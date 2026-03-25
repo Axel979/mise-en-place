@@ -73,7 +73,7 @@ const BADGES = [
   {id:"sprint",      emoji:"🏃",label:"Sprinter",        desc:"Complete the 5 Dish Sprint",          check:s=>s.challs.includes("sprint_5")},
   {id:"explorer",    emoji:"🗺️",label:"Explorer",        desc:"Complete the 10 Meal Explorer",       check:s=>s.challs.includes("explorer_10")},
   {id:"marathon",    emoji:"🏅",label:"Marathoner",      desc:"Complete the 30 Cook Marathon",       check:s=>s.challs.includes("marathon_30")},
-  {id:"kudos_10",    emoji:"👏",label:"Social Star",     desc:"Receive 10 kudos on your posts",      check:s=>s.kudos>=10},
+  {id:"mwah_10",    emoji:"👏",label:"Social Star",     desc:"Receive 10 🤌 Mwahs on your posts",      check:s=>s.mwah>=10},
   {id:"level_5",     emoji:"👨‍🍳",label:"Sous Chef",      desc:"Reach Level 5",                       check:s=>s.level>=5},
 ];
 
@@ -504,10 +504,10 @@ const LEADERBOARD = [
 ];
 
 const SEED_POSTS = [
-  {id:"p1",user:{name:"Sofia R.",  avatar:"👩‍🍳",level:"Sous Chef"},  recipe:"Beef Bourguignon",  emoji:"🥩",photo:null,caption:"Three hours of love. Look at that colour 🤤 So worth it #sundaycooking",                   time:"2h ago", kudos:14,myKudos:false,comments:[{user:"Jake M.",text:"This is insane 🔥"},{user:"Priya K.",text:"Recipe?? 👀"}]},
-  {id:"p2",user:{name:"Jake M.",   avatar:"🧑‍🍳",level:"Home Cook"}, recipe:"Sourdough Focaccia", emoji:"🍞",photo:null,caption:"Finally nailed the dimples after 4 attempts. Sea salt flakes are everything 🤌",         time:"5h ago", kudos:22,myKudos:false,comments:[{user:"Sofia R.",text:"The crust looks perfect 😍"}]},
-  {id:"p3",user:{name:"Priya K.",  avatar:"👩‍🦱",level:"Intermediate"},recipe:"Miso Ramen",        emoji:"🍜",photo:null,caption:"Homemade tonkotsu broth. 6 hours. My entire flat smells incredible ✨",                    time:"1d ago", kudos:31,myKudos:false,comments:[{user:"Jake M.",text:"6 hours! Absolute legend"},{user:"Marcus T.",text:"Recipe please 🙏"}]},
-  {id:"p4",user:{name:"Marcus T.", avatar:"🧔",  level:"Advanced"},   recipe:"Tarte Tatin",        emoji:"🥧",photo:null,caption:"Third attempt at this. Caramelisation is a discipline. Finally nailed it. #persistence",  time:"2d ago", kudos:19,myKudos:false,comments:[{user:"Priya K.",text:"That colour is everything 🙌"}]},
+  {id:"p1",user:{name:"Sofia R.",  avatar:"👩‍🍳",level:"Sous Chef"},  recipe:"Beef Bourguignon",  emoji:"🥩",photo:null,caption:"Three hours of love. Look at that colour 🤤 So worth it #sundaycooking",                   time:"2h ago", mwah:14,myMwah:false,comments:[{user:"Jake M.",text:"This is insane 🔥"},{user:"Priya K.",text:"Recipe?? 👀"}]},
+  {id:"p2",user:{name:"Jake M.",   avatar:"🧑‍🍳",level:"Home Cook"}, recipe:"Sourdough Focaccia", emoji:"🍞",photo:null,caption:"Finally nailed the dimples after 4 attempts. Sea salt flakes are everything 🤌",         time:"5h ago", mwah:22,myMwah:false,comments:[{user:"Sofia R.",text:"The crust looks perfect 😍"}]},
+  {id:"p3",user:{name:"Priya K.",  avatar:"👩‍🦱",level:"Intermediate"},recipe:"Miso Ramen",        emoji:"🍜",photo:null,caption:"Homemade tonkotsu broth. 6 hours. My entire flat smells incredible ✨",                    time:"1d ago", mwah:31,myMwah:false,comments:[{user:"Jake M.",text:"6 hours! Absolute legend"},{user:"Marcus T.",text:"Recipe please 🙏"}]},
+  {id:"p4",user:{name:"Marcus T.", avatar:"🧔",  level:"Advanced"},   recipe:"Tarte Tatin",        emoji:"🥧",photo:null,caption:"Third attempt at this. Caramelisation is a discipline. Finally nailed it. #persistence",  time:"2d ago", mwah:19,myMwah:false,comments:[{user:"Priya K.",text:"That colour is everything 🙌"}]},
 ];
 
 const STREAK_GOALS=[
@@ -659,7 +659,7 @@ function Onboarding({onComplete}){
         <div style={{fontSize:72,marginBottom:20}}>🎉</div>
         <div style={{fontWeight:900,fontSize:28,color:C.bark,fontFamily:DF,marginBottom:12}}>You're all set!</div>
         <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"20px",marginBottom:24,color:"#fff",textAlign:"left"}}>
-          {[["🎯 Goal",goal.label],["👨‍🍳 Level",skill],["🌱 Starting rank","Novice — level up as you cook"]].map(([k,v])=>(
+          {[["🎯 Goal",goal.label],["👨‍🍳 Level",skill],["🌱 Starting rank","Novice — build Heat as you cook"]].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
               <span style={{fontSize:13,opacity:.7}}>{k}</span><span style={{fontSize:13,fontWeight:700}}>{v}</span>
             </div>
@@ -707,7 +707,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
         </div>
         <div style={{fontSize:24,fontWeight:900,color:"#fff",lineHeight:1.25,marginBottom:8,fontFamily:DF}}>{recipe.name}</div>
         <div style={{display:"flex",gap:16,color:"rgba(255,255,255,.65)",fontSize:13}}>
-          <span>⏱ {recipe.time}</span><span>⚡ {recipe.xp} XP</span><span>📋 {(recipe.ingredients||[]).length} ingredients</span>
+          <span>⏱ {recipe.time}</span><span>🔥 {recipe.xp} Heat</span><span>📋 {(recipe.ingredients||[]).length} ingredients</span>
         </div>
       </div>
 
@@ -795,7 +795,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
             </div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center"}}>
               <span style={{fontSize:36}}>{recipe.emoji}</span>
-              <div><div style={{fontWeight:900,fontSize:16,color:"#fff"}}>{recipe.name}</div><div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginTop:2}}>+{recipe.xp} XP earned</div></div>
+              <div><div style={{fontWeight:900,fontSize:16,color:"#fff"}}>{recipe.name}</div><div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginTop:2}}>+{recipe.xp} 🔥 Heat earned</div></div>
             </div>
             {/* Star rating */}
             <div style={{background:C.cream,borderRadius:16,padding:"14px 16px",marginBottom:14,border:`1px solid ${C.border}`}}>
@@ -877,7 +877,7 @@ function ChallengeDetail({ch,progress,onBack,onInvite}){
               );
             })}
           </div>
-          {done&&<div style={{marginTop:14,background:`${C.gold}18`,borderRadius:12,padding:"12px",textAlign:"center"}}><div style={{fontSize:28,marginBottom:4}}>🏅</div><div style={{fontWeight:800,fontSize:14,color:C.bark}}>Challenge Complete! +{ch.xp} XP earned</div></div>}
+          {done&&<div style={{marginTop:14,background:`${C.gold}18`,borderRadius:12,padding:"12px",textAlign:"center"}}><div style={{fontSize:28,marginBottom:4}}>🏅</div><div style={{fontWeight:800,fontSize:14,color:C.bark}}>Challenge Complete! +{ch.xp} 🔥 Heat earned</div></div>}
           {!done&&nextM&&<div style={{marginTop:10,fontSize:12,color:C.muted}}>{nextM-prog} more to next milestone 🎯</div>}
         </div>
 
@@ -993,7 +993,7 @@ function ChallengesTab({challengeProgress,onInvite}){
         <div style={{position:"absolute",top:-20,right:-20,fontSize:110,opacity:.07,lineHeight:1}}>🏃</div>
         <div style={{fontSize:11,opacity:.5,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Cooking Challenges</div>
         <div style={{fontWeight:900,fontSize:24,fontFamily:DF,marginBottom:8,lineHeight:1.2}}>Cook your way to the finish line</div>
-        <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:18}}>Like Nike Run Club, but for cooking. Start at any level. Tap any challenge to read the full description, what you'll learn, and tips for success. Invite friends for accountability.</div>
+        <div style={{fontSize:13,opacity:.7,lineHeight:1.6,marginBottom:18}}>Pick a challenge. Cook through it. Invite a friend to keep each other honest. Every challenge explains exactly what you'll learn and why it matters.</div>
         <div style={{display:"flex",gap:10}}>
           {[["🏃","5 to 30 meals"],["⚔️","With friends"],["🏅","Earn badges"]].map(([e,t])=>(
             <div key={t} style={{flex:1,background:"rgba(255,255,255,.08)",borderRadius:12,padding:"10px 6px",textAlign:"center"}}>
@@ -1065,7 +1065,7 @@ function CookLibrary({cookLog,allRecipes}){
           </div>
           <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center"}}>
             <span style={{fontSize:11,color:C.muted,fontWeight:700,flexShrink:0}}>Sort:</span>
-            {[["recent","Most Recent"],["rating","Top Rated"],["xp","Most XP"]].map(([id,lbl])=>(
+            {[["recent","Most Recent"],["rating","Top Rated"],["xp","Most Heat 🔥"]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setSort(id)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:99,border:`1.5px solid ${sort===id?C.sky:C.border}`,background:sort===id?`${C.sky}18`:"transparent",color:sort===id?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{lbl}</button>
             ))}
           </div>
@@ -1107,7 +1107,7 @@ function CookLibrary({cookLog,allRecipes}){
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
                       {entry.rating>0&&<div style={{fontSize:13}}>{["","⭐","⭐⭐","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐⭐⭐⭐"][entry.rating]}</div>}
-                      <div style={{fontSize:11,fontWeight:700,color:C.sage,marginTop:2}}>+{entry.xp} XP</div>
+                      <div style={{fontSize:11,fontWeight:700,color:C.sage,marginTop:2}}>+{entry.xp} 🔥 Heat</div>
                     </div>
                   </div>
                   {entry.caption&&<div style={{fontSize:13,color:"#6A5C52",lineHeight:1.55,padding:"10px 12px",background:C.cream,borderRadius:10,fontStyle:"italic"}}>"{entry.caption}"</div>}
@@ -1129,7 +1129,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
   const [newComment,setNewComment]=useState("");
   const league=getLeague(5);
 
-  const giveKudos=(pid)=>setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,kudos:p.myKudos?p.kudos-1:p.kudos+1,myKudos:!p.myKudos}));
+  const giveMwah=(pid)=>setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah}));
   const addComment=(pid)=>{
     if(!newComment.trim())return;
     setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,comments:[...(p.comments||[]),{user:"You",text:newComment.trim()}]}));
@@ -1150,7 +1150,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
           </div>
           {/* Tab toggle */}
           <div style={{display:"flex",background:C.pill,borderRadius:12,padding:3,gap:3,marginBottom:0}}>
-            {[["league","🏆 This Week"],["following","👥 Following"],["kudos","❤️ Activity"]].map(([id,lbl])=>(
+            {[["league","🏆 This Week"],["following","👥 Following"],["mwah","❤️ Activity"]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:10,padding:"8px 4px",fontWeight:800,fontSize:11,background:activeTab===id?"#fff":"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 6px rgba(0,0,0,.07)":"none",transition:"all .18s"}}>{lbl}</button>
             ))}
           </div>
@@ -1161,7 +1161,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <span style={{fontSize:12,color:C.muted}}>Weekly leaderboard resets Sunday</span>
-                <span style={{fontSize:13,fontWeight:800,color:league.color}}>{weeklyXp} XP</span>
+                <span style={{fontSize:13,fontWeight:800,color:league.color}}>{weeklyXp} 🔥 Heat</span>
               </div>
               {LEADERBOARD.map((u,i)=>(
                 <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}12`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"4px 10px",marginBottom:4,border:u.isMe?`1.5px solid ${league.color}30`:"none",transition:"all .2s"}}>
@@ -1169,10 +1169,10 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
                   <span style={{fontSize:20}}>{u.avatar}</span>
                   <span style={{flex:1,fontWeight:u.isMe?900:600,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
                   <span style={{fontSize:11,color:C.muted}}>🔥{u.streak}</span>
-                  <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp}</span>
+                  <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp} 🔥</span>
                 </div>
               ))}
-              <div style={{fontSize:11,color:C.muted,marginTop:10,padding:"8px 10px",background:`${C.sage}0D`,borderRadius:10}}>💡 Cook more this week to climb the leaderboard. XP resets every Sunday.</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:10,padding:"8px 10px",background:`${C.sage}0D`,borderRadius:10}}>💡 Cook more this week to climb the leaderboard. 🔥 Heat resets every Sunday.</div>
             </div>
           )}
 
@@ -1186,17 +1186,17 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
                     <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{f.name}</div>
                     <div style={{fontSize:11,color:C.muted}}>{f.cooked} dishes · 🔥{f.streak} streak</div>
                   </div>
-                  <span style={{fontSize:13,fontWeight:800,color:C.sage}}>{f.xp} XP</span>
+                  <span style={{fontSize:13,fontWeight:800,color:C.sage}}>{f.xp} 🔥 Heat</span>
                 </div>
               ))}
               <button className="tap" style={{width:"100%",marginTop:14,padding:"10px",borderRadius:14,border:`2px dashed ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:13,cursor:"pointer"}}>+ Find friends to follow</button>
             </div>
           )}
 
-          {activeTab==="kudos"&&(
+          {activeTab==="mwah"&&(
             <div>
               <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Recent activity on your posts.</div>
-              {[{user:"Sofia R.",avatar:"👩‍🍳",action:"gave kudos to your",dish:"Shakshuka",time:"2h ago"},{user:"Jake M.",avatar:"🧑‍🍳",action:"commented on your",dish:"Avocado Toast",time:"5h ago"},{user:"Priya K.",avatar:"👩‍🦱",action:"gave kudos to your",dish:"Overnight Oats",time:"1d ago"}].map((a,i)=>(
+              {[{user:"Sofia R.",avatar:"👩‍🍳",action:"gave 🤌 Mwah to your",dish:"Shakshuka",time:"2h ago"},{user:"Jake M.",avatar:"🧑‍🍳",action:"commented on your",dish:"Avocado Toast",time:"5h ago"},{user:"Priya K.",avatar:"👩‍🦱",action:"gave 🤌 Mwah to your",dish:"Overnight Oats",time:"1d ago"}].map((a,i)=>(
                 <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<2?`1px solid ${C.border}`:"none"}}>
                   <span style={{fontSize:22}}>{a.avatar}</span>
                   <div style={{flex:1}}>
@@ -1219,7 +1219,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
           <div style={{flex:1}}>
             <div style={{display:"flex",justifyContent:"space-between"}}>
               <span style={{fontWeight:800,fontSize:14,color:C.bark}}>Lv.{levelInfo.current.level} · {levelInfo.current.title}</span>
-              {levelInfo.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} XP</span>}
+              {levelInfo.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 Heat</span>}
             </div>
             <div style={{marginTop:6}}><XPBar pct={levelInfo.pct} color={levelInfo.current.color} h={7}/></div>
             {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>Next: {levelInfo.next.title} {levelInfo.next.icon}</div>}
@@ -1251,9 +1251,9 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo}){
               <div style={{padding:"12px 16px 0"}}>
                 {post.caption&&<div style={{fontSize:14,color:C.bark,lineHeight:1.55,marginBottom:12}}><span style={{fontWeight:700}}>{post.user.name.split(" ")[0]}</span> {post.caption}</div>}
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:10}}>
-                  <button onClick={()=>giveKudos(post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
-                    <span style={{fontSize:22,transition:"transform .2s",transform:post.myKudos?"scale(1.15)":"scale(1)"}}>{post.myKudos?"👏":"🤍"}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:post.myKudos?C.flame:C.muted}}>{post.kudos} kudo{post.kudos!==1?"s":""}</span>
+                  <button onClick={()=>giveMwah(post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
+                    <span style={{fontSize:22,transition:"transform .2s",transform:post.myMwah?"scale(1.15)":"scale(1)"}}>{post.myMwah?"👏":"🤍"}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah} 🤌 mwah{post.mwah!==1?"s":""}</span>
                   </button>
                   <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
                     <span style={{fontSize:20}}>💬</span>
@@ -1325,7 +1325,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
           ))}
         </div>
         <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid rgba(255,255,255,.12)",paddingTop:14}}>
-          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Total XP</div><div style={{fontSize:20,fontWeight:900}}>{xp.toLocaleString()}</div></div>
+          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Total Heat</div><div style={{fontSize:20,fontWeight:900}}>{xp.toLocaleString()}</div></div>
           <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Level</div><div style={{fontSize:20,fontWeight:900}}>{levelInfo.current.icon} {levelInfo.current.title}</div></div>
           <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Cooked</div><div style={{fontSize:20,fontWeight:900}}>{recipes.filter(r=>r.done).length}</div></div>
         </div>
@@ -1336,7 +1336,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         <div style={{margin:"0 16px 18px"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
             <span style={{fontSize:12,color:C.muted,fontWeight:600}}>Next: {levelInfo.next.title} {levelInfo.next.icon}</span>
-            <span style={{fontSize:12,color:levelInfo.current.color,fontWeight:700}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} XP</span>
+            <span style={{fontSize:12,color:levelInfo.current.color,fontWeight:700}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 Heat</span>
           </div>
           <XPBar pct={levelInfo.pct} color={levelInfo.current.color}/>
         </div>
@@ -1372,7 +1372,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
               </div>
               {!r.done&&(
                 <button onClick={e=>quickComplete(e,r)} className="tap" style={{background:completing===r.id?C.sage:C.flame,color:"#fff",border:"none",borderRadius:12,padding:"8px 14px",fontWeight:800,fontSize:12,cursor:"pointer",flexShrink:0,boxShadow:`0 3px 10px ${C.flame}44`,transition:"background .2s"}}>
-                  {completing===r.id?`+${r.xp}xp!`:`Cook · ${r.xp}xp`}
+                  {completing===r.id?`+${r.xp} 🔥`:`Cook · ${r.xp} 🔥`}
                 </button>
               )}
             </div>
@@ -1417,7 +1417,7 @@ function RecipesTab({allRecipes,onOpen}){
       <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{DIETS.map(d=><button key={d} onClick={()=>setDiet(d)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}18`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{d==="All"?"🍽️ All":d}</button>)}</div>
       <div style={{display:"flex",gap:8,padding:"0 16px 12px",alignItems:"center",overflowX:"auto"}}>
         <span style={{fontSize:11,color:C.muted,fontWeight:700,flexShrink:0}}>Sort:</span>
-        {[["default","Default"],["easy","Easiest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most XP"]].map(([k,l])=><button key={k} onClick={()=>setSort(k)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:99,border:`1.5px solid ${sort===k?C.sky:C.border}`,background:sort===k?`${C.sky}18`:"transparent",color:sort===k?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{l}</button>)}
+        {[["default","Default"],["easy","Easiest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most Heat 🔥"]].map(([k,l])=><button key={k} onClick={()=>setSort(k)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:99,border:`1.5px solid ${sort===k?C.sky:C.border}`,background:sort===k?`${C.sky}18`:"transparent",color:sort===k?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{l}</button>)}
       </div>
       <div style={{padding:"0 16px"}}>
         <div style={{fontSize:12,color:C.muted,fontWeight:600,marginBottom:10}}>{filtered.length} recipe{filtered.length!==1?"s":""}</div>
@@ -1572,7 +1572,7 @@ export default function App(){
         user:{name:"You",avatar:"👩‍🍳",level:levelInfo.current.title},
         recipe:recipe.name,emoji:recipe.emoji,photo,
         caption:caption||`Just cooked ${recipe.name}! 🎉`,
-        time:"just now",kudos:0,myKudos:false,comments:[],
+        time:"just now",mwah:0,myMwah:false,comments:[],
       },...ps]);
     }
 
@@ -1582,7 +1582,7 @@ export default function App(){
     const uniqueCuisines=Object.values(cats).filter(v=>v>0).length;
     const streak=cookedDays.filter(Boolean).length+1;
     const doneChalls=Object.keys(newCP).filter(id=>(newCP[id]||0)>=(CHALLENGES.find(c=>c.id===id)?.target||99));
-    checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,kudos:0});
+    checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,mwah:0});
   },[xp,allRecipes,cookedDays,skillData,challengeProgress,levelInfo,checkBadges]);
 
   const openRecipe=useCallback((recipe)=>setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe),[allRecipes]);
@@ -1637,7 +1637,7 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:14}}>
+        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:14,paddingBottom:80}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
@@ -1645,7 +1645,7 @@ export default function App(){
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes}/>}
         </div>
 
-        <div style={{position:"sticky",bottom:0,background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 12px",zIndex:50}}>
+        <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 12px",zIndex:50}}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 0",transform:tab===t.id?"scale(1.08)":"scale(1)",transition:"transform .18s"}}>
               <div style={{fontSize:19}}>{t.emoji}</div>
