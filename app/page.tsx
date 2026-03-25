@@ -1482,6 +1482,100 @@ function GoalPicker({goal,onSelect,onClose}){
   );
 }
 
+
+/* ═══ NOTIFICATIONS TAB ════════════════════════════════════════════════════ */
+function NotificationsTab({notifications,setNotifications,setTab}){
+  const markAllRead=()=>setNotifications(ns=>ns.map(n=>({...n,read:true})));
+  const markRead=(id)=>setNotifications(ns=>ns.map(n=>n.id===id?{...n,read:true}:n));
+  const accept=(id)=>{markRead(id);setNotifications(ns=>ns.map(n=>n.id===id?{...n,accepted:true}:n));};
+  const decline=(id)=>setNotifications(ns=>ns.filter(n=>n.id!==id));
+
+  const unreadCount=notifications.filter(n=>!n.read).length;
+
+  const typeConfig={
+    mwah:      {color:C.flame,  bg:`${C.flame}12`,  icon:"🤌"},
+    comment:   {color:C.sky,    bg:`${C.sky}12`,    icon:"💬"},
+    friend_req:{color:C.sage,   bg:`${C.sage}12`,   icon:"👤"},
+    challenge: {color:C.plum,   bg:`${C.plum}12`,   icon:"⚔️"},
+    streak:    {color:C.ember,  bg:`${C.ember}12`,  icon:"🔥"},
+    level:     {color:C.gold,   bg:`${C.gold}12`,   icon:"⭐"},
+  };
+
+  return(
+    <div style={{paddingBottom:30}}>
+      {/* Header */}
+      <div style={{padding:"0 16px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontWeight:900,fontSize:22,color:C.bark,fontFamily:DF}}>Notifications</div>
+          <div style={{fontSize:12,color:C.muted,marginTop:2}}>{unreadCount>0?`${unreadCount} unread`:"All caught up ✓"}</div>
+        </div>
+        {unreadCount>0&&(
+          <button onClick={markAllRead} className="tap" style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"7px 12px",fontSize:12,fontWeight:700,color:C.muted,cursor:"pointer"}}>
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      {notifications.length===0&&(
+        <div style={{textAlign:"center",padding:"60px 32px"}}>
+          <div style={{fontSize:56,marginBottom:16}}>🔔</div>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF,marginBottom:8}}>No notifications yet</div>
+          <div style={{fontSize:14,color:C.muted,lineHeight:1.6}}>When friends give you 🤌 Mwah, comment on your dishes, or challenge you — it'll show up here.</div>
+        </div>
+      )}
+
+      <div style={{display:"flex",flexDirection:"column",gap:2,padding:"0 12px"}}>
+        {notifications.map((n,idx)=>{
+          const cfg=typeConfig[n.type]||{color:C.muted,bg:C.cream,icon:"🔔"};
+          return(
+            <div key={n.id} onClick={()=>markRead(n.id)} style={{background:n.read?"transparent":cfg.bg,borderRadius:16,padding:"14px 14px",display:"flex",gap:12,alignItems:"flex-start",transition:"background .3s",animation:`fadeUp .25s ease ${idx*.03}s both`,cursor:"default"}}>
+              {/* Avatar + type icon */}
+              <div style={{position:"relative",flexShrink:0}}>
+                <div style={{width:44,height:44,borderRadius:14,background:`${cfg.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>
+                  {n.avatar}
+                </div>
+                <div style={{position:"absolute",bottom:-4,right:-4,width:20,height:20,borderRadius:"50%",background:cfg.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,border:"2px solid #FAF4EE"}}>
+                  {cfg.icon}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,color:C.bark,lineHeight:1.5}}>
+                  {n.type!=="streak"&&n.type!=="level"&&<span style={{fontWeight:800}}>{n.name} </span>}
+                  <span style={{fontWeight:n.read?400:600}}>{n.text}</span>
+                </div>
+                <div style={{fontSize:11,color:C.muted,marginTop:4}}>{n.time}</div>
+
+                {/* Friend request actions */}
+                {n.type==="friend_req"&&!n.accepted&&(
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    <button onClick={e=>{e.stopPropagation();accept(n.id);}} className="tap" style={{flex:1,padding:"8px",borderRadius:10,border:"none",background:C.sage,color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer"}}>Accept</button>
+                    <button onClick={e=>{e.stopPropagation();decline(n.id);}} className="tap" style={{flex:1,padding:"8px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:12,cursor:"pointer"}}>Decline</button>
+                  </div>
+                )}
+                {n.type==="friend_req"&&n.accepted&&(
+                  <div style={{marginTop:8,fontSize:12,color:C.sage,fontWeight:700}}>✓ Following {n.name}</div>
+                )}
+
+                {/* Challenge action */}
+                {n.type==="challenge"&&(
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    <button onClick={e=>{e.stopPropagation();markRead(n.id);setTab("challenges");}} className="tap" style={{flex:1,padding:"8px",borderRadius:10,border:"none",background:C.plum,color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer"}}>View Challenge ⚔️</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Unread dot */}
+              {!n.read&&<div style={{width:8,height:8,borderRadius:"50%",background:C.flame,flexShrink:0,marginTop:6}}/>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ═══ ROOT APP ════════════════════════════════════════════════════════════ */
 export default function App(){
   const [onboarded,  setOnboarded]  = useState(false);
@@ -1500,6 +1594,18 @@ export default function App(){
   const [earnedBadges,setEarnedBadges]=useState([]);
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
   const [cookLog,    setCookLog]    = useState([]); // Goodreads-style library
+  const [notifications,setNotifications] = useState([
+    {id:"n1", type:"mwah",      read:false, avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2m ago",  emoji:"🍳"},
+    {id:"n2", type:"friend_req",read:false, avatar:"🧑‍🍳", name:"Jake M.",    text:"sent you a friend request",                   time:"15m ago", emoji:null},
+    {id:"n3", type:"comment",   read:false, avatar:"👩‍🦱", name:"Priya K.",   text:"commented on your Avocado Toast: \"Looks incredible!\"",time:"1h ago",emoji:"🥑"},
+    {id:"n4", type:"challenge", read:false, avatar:"🧔",   name:"Marcus T.",  text:"challenged you to the 10 Meal Explorer",      time:"2h ago",  emoji:"🗺️"},
+    {id:"n5", type:"mwah",      read:true,  avatar:"👩",   name:"Yuki A.",    text:"gave you 🤌 Mwah on your Overnight Oats",     time:"3h ago",  emoji:"🥣"},
+    {id:"n6", type:"streak",    read:true,  avatar:"🔥",   name:"mise.en.place", text:"You're on a 4-day streak. Keep it going!", time:"5h ago",  emoji:null},
+    {id:"n7", type:"level",     read:true,  avatar:"⭐",   name:"mise.en.place", text:"You reached Prep Cook! You've earned 500 🔥 Heat",time:"1d ago",emoji:null},
+    {id:"n8", type:"friend_req",read:true,  avatar:"👨",   name:"Liam B.",    text:"sent you a friend request",                   time:"1d ago",  emoji:null},
+    {id:"n9", type:"comment",   read:true,  avatar:"🧔",   name:"Marcus T.",  text:"commented on your French Omelette: \"Chef level!\"",time:"2d ago",emoji:"🥚"},
+    {id:"n10",type:"mwah",      read:true,  avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2d ago",  emoji:"🍳"},
+  ]);
   const prevLevel = useRef(null);
 
   useEffect(()=>{setTimeout(()=>setMounted(true),60);},[]);
@@ -1622,12 +1728,16 @@ export default function App(){
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
       <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}}>
         {/* Header — no AI button */}
-        <div style={{background:C.paper,padding:"15px 20px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{background:C.paper,padding:"15px 20px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`}}>
           <div>
             <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
             <div style={{fontSize:11,color:C.muted,marginTop:-1}}>your daily cooking habit</div>
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+              <span style={{fontSize:17}}>🔔</span>
+              {notifications.filter(n=>!n.read).length>0&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</div>}
+            </button>
             <div style={{background:`${levelInfo.current.color}18`,border:`1.5px solid ${levelInfo.current.color}44`,borderRadius:10,padding:"5px 10px",fontSize:12,fontWeight:800,color:levelInfo.current.color}}>
               {levelInfo.current.icon} Lv.{levelInfo.current.level}
             </div>
@@ -1637,12 +1747,13 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:14,paddingBottom:80}}>
+        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes}/>}
+          {tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 12px",zIndex:50}}>
