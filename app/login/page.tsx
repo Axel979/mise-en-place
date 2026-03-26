@@ -1,9 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+    const supabase = createClient();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        window.location.href = '/login';
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   const supabase = createClient();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
