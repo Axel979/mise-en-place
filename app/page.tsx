@@ -188,7 +188,7 @@ By meal 30 you will think about food differently. The 30 Cook Marathon is the hi
 /* ═══ RECIPES ═════════════════════════════════════════════════════════════ */
 const mk=(cal,pro,carb,fat,fib=2)=>({calories:cal,protein:pro,carbs:carb,fat,fiber:fib});
 const RECIPES = [
-  {id:1,name:"Perfect French Omelette",emoji:"🥚",xp:50,difficulty:"Medium",time:"8 min",category:"Breakfast",
+  {id:1,photo:"https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&q=80&fit=crop&auto=format",name:"Perfect French Omelette",emoji:"🥚",xp:50,difficulty:"Medium",time:"8 min",category:"Breakfast",
    diets:["Vegetarian","Gluten-free","Keto"],macros:mk(290,18,1,22,0),done:false,
    ingredients:["3 large eggs","20g cold unsalted butter, cut into small cubes","Pinch of fine salt and white pepper","Small handful fresh chives, finely chopped"],
    steps:[
@@ -199,7 +199,7 @@ const RECIPES = [
      {title:"Roll and plate",body:"Tilt the pan at 45°. Fold the near edge over the centre. Tip onto a warm plate, folding the final edge underneath. It should be pale yellow — no browning. Add remaining butter on top to melt and gloss. Scatter chives."},
    ],
    tip:"The entire omelette should take under 90 seconds once the eggs hit the pan. If it's taking longer, your heat is too low."},
-  {id:2,name:"Shakshuka",emoji:"🍳",xp:65,difficulty:"Easy",time:"25 min",category:"Breakfast",
+  {id:2,photo:"https://images.unsplash.com/photo-1590412200988-a436970781fa?w=600&q=80&fit=crop&auto=format",name:"Shakshuka",emoji:"🍳",xp:65,difficulty:"Easy",time:"25 min",category:"Breakfast",
    diets:["Vegetarian","Gluten-free","Dairy-free"],macros:mk(320,18,24,16,5),done:false,
    ingredients:["6 large eggs","2×400g cans chopped tomatoes","1 large red bell pepper, diced","1 large white onion, finely diced","5 cloves garlic, minced","2 tsp ground cumin","1½ tsp smoked paprika","½ tsp cayenne","3 tbsp olive oil","Salt and black pepper","Feta (optional), fresh coriander, pita to serve"],
    steps:[
@@ -211,7 +211,7 @@ const RECIPES = [
      {title:"Finish and serve",body:"Crumble feta over the top if using. Add fresh coriander. Serve directly from the pan with pita or bread."},
    ],
    tip:"Pull the pan off heat 1 minute before the eggs look done. Residual heat finishes them perfectly."},
-  {id:3,name:"Overnight Oats",emoji:"🥣",xp:30,difficulty:"Easy",time:"10 min",category:"Breakfast",
+  {id:3,photo:"https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=600&q=80&fit=crop&auto=format",name:"Overnight Oats",emoji:"🥣",xp:30,difficulty:"Easy",time:"10 min",category:"Breakfast",
    diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(380,12,58,10,8),done:false,
    ingredients:["400g (4 cups) rolled oats — not instant","500ml oat milk or any milk","100ml cold water","4 tbsp chia seeds","4 tbsp maple syrup","2 tsp vanilla extract","Pinch of salt","To serve: fresh berries, banana, nut butter"],
    steps:[
@@ -222,7 +222,7 @@ const RECIPES = [
      {title:"Top and serve",body:"In the morning, add a splash more milk if you prefer a looser texture. Top with fresh berries, banana slices, and a spoonful of nut butter."},
    ],
    tip:"Make 4 jars on Sunday and you have breakfast ready Monday through Thursday."},
-  {id:4,name:"Avocado Toast & Poached Eggs",emoji:"🥑",xp:40,difficulty:"Easy",time:"15 min",category:"Breakfast",
+  {id:4,photo:"https://images.unsplash.com/photo-1541519227354-08fa5d50c820?w=600&q=80&fit=crop&auto=format",name:"Avocado Toast & Poached Eggs",emoji:"🥑",xp:40,difficulty:"Easy",time:"15 min",category:"Breakfast",
    diets:["Vegetarian","Dairy-free"],macros:mk(440,18,36,24,9),done:false,
    ingredients:["2 ripe avocados","4 large eggs","4 thick slices sourdough","1 lemon","1 tsp white wine vinegar","Chilli flakes","Flaky sea salt and black pepper","Microgreens to serve"],
    steps:[
@@ -233,7 +233,7 @@ const RECIPES = [
      {title:"Assemble",body:"Spread smashed avocado thickly on toast. Remove eggs with a slotted spoon, dab dry. Place on avocado. Add chilli flakes, sea salt, and microgreens."},
    ],
    tip:"The vinegar helps the egg white coagulate around the yolk. Fresh eggs hold together far better than old ones."},
-  {id:5,name:"Banana Pancakes",emoji:"🥞",xp:45,difficulty:"Easy",time:"20 min",category:"Breakfast",
+  {id:5,photo:"https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=600&q=80&fit=crop&auto=format",name:"Banana Pancakes",emoji:"🥞",xp:45,difficulty:"Easy",time:"20 min",category:"Breakfast",
    diets:["Vegetarian"],macros:mk(380,10,58,12,3),done:false,
    ingredients:["200g plain flour","1 tbsp baking powder","2 tbsp caster sugar","Pinch of salt","2 ripe bananas, mashed","2 large eggs","200ml whole milk","2 tbsp melted butter plus extra for the pan","1 tsp vanilla extract","Maple syrup and berries to serve"],
    steps:[
@@ -244,7 +244,7 @@ const RECIPES = [
      {title:"Flip once",body:"Flip once. Cook 1–2 minutes more until golden. Never press down on pancakes — this deflates them.",timer:90},
    ],
    tip:"The riper the banana — the more brown spots the better — the sweeter and more intensely flavoured the pancakes."},
-  {id:6,name:"Aglio e Olio",emoji:"🍝",xp:55,difficulty:"Easy",time:"15 min",category:"Italian",
+  {id:6,photo:"https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=600&q=80&fit=crop&auto=format",name:"Aglio e Olio",emoji:"🍝",xp:55,difficulty:"Easy",time:"15 min",category:"Italian",
    diets:["Vegetarian","Dairy-free"],macros:mk(520,14,72,20,3),done:false,
    ingredients:["400g spaghetti","10 cloves garlic, very thinly sliced","100ml extra-virgin olive oil — good quality","1½ tsp dried chilli flakes","Large bunch flat-leaf parsley, chopped","Fine salt for the pasta water","Pecorino Romano or Parmesan to serve"],
    steps:[
@@ -256,7 +256,7 @@ const RECIPES = [
      {title:"Serve immediately",body:"Plate into warm bowls. Finish with remaining parsley, a drizzle of your best olive oil, and plenty of Pecorino."},
    ],
    tip:"The pasta water IS the sauce. The starch emulsifies with olive oil to create a silky, clinging sauce. Use far more than you think you need."},
-  {id:7,name:"Cacio e Pepe",emoji:"🧀",xp:85,difficulty:"Hard",time:"20 min",category:"Italian",
+  {id:7,photo:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80&fit=crop&auto=format",name:"Cacio e Pepe",emoji:"🧀",xp:85,difficulty:"Hard",time:"20 min",category:"Italian",
    diets:["Vegetarian"],macros:mk(580,20,70,24,2),done:false,
    ingredients:["400g spaghetti","100g Pecorino Romano, very finely grated (use a microplane)","50g Parmesan, very finely grated","2 tsp whole black peppercorns","Fine salt for pasta water"],
    steps:[
@@ -268,7 +268,7 @@ const RECIPES = [
      {title:"Adjust and serve",body:"Return to very low heat if needed. Add pasta water little by little until perfect consistency. Plate into warm bowls with more pepper and Pecorino."},
    ],
    tip:"Cacio e Pepe has 4 ingredients but is genuinely difficult. The cheese only works off the heat, with very fine grating, and plenty of starchy pasta water. Your first attempt may fail. Your second won't."},
-  {id:8,name:"Lemon Ricotta Pasta",emoji:"🍋",xp:45,difficulty:"Easy",time:"18 min",category:"Italian",
+  {id:8,photo:"https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=600&q=80&fit=crop&auto=format",name:"Lemon Ricotta Pasta",emoji:"🍋",xp:45,difficulty:"Easy",time:"18 min",category:"Italian",
    diets:["Vegetarian"],macros:mk(490,18,66,16,3),done:false,
    ingredients:["400g rigatoni or pappardelle","250g whole-milk ricotta — the freshest you can find","Zest and juice of 2 unwaxed lemons","60g Parmesan, finely grated","25g unsalted butter","3 cloves garlic, finely grated","Large handful fresh basil","Salt and plenty of cracked black pepper"],
    steps:[
@@ -279,7 +279,7 @@ const RECIPES = [
      {title:"Finish",body:"Taste and adjust — it should be bright, lemony, creamy, and peppery. Tear in basil. Top with remaining Parmesan and more lemon zest."},
    ],
    tip:"The quality of the ricotta is almost the entire dish. Buy the best, freshest whole-milk ricotta you can find."},
-  {id:9,name:"Thai Green Curry",emoji:"🍛",xp:120,difficulty:"Hard",time:"45 min",category:"Asian",
+  {id:9,photo:"https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=600&q=80&fit=crop&auto=format",name:"Thai Green Curry",emoji:"🍛",xp:120,difficulty:"Hard",time:"45 min",category:"Asian",
    diets:["Gluten-free","Dairy-free"],macros:mk(520,34,28,32,4),done:false,
    ingredients:["400ml full-fat coconut milk","3 tbsp green curry paste (Mae Ploy brand recommended)","600g chicken thigh, sliced","1 zucchini, sliced","6–8 Thai eggplants, quartered","4 kaffir lime leaves, torn","2 tbsp fish sauce","1 tbsp palm sugar","Large handful Thai basil","Jasmine rice to serve"],
    steps:[
@@ -290,7 +290,7 @@ const RECIPES = [
      {title:"Season and serve",body:"Season with fish sauce and palm sugar — the balance of salty and sweet is the whole point of Thai cooking. Stir in Thai basil just before serving. Serve over jasmine rice."},
    ],
    tip:"Frying the paste in coconut cream before adding liquid transforms it from raw and sharp to deep and fragrant. This is the most important step."},
-  {id:10,name:"Miso Glazed Salmon",emoji:"🐟",xp:80,difficulty:"Medium",time:"25 min",category:"Japanese",
+  {id:10,photo:"https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80&fit=crop&auto=format",name:"Miso Glazed Salmon",emoji:"🐟",xp:80,difficulty:"Medium",time:"25 min",category:"Japanese",
    diets:["Gluten-free","Dairy-free"],macros:mk(420,38,16,22,1),done:false,
    ingredients:["2 salmon fillets 200g each, skin on","3 tbsp white miso paste","2 tbsp mirin","1 tbsp tamari (gluten-free soy sauce)","1 tsp sesame oil","2 cloves garlic, grated","1 tsp fresh ginger, grated","Spring onions and sesame seeds to serve","Steamed rice to serve"],
    steps:[
@@ -300,7 +300,7 @@ const RECIPES = [
      {title:"Rest and serve",body:"Salmon is done when it just flakes when pressed — the very centre should be slightly translucent still. Rest 2 minutes. Scatter spring onions and sesame. Serve over rice."},
    ],
    tip:"Watch closely in the final 2 minutes — miso sugar burns very fast. Deep amber is the goal, not black char."},
-  {id:11,name:"Sichuan Mapo Tofu",emoji:"🌶️",xp:95,difficulty:"Medium",time:"25 min",category:"Asian",
+  {id:11,photo:"https://images.unsplash.com/photo-1583032015879-e5022cb87c3b?w=600&q=80&fit=crop&auto=format",name:"Sichuan Mapo Tofu",emoji:"🌶️",xp:95,difficulty:"Medium",time:"25 min",category:"Asian",
    diets:["Vegan","Vegetarian","Gluten-free"],macros:mk(280,14,18,16,3),done:false,
    ingredients:["500g silken tofu, carefully drained and cubed","3 tbsp doubanjiang (Pixian chilli bean paste)","5 cloves garlic, minced","2 tsp fresh ginger, minced","1 tbsp Sichuan peppercorns, toasted and ground","250ml vegetable stock","2 tbsp soy sauce","1 tsp dark soy sauce","2 tsp cornstarch mixed with 2 tbsp cold water","2 tbsp neutral oil","3 spring onions, sliced","Steamed rice to serve"],
    steps:[
@@ -312,7 +312,7 @@ const RECIPES = [
      {title:"Thicken and finish",body:"Stir cornstarch mixture, pour slowly into wok while swirling. Sauce will thicken in 1–2 minutes. Finish with ground Sichuan pepper and spring onions."},
    ],
    tip:"Doubanjiang is the soul of this dish. The combination of doubanjiang heat and Sichuan pepper numbing (má là) is what defines it — don't skip either."},
-  {id:12,name:"Chicken Tikka Masala",emoji:"🍲",xp:105,difficulty:"Medium",time:"1 hr",category:"Indian",
+  {id:12,photo:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600&q=80&fit=crop&auto=format",name:"Chicken Tikka Masala",emoji:"🍲",xp:105,difficulty:"Medium",time:"1 hr",category:"Indian",
    diets:["Gluten-free"],macros:mk(490,36,24,28,3),done:false,
    ingredients:["700g chicken breast, cut into large chunks","200g full-fat Greek yoghurt","3 tbsp tikka masala paste","400ml passata","200ml double cream","1 large onion, finely diced","5 cloves garlic, minced","2 tsp ginger paste","2 tsp garam masala","3 tbsp neutral oil","Salt","Fresh coriander and basmati rice to serve"],
    steps:[
@@ -323,7 +323,7 @@ const RECIPES = [
      {title:"Finish with cream and chicken",body:"Add double cream and charred chicken. Simmer gently 10 minutes. Taste and adjust salt. Top with coriander. Serve with basmati rice and naan."},
    ],
    tip:"The charring step is what separates real tikka masala from a plain curry sauce. The Maillard reaction on the marinated chicken creates flavour compounds the sauce cannot replicate."},
-  {id:13,name:"Chana Masala",emoji:"🫘",xp:65,difficulty:"Easy",time:"35 min",category:"Indian",
+  {id:13,photo:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&q=80&fit=crop&auto=format",name:"Chana Masala",emoji:"🫘",xp:65,difficulty:"Easy",time:"35 min",category:"Indian",
    diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(360,16,48,12,12),done:false,
    ingredients:["2×400g cans chickpeas, drained","1×400g can chopped tomatoes","1 large onion, finely diced","5 cloves garlic, minced","2 tsp fresh ginger, minced","2 green chillies, sliced","2 tsp cumin","2 tsp ground coriander","1½ tsp garam masala","1 tsp turmeric","3 tbsp neutral oil","Juice of 1 lemon","Fresh coriander and naan to serve"],
    steps:[
@@ -334,7 +334,7 @@ const RECIPES = [
      {title:"Simmer and finish",body:"Add garam masala. Simmer 8–10 minutes until thick. Add lemon juice. Taste and adjust salt, chilli, and lemon. Garnish with coriander.",timer:600},
    ],
    tip:"The deeply caramelised onion is not optional. If your onions are pale and soft after 5 minutes, your heat is too low. They should be close to dark brown."},
-  {id:14,name:"Butter Chicken",emoji:"🍗",xp:110,difficulty:"Medium",time:"50 min",category:"Indian",
+  {id:14,photo:"https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600&q=80&fit=crop&auto=format",name:"Butter Chicken",emoji:"🍗",xp:110,difficulty:"Medium",time:"50 min",category:"Indian",
    diets:["Gluten-free"],macros:mk(540,38,18,36,2),done:false,
    ingredients:["700g chicken thigh, cut into large pieces","200g full-fat yoghurt","2 tsp garam masala","1 tsp turmeric","1 tsp smoked paprika","3 tbsp butter (real butter — not oil)","1 large onion, diced","6 cloves garlic","2 tsp ginger paste","1×400g can whole tomatoes","200ml double cream","1 tsp sugar","Salt","Naan and coriander to serve"],
    steps:[
@@ -346,7 +346,7 @@ const RECIPES = [
      {title:"The finishing touch",body:"Remove from heat. Stir in one final knob of cold butter — this adds the signature silkiness. Serve with warm naan and coriander."},
    ],
    tip:"The final cold knob of butter stirred in off the heat is what gives butter chicken its silky, glossy texture. Don't skip it."},
-  {id:15,name:"Classic Hummus",emoji:"🫘",xp:35,difficulty:"Easy",time:"15 min",category:"Mediterranean",
+  {id:15,photo:"https://images.unsplash.com/photo-1577805947697-89e18249d767?w=600&q=80&fit=crop&auto=format",name:"Classic Hummus",emoji:"🫘",xp:35,difficulty:"Easy",time:"15 min",category:"Mediterranean",
    diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(280,10,30,14,6),done:false,
    ingredients:["2×400g cans chickpeas, reserve liquid from one can","4 tbsp good-quality tahini (stir the jar well first)","Juice of 2 lemons","2 cloves garlic","60ml ice cold water","4 tbsp extra-virgin olive oil plus more to serve","1 tsp fine salt","Pinch of cumin","Smoked paprika and fresh parsley to garnish"],
    steps:[
@@ -357,7 +357,7 @@ const RECIPES = [
      {title:"Serve",body:"Spread into a shallow bowl. Make a well in the centre with the back of a spoon. Pour olive oil generously into the well. Dust with smoked paprika and scatter parsley."},
    ],
    tip:"Most hummus is disappointingly grainy. The fix is time: blend for longer than feels necessary — at least 4 minutes total. Ice cold water is key to that light, smooth texture."},
-  {id:16,name:"Chimichurri Steak",emoji:"🥩",xp:100,difficulty:"Medium",time:"30 min",category:"Mediterranean",
+  {id:16,photo:"https://images.unsplash.com/photo-1546793665-c74683f339c1?w=600&q=80&fit=crop&auto=format",name:"Chimichurri Steak",emoji:"🥩",xp:100,difficulty:"Medium",time:"30 min",category:"Mediterranean",
    diets:["Gluten-free","Dairy-free"],macros:mk(560,46,4,38,1),done:false,
    ingredients:["2 ribeye or sirloin steaks 250g each, at room temperature","Large bunch flat-leaf parsley, about 50g leaves","4 cloves garlic","2 tbsp red wine vinegar","½ tsp dried chilli flakes","100ml extra-virgin olive oil","1 tsp dried oregano","Flaky sea salt and cracked black pepper"],
    steps:[
@@ -369,7 +369,7 @@ const RECIPES = [
      {title:"Slice and serve",body:"Slice against the grain — perpendicular to the muscle fibres. Spoon chimichurri generously over the sliced steak and serve more on the side."},
    ],
    tip:"Two things ruin a steak: a wet surface and low heat. Completely dry the steak and get the pan smoking hot. Moisture creates steam and prevents the crust that makes steak flavourful."},
-  {id:17,name:"Tacos al Pastor",emoji:"🌮",xp:95,difficulty:"Medium",time:"45 min",category:"Mexican",
+  {id:17,photo:"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&q=80&fit=crop&auto=format",name:"Tacos al Pastor",emoji:"🌮",xp:95,difficulty:"Medium",time:"45 min",category:"Mexican",
    diets:["Gluten-free","Dairy-free"],macros:mk(480,28,42,20,4),done:false,
    ingredients:["600g pork shoulder, very thinly sliced","3 dried guajillo chillies, soaked in boiling water 20 min","1 chipotle in adobo","4 cloves garlic","1 tsp cumin","1 tsp dried oregano","3 tbsp white wine vinegar","½ fresh pineapple — half to blend, half to grill","Salt","Corn tortillas, white onion, fresh coriander, lime to serve"],
    steps:[
@@ -381,7 +381,7 @@ const RECIPES = [
      {title:"Build the tacos",body:"Warm corn tortillas in a dry pan or over a flame. Stack two per taco. Add pork, grilled pineapple, raw white onion, coriander, and a generous squeeze of lime."},
    ],
    tip:"The char is the point. The marinade caramelises and creates complex, smoky flavour. Medium heat produces a stew, not tacos."},
-  {id:18,name:"Vegan Black Bean Tacos",emoji:"🌱",xp:55,difficulty:"Easy",time:"20 min",category:"Mexican",
+  {id:18,photo:"https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=600&q=80&fit=crop&auto=format",name:"Vegan Black Bean Tacos",emoji:"🌱",xp:55,difficulty:"Easy",time:"20 min",category:"Mexican",
    diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(380,14,58,10,14),done:false,
    ingredients:["2×400g cans black beans, drained","1×400g can chopped tomatoes","1 onion, finely diced","4 cloves garlic, minced","2 tsp smoked paprika","1½ tsp cumin","1 tsp chilli powder","3 tbsp olive oil","Salt","8 corn tortillas","1 ripe avocado","Juice of 1 lime","Coriander, shredded lettuce, jalapeños to serve"],
    steps:[
@@ -393,7 +393,7 @@ const RECIPES = [
      {title:"Assemble",body:"Warm tortillas in a dry pan. Layer with bean filling, guacamole, shredded lettuce, coriander, and jalapeños."},
    ],
    tip:"Mashing some beans thickens the filling so it stays in your taco instead of falling out. Don't skip this step."},
-  {id:19,name:"Smash Burgers",emoji:"🍔",xp:70,difficulty:"Medium",time:"20 min",category:"Comfort",
+  {id:19,photo:"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80&fit=crop&auto=format",name:"Smash Burgers",emoji:"🍔",xp:70,difficulty:"Medium",time:"20 min",category:"Comfort",
    diets:["No restrictions"],macros:mk(680,38,42,38,2),done:false,
    ingredients:["600g 80/20 ground beef — fat content is non-negotiable","4 brioche buns, split and toasted","8 slices American cheese","1 large white onion, very finely diced","Dill pickles","Shredded iceberg lettuce","Smash sauce: 3 tbsp mayo, 1 tbsp ketchup, 1 tsp mustard, 1 tsp white wine vinegar, ½ tsp smoked paprika"],
    steps:[
@@ -405,7 +405,7 @@ const RECIPES = [
      {title:"Stack and serve immediately",body:"Stack two patties per bun. Sauce both bun halves generously. Layer: sauce, pickles, lettuce, double patty, sauce. Serve immediately — smash burgers deteriorate within minutes."},
    ],
    tip:"SMASH hard and FAST the moment the beef touches the pan. That initial contact maximises surface area for the Maillard reaction — the lacy, crunchy crust that makes this burger what it is."},
-  {id:20,name:"French Onion Soup",emoji:"🧅",xp:110,difficulty:"Medium",time:"1h 30m",category:"Comfort",
+  {id:20,photo:"https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=600&q=80&fit=crop&auto=format",name:"French Onion Soup",emoji:"🧅",xp:110,difficulty:"Medium",time:"1h 30m",category:"Comfort",
    diets:["Vegetarian"],macros:mk(440,18,38,22,4),done:false,
    ingredients:["1.5kg yellow onions, thinly sliced","60g unsalted butter","1 tbsp neutral oil","1 tsp caster sugar","150ml dry white wine","1.5 litres good-quality beef or vegetable stock","3 sprigs fresh thyme, 2 bay leaves","Salt and black pepper","8 slices baguette (slightly stale)","250g Gruyère, coarsely grated"],
    steps:[
@@ -417,7 +417,7 @@ const RECIPES = [
      {title:"Gratinée",body:"Ladle soup into oven-safe bowls on a baking tray. Float 2 baguette slices on top. Cover completely and generously with Gruyère. Grill 4–6 minutes until bubbling, golden, and crisp at the edges.",timer:360},
    ],
    tip:"The caramelised onions are the entire dish. Pale onions produce pale soup. The difference between 30-minute onions and 55-minute onions is the difference between mediocre and unforgettable."},
-  {id:21,name:"Buddha Bowl",emoji:"🥗",xp:55,difficulty:"Easy",time:"40 min",category:"Healthy",
+  {id:21,photo:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80&fit=crop&auto=format",name:"Buddha Bowl",emoji:"🥗",xp:55,difficulty:"Easy",time:"40 min",category:"Healthy",
    diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(480,16,62,18,12),done:false,
    ingredients:["1 head cauliflower, broken into florets","2×400g cans chickpeas, drained and dried","2 tsp smoked paprika","1 tsp cumin","4 tbsp olive oil","200g quinoa, cooked","Tahini dressing: 4 tbsp tahini, juice of 1½ lemons, 1 clove garlic minced, 4–5 tbsp cold water, pinch of salt","Pomegranate seeds, fresh mint, cucumber to finish"],
    steps:[
@@ -428,7 +428,7 @@ const RECIPES = [
      {title:"Finish",body:"Drizzle tahini dressing generously over everything. Scatter pomegranate seeds and fresh mint. Serve immediately or keep dressing separate for meal prep."},
    ],
    tip:"Crispy chickpeas require thorough drying and high heat with space between them. Crowded chickpeas steam rather than roast."},
-  {id:22,name:"Garlic Butter Prawns",emoji:"🍤",xp:60,difficulty:"Easy",time:"15 min",category:"Quick",
+  {id:22,photo:"https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=600&q=80&fit=crop&auto=format",name:"Garlic Butter Prawns",emoji:"🍤",xp:60,difficulty:"Easy",time:"15 min",category:"Quick",
    diets:["Gluten-free"],macros:mk(280,28,4,16,0),done:false,
    ingredients:["500g raw king prawns, peeled and deveined (defrost fully if frozen and pat very dry)","6 cloves garlic, finely minced","80g unsalted butter","2 tbsp olive oil","1 tsp smoked paprika","½ tsp cayenne","Juice of 1 lemon","Large handful flat-leaf parsley, chopped","Salt and pepper","Crusty bread to serve"],
    steps:[
@@ -438,7 +438,7 @@ const RECIPES = [
      {title:"Finish and serve immediately",body:"Remove from heat. Add lemon juice — it will hiss and create a quick sauce. Add parsley. Toss to coat. Serve immediately with crusty bread for the sauce."},
    ],
    tip:"Prawns cook in under 3 minutes total. The moment they're fully opaque pink, they're done. Overcooked prawns are rubbery and tasteless."},
-  {id:23,name:"Halloumi & Roasted Veg Wraps",emoji:"🫓",xp:40,difficulty:"Easy",time:"25 min",category:"Quick",
+  {id:23,photo:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80&fit=crop&auto=format",name:"Halloumi & Roasted Veg Wraps",emoji:"🫓",xp:40,difficulty:"Easy",time:"25 min",category:"Quick",
    diets:["Vegetarian"],macros:mk(420,18,48,18,6),done:false,
    ingredients:["250g halloumi, sliced into 1cm planks","1 red bell pepper, sliced","1 courgette, sliced into rounds","1 red onion, cut into wedges","2 tbsp olive oil","1 tsp smoked paprika","4 large flour tortillas or flatbreads","4 tbsp hummus","Handful of rocket","Juice of ½ lemon","Salt and pepper"],
    steps:[
@@ -448,7 +448,7 @@ const RECIPES = [
      {title:"Assemble and wrap",body:"Spread hummus across each wrap. Layer roasted vegetables, hot halloumi, and rocket. Squeeze lemon over everything. Season with black pepper. Fold in sides and roll tightly from the bottom up. Cut diagonally."},
    ],
    tip:"Eat halloumi the moment it comes off the pan. Time your assembly so you're wrapping immediately after the halloumi is cooked."},
-  {id:24,name:"Chocolate Chip Cookies",emoji:"🍪",xp:70,difficulty:"Easy",time:"30 min",category:"Baking",
+  {id:24,photo:"https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600&q=80&fit=crop&auto=format",name:"Chocolate Chip Cookies",emoji:"🍪",xp:70,difficulty:"Easy",time:"30 min",category:"Baking",
    diets:["Vegetarian"],macros:mk(220,3,28,11,1),done:false,
    ingredients:["225g unsalted butter, at room temperature — not melted, not cold","200g light brown sugar","100g caster sugar","2 large eggs, at room temperature","2 tsp vanilla extract","300g plain flour","1 tsp bicarbonate of soda","1 tsp fine salt","300g dark chocolate 70%, roughly chopped (not chips — chopping creates better variation)"],
    steps:[
@@ -460,7 +460,7 @@ const RECIPES = [
      {title:"Cool on the tray",body:"Leave on the tray for 5 minutes to firm up — they continue cooking on the hot tray. They will look underdone when you pull them out. This is correct.",timer:300},
    ],
    tip:"Pull the cookies out when they look 80% done. Soft and underdone in the centre means soft and chewy when cooled. Fully done in the oven means crunchy biscuits."},
-  {id:25,name:"Banana Bread",emoji:"🍌",xp:60,difficulty:"Easy",time:"1h 15m",category:"Baking",
+  {id:25,photo:"https://images.unsplash.com/photo-1605286978633-2dec93ff88a2?w=600&q=80&fit=crop&auto=format",name:"Banana Bread",emoji:"🍌",xp:60,difficulty:"Easy",time:"1h 15m",category:"Baking",
    diets:["Vegetarian"],macros:mk(280,5,44,10,2),done:false,
    ingredients:["3–4 very ripe bananas (black-spotted is ideal)","200g plain flour","150g light brown sugar","2 large eggs","100g unsalted butter, melted and cooled","1 tsp bicarbonate of soda","1 tsp cinnamon","½ tsp fine salt","1 tsp vanilla extract","Optional: 80g walnuts roughly chopped or dark chocolate chips"],
    steps:[
@@ -472,7 +472,7 @@ const RECIPES = [
      {title:"Test and cool",body:"Skewer in the centre should come out clean or with a few moist crumbs. Cool in tin 10 minutes, then turn out onto a wire rack. Wait until completely cool before slicing.",timer:600},
    ],
    tip:"Wait until the bread is completely cool before slicing. The inside continues to set as it cools. Cutting hot produces a gummy, sticky crumb."},
-  {id:26,name:"Miso Soup with Tofu",emoji:"🍜",xp:30,difficulty:"Easy",time:"15 min",category:"Healthy",
+  {id:26,photo:"https://images.unsplash.com/photo-1547592166-23ac45744acd?w=600&q=80&fit=crop&auto=format",name:"Miso Soup with Tofu",emoji:"🍜",xp:30,difficulty:"Easy",time:"15 min",category:"Healthy",
    diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(120,8,10,5,2),done:false,
    ingredients:["1 litre vegetable stock or kombu dashi","3 tbsp white miso paste (shiro miso)","200g firm tofu, drained and cut into 1.5cm cubes","2 spring onions, thinly sliced diagonally","1 sheet dried wakame seaweed, cut small (rehydrates quickly)","Optional: 1 tsp toasted sesame oil"],
    steps:[
@@ -482,6 +482,116 @@ const RECIPES = [
      {title:"Serve immediately",body:"Ladle into warm bowls. Scatter spring onions. Add a few drops of sesame oil if using. Serve immediately — miso soup is best drunk the moment it's made."},
    ],
    tip:"Miso must never boil. Add it off the heat as the very last step. This is the most important rule in miso soup."},
+  {id:27,photo:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&q=80&fit=crop",name:"Roast Chicken",emoji:"🍗",xp:130,difficulty:"Medium",time:"1h 30m",category:"Comfort",
+   diets:["Gluten-free","Dairy-free"],macros:mk(520,48,4,34,0),done:false,
+   ingredients:["1 whole chicken (1.6kg)","1 lemon, halved","1 whole head garlic, halved","Fresh rosemary and thyme","3 tbsp olive oil","Flaky sea salt and black pepper"],
+   steps:[
+     {title:"Prepare",body:"Take chicken out 30 minutes before cooking. Preheat oven to 200°C. Pat chicken completely dry inside and out — essential for crispy skin."},
+     {title:"Season generously",body:"Rub all over with olive oil. Season very generously with salt and pepper, including the cavity and under the skin where you can reach."},
+     {title:"Stuff the cavity",body:"Squeeze lemon into the cavity, then push both halves in along with the garlic halves and fresh herbs."},
+     {title:"Roast",body:"Place breast-side up in a roasting tin. Roast at 200°C for 1 hour 20 minutes until deeply golden and juices run clear when you pierce the thigh.",timer:4800},
+     {title:"Rest",body:"Rest uncovered for 15 full minutes before carving. This is not optional — it keeps all the juices inside.",timer:900},
+   ],
+   tip:"A hot oven, a completely dry bird, and a proper rest. Those three things are the difference between good and extraordinary roast chicken."},
+  {id:28,photo:"https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80&fit=crop",name:"Pad Thai",emoji:"🍜",xp:100,difficulty:"Medium",time:"30 min",category:"Asian",
+   diets:["Gluten-free","Dairy-free"],macros:mk(490,24,62,16,3),done:false,
+   ingredients:["200g flat rice noodles","200g chicken breast or firm tofu, sliced","3 eggs","3 tbsp fish sauce (or soy sauce for vegan)","2 tbsp tamarind paste","1 tbsp brown sugar","3 cloves garlic, minced","3 spring onions, sliced","Large handful bean sprouts","2 tbsp neutral oil","Roasted peanuts, lime, chilli flakes to serve"],
+   steps:[
+     {title:"Soak noodles",body:"Soak rice noodles in cold water for 30 minutes until pliable but still firm. They'll finish in the wok.",timer:1800},
+     {title:"Make the sauce",body:"Mix fish sauce, tamarind paste, and sugar until the sugar dissolves. Taste — it should be sour, salty, and slightly sweet."},
+     {title:"Cook protein",body:"Heat oil in a wok over maximum heat. Stir-fry chicken or tofu until cooked through and beginning to caramelise. Push to one side.",timer:240},
+     {title:"Add noodles",body:"Add garlic to the empty space. Stir 30 seconds. Add drained noodles and all the sauce. Toss over high heat for 2 minutes.",timer:120},
+     {title:"Scramble eggs",body:"Push noodles to the sides. Crack eggs into the centre. Scramble briefly then fold through the noodles before fully set."},
+     {title:"Finish",body:"Add bean sprouts and most spring onions. Toss 30 seconds. Serve topped with peanuts, spring onions, lime, and chilli."},
+   ],
+   tip:"High heat is everything in a wok. If your pan isn't screaming hot, the noodles will steam instead of fry and become mushy."},
+  {id:29,photo:"https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=600&q=80&fit=crop",name:"Mushroom Risotto",emoji:"🍄",xp:110,difficulty:"Hard",time:"45 min",category:"Italian",
+   diets:["Vegetarian","Gluten-free"],macros:mk(510,14,68,18,4),done:false,
+   ingredients:["300g Arborio rice","500g mixed mushrooms (chestnut, portobello, shiitake)","1.5L warm vegetable stock","1 large onion, finely diced","4 cloves garlic","150ml dry white wine","80g Parmesan, finely grated","50g cold butter","3 tbsp olive oil","Flat-leaf parsley","Salt and black pepper"],
+   steps:[
+     {title:"Fry the mushrooms",body:"Heat olive oil over high heat. Fry mushrooms in a single layer without stirring for 3 minutes until deeply golden. Season. Set aside.",timer:180},
+     {title:"Build the base",body:"In the same pan over medium heat, cook onion in butter for 8 minutes until soft and translucent. Add garlic, cook 1 minute.",timer:480},
+     {title:"Toast the rice",body:"Add rice. Stir constantly for 2 minutes until the edges turn translucent.",timer:120},
+     {title:"Add wine",body:"Add wine. Stir until completely absorbed.",timer:60},
+     {title:"Add stock ladle by ladle",body:"Add stock one ladle at a time, stirring constantly and waiting for each ladle to absorb before adding the next. This takes 18–22 minutes.",timer:1200},
+     {title:"Finish",body:"When rice is al dente and risotto moves in waves (all'onda), remove from heat. Beat in cold butter and Parmesan vigorously. Rest 2 minutes. Fold in mushrooms."},
+   ],
+   tip:"The constant stirring releases starch to create the creamy texture. A risotto left alone is a ruined risotto."},
+  {id:30,photo:"https://images.unsplash.com/photo-1548940740-204726a19be3?w=600&q=80&fit=crop",name:"Beef Tacos",emoji:"🌮",xp:70,difficulty:"Easy",time:"25 min",category:"Mexican",
+   diets:["Gluten-free","Dairy-free"],macros:mk(440,32,36,18,4),done:false,
+   ingredients:["500g lean ground beef","1 onion, finely diced","4 cloves garlic","2 tsp cumin","2 tsp smoked paprika","1 tsp chilli powder","3 tbsp tomato paste","100ml beef stock","8 corn tortillas","Diced tomato, shredded lettuce, sour cream, jalapeños, coriander, lime"],
+   steps:[
+     {title:"Brown the beef",body:"Heat a large pan over high heat. Add beef and don't stir for 2 minutes to let it brown. Break up with a spoon. Continue until fully cooked.",timer:300},
+     {title:"Add aromatics",body:"Add onion. Cook 3 minutes. Add garlic, cumin, paprika, and chilli powder. Stir 1 minute."},
+     {title:"Simmer",body:"Add tomato paste and stock. Simmer 5–8 minutes until thick and saucy.",timer:480},
+     {title:"Warm and assemble",body:"Warm tortillas over a flame or in a dry pan. Fill with beef and all toppings. Squeeze lime over everything."},
+   ],
+   tip:"Don't crowd the beef — let it sear properly before breaking it up. That caramelisation is the whole flavour."},
+  {id:31,photo:"https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80&fit=crop",name:"Egg Fried Rice",emoji:"🍚",xp:45,difficulty:"Easy",time:"15 min",category:"Quick",
+   diets:["Vegetarian","Dairy-free"],macros:mk(380,14,52,14,2),done:false,
+   ingredients:["400g cold cooked rice — day-old is essential","3 large eggs","3 spring onions, sliced","4 cloves garlic, minced","1 tsp fresh ginger","3 tbsp soy sauce","1 tsp sesame oil","2 tbsp neutral oil","Optional: frozen peas, corn, diced carrot"],
+   steps:[
+     {title:"Cold rice only",body:"This dish only works with cold, day-old rice. Fresh rice is too moist and clumps. Break up any clumps with your hands before starting."},
+     {title:"Screaming hot wok",body:"Heat neutral oil in a wok or large pan over maximum heat for 2 minutes until smoking."},
+     {title:"Fry the rice",body:"Add rice. Press flat. Don't stir for 1 minute — let it crisp on the bottom. Then toss and stir-fry 2 more minutes.",timer:180},
+     {title:"Add garlic and ginger",body:"Push rice to the side. Add garlic and ginger to the empty space. Stir 30 seconds. Mix through the rice."},
+     {title:"Scramble eggs",body:"Push rice to sides. Crack eggs into centre. Scramble briefly then fold through rice before fully set."},
+     {title:"Season",body:"Add soy sauce and sesame oil. Toss well. Add spring onions. Serve immediately."},
+   ],
+   tip:"Cold rice is non-negotiable. Make rice the day before or use cooled microwave rice."},
+  {id:32,photo:"https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80&fit=crop",name:"Vegetable Soup",emoji:"🥣",xp:40,difficulty:"Easy",time:"35 min",category:"Healthy",
+   diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(180,6,32,4,8),done:false,
+   ingredients:["2 carrots, diced","3 stalks celery, diced","1 large onion, diced","3 cloves garlic","2 potatoes, cubed","1×400g can chopped tomatoes","1.5L vegetable stock","1 tsp dried thyme","2 tbsp olive oil","Salt, pepper, fresh parsley"],
+   steps:[
+     {title:"Sweat aromatics",body:"Heat olive oil in a large pot over medium heat. Cook onion, carrot, and celery for 8 minutes until softened. Add garlic and thyme, cook 1 minute.",timer:480},
+     {title:"Add veg",body:"Add potatoes and chopped tomatoes. Stir to combine."},
+     {title:"Simmer",body:"Add stock. Bring to a boil, reduce to a simmer. Cook 20 minutes until potatoes are completely tender.",timer:1200},
+     {title:"Season and serve",body:"Season generously. Serve with crusty bread and fresh parsley."},
+   ],
+   tip:"Don't rush the base — those 8 minutes building the softened aromatics are the flavour foundation of the whole soup."},
+  {id:33,photo:"https://images.unsplash.com/photo-1574484284002-952d92456975?w=600&q=80&fit=crop",name:"Spaghetti Bolognese",emoji:"🍝",xp:90,difficulty:"Medium",time:"1h 20m",category:"Italian",
+   diets:["No restrictions"],macros:mk(560,32,58,22,5),done:false,
+   ingredients:["500g 80/20 ground beef","400g spaghetti","1 onion, finely diced","2 carrots, finely diced","3 stalks celery, finely diced","5 cloves garlic","150ml full-fat milk","150ml dry red wine","2×400g cans chopped tomatoes","2 tbsp tomato paste","3 tbsp olive oil","Salt, pepper, Parmesan"],
+   steps:[
+     {title:"Build the soffritto",body:"Cook onion, carrot, and celery in olive oil over medium heat for 12–15 minutes until completely soft. Add garlic, cook 2 minutes.",timer:840},
+     {title:"Brown the meat properly",body:"Add meat. Cook on high heat, breaking up, until deeply brown all over — not grey, genuinely brown. Takes 8–10 minutes.",timer:600},
+     {title:"Add wine and milk",body:"Add wine. Cook until absorbed. Add milk. Cook until absorbed. The milk tenderises the meat.",timer:300},
+     {title:"Simmer low and slow",body:"Add tomatoes and tomato paste. Reduce heat to very low. Simmer covered for at least 45 minutes.",timer:2700},
+     {title:"Toss and serve",body:"Cook spaghetti in heavily salted water. Toss with sauce and pasta water. Serve with Parmesan."},
+   ],
+   tip:"A 45-minute Bolognese is good. A 90-minute Bolognese is extraordinary. Low heat and patience are everything."},
+  {id:34,photo:"https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=600&q=80&fit=crop",name:"French Toast",emoji:"🍞",xp:35,difficulty:"Easy",time:"15 min",category:"Breakfast",
+   diets:["Vegetarian"],macros:mk(340,12,42,14,2),done:false,
+   ingredients:["4 thick slices brioche or day-old bread","3 large eggs","100ml whole milk","1 tbsp caster sugar","1 tsp vanilla extract","½ tsp cinnamon","2 tbsp butter","Maple syrup, fresh berries, icing sugar to serve"],
+   steps:[
+     {title:"Make the custard",body:"Whisk eggs, milk, sugar, vanilla, and cinnamon together until combined."},
+     {title:"Soak the bread",body:"Dip bread slices into the custard. Soak 30 seconds per side.",timer:60},
+     {title:"Cook gently",body:"Melt butter in a non-stick pan over medium heat. Cook soaked bread 2–3 minutes per side until deeply golden.",timer:180},
+     {title:"Serve immediately",body:"Dust with icing sugar, add berries and maple syrup."},
+   ],
+   tip:"Thick-cut brioche or day-old sourdough holds up far better than fresh sandwich bread. Fresh bread turns to mush."},
+  {id:35,photo:"https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80&fit=crop",name:"Lentil Dal",emoji:"🥘",xp:55,difficulty:"Easy",time:"30 min",category:"Indian",
+   diets:["Vegan","Vegetarian","Gluten-free","Dairy-free"],macros:mk(320,18,48,8,14),done:false,
+   ingredients:["300g red lentils, rinsed","1 large onion, diced","4 cloves garlic","2 tsp fresh ginger","1×400g can chopped tomatoes","1L vegetable stock","2 tsp cumin seeds","1 tsp turmeric","1 tsp garam masala","½ tsp cayenne","3 tbsp oil","Lemon juice, fresh coriander, rice"],
+   steps:[
+     {title:"Bloom the spices",body:"Heat oil in a large pot. Add cumin seeds — they should sizzle immediately. Cook 30 seconds. Add onion. Cook 8 minutes until golden.",timer:480},
+     {title:"Add aromatics and spices",body:"Add garlic and ginger. Cook 2 minutes. Add turmeric and cayenne. Stir 1 minute."},
+     {title:"Add tomatoes and lentils",body:"Add tomatoes. Cook 3 minutes. Add rinsed lentils and stock. Stir well."},
+     {title:"Simmer",body:"Bring to a boil, reduce to a simmer, cook 18–20 minutes until lentils are completely soft and dal has thickened.",timer:1200},
+     {title:"Finish",body:"Add garam masala and lemon juice. Taste and adjust seasoning. Top with coriander. Serve over rice."},
+   ],
+   tip:"Don't rush the onion step — that golden colour is the flavour base of the whole dish."},
+  {id:36,photo:"https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=600&q=80&fit=crop",name:"Lamb Kofta",emoji:"🫕",xp:85,difficulty:"Medium",time:"35 min",category:"Mediterranean",
+   diets:["Gluten-free","Dairy-free"],macros:mk(480,36,16,30,3),done:false,
+   ingredients:["600g ground lamb","1 small onion, grated","4 cloves garlic, minced","2 tsp cumin","1 tsp ground coriander","1 tsp cinnamon","½ tsp cayenne","Large handful fresh parsley, finely chopped","Salt and black pepper","Flatbread, tzatziki, cucumber, tomato, lemon to serve"],
+   steps:[
+     {title:"Make the mixture",body:"Combine lamb with onion, garlic, all spices, parsley, 1 tsp salt, and plenty of pepper. Mix with hands until combined. Refrigerate 20 minutes if time allows.",timer:1200},
+     {title:"Shape the kofta",body:"Divide into 8 equal portions. With wet hands, shape each into a long sausage or oval patty."},
+     {title:"Cook over high heat",body:"Grill or cook in a very hot griddle pan for 3–4 minutes per side until charred outside and just cooked through.",timer:240},
+     {title:"Serve",body:"Rest 3 minutes. Serve in warm flatbreads with tzatziki, tomato, cucumber, and lemon."},
+   ],
+   tip:"Grating rather than chopping the onion incorporates the flavour and moisture without large chunks falling out of the kofta."},
+
 ];
 
 /* ═══ SOCIAL DATA ═════════════════════════════════════════════════════════ */
@@ -698,9 +808,18 @@ function RecipeDetail({recipe,onBack,onComplete}){
 
   return(
     <div style={{background:C.paper,minHeight:"100vh"}}>
-      <div style={{background:`linear-gradient(160deg,${C.bark},#5A3520)`,padding:"20px 20px 28px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-10,right:-10,fontSize:108,opacity:.12,lineHeight:1}}>{recipe.emoji}</div>
-        <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:18}}>← Back</button>
+      <div style={{position:"relative",overflow:"hidden"}}>
+        {recipe.photo
+          ?<div style={{position:"relative",height:220,overflow:"hidden"}}>
+            <img src={recipe.photo} alt={recipe.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.1),rgba(59,42,26,.85))"}}/>
+          </div>
+          :<div style={{background:`linear-gradient(160deg,${C.bark},#5A3520)`,padding:"20px 20px 10px",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:-10,right:-10,fontSize:108,opacity:.12,lineHeight:1}}>{recipe.emoji}</div>
+          </div>
+        }
+        <div style={{background:`linear-gradient(160deg,${C.bark},#5A3520)`,padding:recipe.photo?"16px 20px 28px":"0 20px 28px",position:"relative",overflow:"hidden",marginTop:recipe.photo?-8:0}}>
+        <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:18,position:recipe.photo?"absolute":"relative",top:recipe.photo?16:undefined,left:recipe.photo?20:undefined,zIndex:2}}>← Back</button>
         <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}>
           <DiffBadge level={recipe.difficulty}/>
           {(recipe.diets||[]).filter(d=>d!=="No restrictions").slice(0,3).map(d=><Chip key={d} label={d} color="rgba(255,255,255,.9)" bg="rgba(255,255,255,.18)"/>)}
@@ -757,6 +876,15 @@ function RecipeDetail({recipe,onBack,onComplete}){
               ))}
             </div>
             {recipe.tip&&<div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}55`,borderRadius:18,padding:"14px 18px",marginBottom:16}}><div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:6}}>💡 Chef's Tip</div><div style={{fontSize:13,color:"#6A5C52",lineHeight:1.65}}>{recipe.tip}</div></div>}
+            {recipe.isImported&&recipe.sourceUrl&&(
+              <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>🔗</span>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:C.sky}}>Imported from {recipe.sourceName}</div>
+                  <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:C.muted,textDecoration:"underline"}}>View original recipe →</a>
+                </div>
+              </div>
+            )}
             {done?<div style={{textAlign:"center",padding:"12px",fontWeight:700,color:C.sage,fontSize:15}}>✓ Cooked! Great work.</div>:<Btn onClick={()=>setMode("cook")} full>Start Cooking 👨‍🍳</Btn>}
           </>
         ):(
@@ -1364,7 +1492,10 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {recipes.slice(0,6).map(r=>(
             <div key={r.id} onClick={()=>onOpen(r)} className="ch" style={{background:r.done?"#F5F0EB":C.cream,border:`2px solid ${r.done?"#E0D5CB":C.border}`,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,opacity:r.done?.65:1,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.04)",transition:"transform .18s,box-shadow .18s"}}>
-              <div style={{width:52,height:52,borderRadius:14,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
+              {r.photo&&!r.done
+  ?<img src={r.photo} alt={r.name} style={{width:52,height:52,borderRadius:14,objectFit:"cover",flexShrink:0}}/>
+  :<div style={{width:52,height:52,borderRadius:14,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
+}
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:800,fontSize:15,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
                 <div style={{display:"flex",gap:8,marginTop:4}}><span style={{fontSize:11,color:C.muted}}>⏱ {r.time}</span><DiffBadge level={r.difficulty}/></div>
@@ -1384,7 +1515,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
 }
 
 /* ═══ RECIPES TAB ═════════════════════════════════════════════════════════ */
-function RecipesTab({allRecipes,onOpen}){
+function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
   const [cat,setCat]=useState("All");
@@ -1413,6 +1544,16 @@ function RecipesTab({allRecipes,onOpen}){
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search recipes…" style={{width:"100%",padding:"11px 14px 11px 40px",borderRadius:14,border:`2px solid ${search?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",transition:"border-color .18s"}}/>
         </div>
       </div>
+      <div style={{display:"flex",gap:10,padding:"0 16px 12px"}}>
+        <button onClick={onShowCreate} className="tap" style={{flex:1,background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:14,padding:"12px",cursor:"pointer",textAlign:"center"}}>
+          <div style={{fontSize:20,marginBottom:3}}>✍️</div>
+          <div style={{fontSize:12,fontWeight:800,color:C.sage}}>Create Recipe</div>
+        </button>
+        <button onClick={onShowImport} className="tap" style={{flex:1,background:`${C.sky}14`,border:`2px solid ${C.sky}33`,borderRadius:14,padding:"12px",cursor:"pointer",textAlign:"center"}}>
+          <div style={{fontSize:20,marginBottom:3}}>🔗</div>
+          <div style={{fontSize:12,fontWeight:800,color:C.sky}}>Import URL</div>
+        </button>
+      </div>
       <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(c=><button key={c} onClick={()=>setCat(c)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===c?C.flame:C.border}`,background:cat===c?C.flame:C.cream,color:cat===c?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{c}</button>)}</div>
       <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{DIETS.map(d=><button key={d} onClick={()=>setDiet(d)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}18`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{d==="All"?"🍽️ All":d}</button>)}</div>
       <div style={{display:"flex",gap:8,padding:"0 16px 12px",alignItems:"center",overflowX:"auto"}}>
@@ -1425,9 +1566,16 @@ function RecipesTab({allRecipes,onOpen}){
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtered.map((r,idx)=>(
             <div key={r.id} className="ch" onClick={()=>onOpen(r)} style={{background:r.done?"#F5F0EB":C.cream,border:`2px solid ${r.done?"#E0D5CB":C.border}`,borderRadius:18,padding:"15px",display:"flex",gap:14,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.04)",animation:`fadeUp .3s ease ${idx*.04}s both`,transition:"transform .18s,box-shadow .18s"}}>
-              <div style={{width:58,height:58,borderRadius:16,background:r.done?"#E8E0D8":`${C.ember}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
+              {r.photo&&!r.done
+  ?<img src={r.photo} alt={r.name} style={{width:58,height:58,borderRadius:16,objectFit:"cover",flexShrink:0}}/>
+  :<div style={{width:58,height:58,borderRadius:16,background:r.done?"#E8E0D8":`${C.ember}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
+}
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:800,fontSize:15,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginBottom:5}}>{r.name}</div>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+                  <div style={{fontWeight:800,fontSize:15,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
+                  {r.isCustom&&<span style={{fontSize:9,background:`${C.sage}18`,color:C.sage,borderRadius:5,padding:"1px 5px",fontWeight:700,flexShrink:0}}>MINE</span>}
+                  {r.isImported&&<span style={{fontSize:9,background:`${C.sky}18`,color:C.sky,borderRadius:5,padding:"1px 5px",fontWeight:700,flexShrink:0}}>IMPORTED</span>}
+                </div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:5}}>
                   <DiffBadge level={r.difficulty}/>
                   {(r.diets||[]).filter(d=>d!=="No restrictions").slice(0,2).map(d=><Chip key={d} label={d} color={C.sage}/>)}
@@ -1482,6 +1630,259 @@ function GoalPicker({goal,onSelect,onClose}){
   );
 }
 
+
+
+/* ═══ CREATE RECIPE ═══════════════════════════════════════════════════════ */
+function CreateRecipeSheet({onSave,onClose}){
+  const [name,setName]=useState("");
+  const [category,setCategory]=useState("Comfort");
+  const [difficulty,setDifficulty]=useState("Easy");
+  const [time,setTime]=useState("");
+  const [ingredients,setIngredients]=useState([""]);
+  const [steps,setSteps]=useState([{title:"",body:""}]);
+  const [tip,setTip]=useState("");
+  const [activeTab,setActiveTab]=useState("basics");
+  const CATS=["Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
+
+  const addIngredient=()=>setIngredients(i=>[...i,""]);
+  const setIng=(idx,val)=>setIngredients(i=>i.map((x,j)=>j===idx?val:x));
+  const removeIng=(idx)=>setIngredients(i=>i.filter((_,j)=>j!==idx));
+  const addStep=()=>setSteps(s=>[...s,{title:"",body:""}]);
+  const setStep=(idx,field,val)=>setSteps(s=>s.map((x,j)=>j===idx?{...x,[field]:val}:x));
+  const removeStep=(idx)=>setSteps(s=>s.filter((_,j)=>j!==idx));
+
+  const handleSave=()=>{
+    if(!name.trim()||ingredients.filter(i=>i.trim()).length===0)return;
+    const xpMap={Easy:50,Medium:80,Hard:120};
+    onSave({
+      id:Date.now(),name:name.trim(),emoji:"🍳",photo:null,
+      xp:xpMap[difficulty]||60,difficulty,time:time||"30 min",
+      category,diets:["No restrictions"],macros:null,done:false,
+      ingredients:ingredients.filter(i=>i.trim()),
+      steps:steps.filter(s=>s.body.trim()).map(s=>({title:s.title||"Step",body:s.body})),
+      tip:tip.trim()||null,isCustom:true,
+    });
+    onClose();
+  };
+
+  const tabSt=(id)=>({flex:1,border:"none",cursor:"pointer",borderRadius:10,padding:"8px 4px",fontWeight:800,fontSize:12,background:activeTab===id?"#fff":"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"});
+
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>✍️ Create Recipe</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Add your own recipe to your library</div></div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+
+        <div style={{display:"flex",background:C.pill,borderRadius:14,padding:4,gap:4,marginBottom:16}}>
+          {[["basics","📋 Basics"],["ingredients","🥕 Ingredients"],["steps","👨‍🍳 Steps"]].map(([id,lbl])=>(
+            <button key={id} onClick={()=>setActiveTab(id)} style={tabSt(id)}>{lbl}</button>
+          ))}
+        </div>
+
+        {activeTab==="basics"&&(
+          <div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Recipe Name</div>
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Mum's Pasta Bake" style={{width:"100%",padding:"11px 14px",borderRadius:14,border:`2px solid ${name?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Difficulty</div>
+                <div style={{display:"flex",gap:6}}>
+                  {["Easy","Medium","Hard"].map(d=><button key={d} onClick={()=>setDifficulty(d)} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${difficulty===d?C.flame:C.border}`,background:difficulty===d?`${C.flame}12`:"transparent",color:difficulty===d?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:"pointer"}}>{d}</button>)}
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Time</div>
+                <input value={time} onChange={e=>setTime(e.target.value)} placeholder="30 min" style={{width:"100%",padding:"9px 12px",borderRadius:12,border:`2px solid ${C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>Category</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                {CATS.map(cat=><button key={cat} onClick={()=>setCategory(cat)} style={{padding:"6px 12px",borderRadius:99,border:`2px solid ${category===cat?C.sage:C.border}`,background:category===cat?C.sage:"transparent",color:category===cat?"#fff":C.muted,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .15s"}}>{cat}</button>)}
+              </div>
+            </div>
+            <div style={{marginTop:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Chef's Tip (optional)</div>
+              <textarea value={tip} onChange={e=>setTip(e.target.value)} placeholder="Your best tip for this recipe…" style={{width:"100%",minHeight:60,padding:"10px 12px",borderRadius:12,border:`2px solid ${C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"none",lineHeight:1.5,boxSizing:"border-box"}}/>
+            </div>
+          </div>
+        )}
+
+        {activeTab==="ingredients"&&(
+          <div>
+            <div style={{marginBottom:12}}>
+              {ingredients.map((ing,i)=>(
+                <div key={i} style={{display:"flex",gap:8,marginBottom:8}}>
+                  <input value={ing} onChange={e=>setIng(i,e.target.value)} placeholder={`Ingredient ${i+1} with quantity…`} style={{flex:1,padding:"9px 12px",borderRadius:12,border:`2px solid ${ing?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",transition:"border-color .18s"}}/>
+                  {ingredients.length>1&&<button onClick={()=>removeIng(i)} style={{width:32,height:36,borderRadius:10,background:`${C.flame}14`,border:`1.5px solid ${C.flame}33`,color:C.flame,fontWeight:800,fontSize:16,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>}
+                </div>
+              ))}
+            </div>
+            <Btn onClick={addIngredient} outline color={C.sage} full sm>+ Add Ingredient</Btn>
+          </div>
+        )}
+
+        {activeTab==="steps"&&(
+          <div>
+            {steps.map((s,i)=>(
+              <div key={i} style={{background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,marginBottom:10}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.flame},${C.ember})`,color:"#fff",fontWeight:900,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
+                  <input value={s.title} onChange={e=>setStep(i,"title",e.target.value)} placeholder="Step name…" style={{flex:1,padding:"7px 10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none"}}/>
+                  {steps.length>1&&<button onClick={()=>removeStep(i)} style={{width:28,height:28,borderRadius:8,background:`${C.flame}14`,border:"none",color:C.flame,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>}
+                </div>
+                <textarea value={s.body} onChange={e=>setStep(i,"body",e.target.value)} placeholder="Describe what to do in this step…" style={{width:"100%",minHeight:64,padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none",resize:"none",lineHeight:1.5,boxSizing:"border-box"}}/>
+              </div>
+            ))}
+            <Btn onClick={addStep} outline color={C.sky} full sm>+ Add Step</Btn>
+          </div>
+        )}
+
+        <div style={{display:"flex",gap:10,marginTop:20}}>
+          <Btn onClick={onClose} outline color={C.muted} style={{flex:1}}>Cancel</Btn>
+          <Btn onClick={handleSave} disabled={!name.trim()||ingredients.filter(i=>i.trim()).length===0} color={C.sage} style={{flex:2}}>Save Recipe ✓</Btn>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+/* ═══ URL IMPORT ══════════════════════════════════════════════════════════ */
+function URLImportSheet({onSave,onClose}){
+  const [url,setUrl]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState(null);
+  const [error,setError]=useState("");
+
+  const importRecipe=async()=>{
+    if(!url.trim())return;
+    setLoading(true);setError("");setResult(null);
+    try{
+      // Use allorigins.win as CORS proxy to fetch the page
+      const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(15000)});
+      const html=await res.text();
+
+      // Try to extract JSON-LD Recipe schema (published by most recipe sites)
+      const jsonLdMatches=html.matchAll(/<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
+      let recipe=null;
+
+      for(const match of jsonLdMatches){
+        try{
+          const data=JSON.parse(match[1].trim());
+          const items=Array.isArray(data)?data:[data];
+          const found=items.find(d=>d?.["@type"]==="Recipe"||(Array.isArray(d?.["@type"])&&d["@type"].includes("Recipe")));
+          if(found){recipe=found;break;}
+        }catch{}
+      }
+
+      if(!recipe)throw new Error("no_recipe");
+
+      // Extract ingredients
+      const ingredients=(recipe.recipeIngredient||[]).map(i=>String(i).trim()).filter(Boolean);
+
+      // Extract steps
+      const rawSteps=recipe.recipeInstructions||[];
+      const steps=rawSteps.map((s,i)=>{
+        if(typeof s==="string")return{title:`Step ${i+1}`,body:s.trim()};
+        return{title:s.name||`Step ${i+1}`,body:(s.text||s.description||"").trim()};
+      }).filter(s=>s.body);
+
+      // Extract time
+      const totalTime=recipe.totalTime||recipe.cookTime||recipe.prepTime||"";
+      const timeStr=totalTime.replace(/PT/,"").replace(/H/,"h ").replace(/M/,"min").trim()||"";
+
+      // Get image URL if provided in the structured data (don't scrape from page)
+      const imageUrl=typeof recipe.image==="string"?recipe.image:recipe.image?.url||null;
+
+      if(ingredients.length===0&&steps.length===0)throw new Error("no_recipe");
+
+      setResult({
+        name:recipe.name||"Imported Recipe",
+        emoji:"🍳",
+        photo:imageUrl,
+        time:timeStr||"30 min",
+        ingredients,steps,
+        tip:null,
+        sourceUrl:url,
+        sourceName:new URL(url).hostname.replace("www.",""),
+      });
+    }catch(e){
+      if(e.message==="no_recipe"){
+        setError("No recipe found on that page. This works best with recipe blogs and cooking websites that use structured data.");
+      } else {
+        setError("Couldn't reach that page. Check the URL is correct and the site is accessible.");
+      }
+    }finally{setLoading(false);}
+  };
+
+  const handleSave=()=>{
+    if(!result)return;
+    const xpMap={Easy:50,Medium:80,Hard:120};
+    onSave({
+      id:Date.now(),
+      name:result.name,emoji:result.emoji,photo:result.photo,
+      xp:60,difficulty:"Medium",time:result.time,
+      category:"Comfort",diets:["No restrictions"],macros:null,done:false,
+      ingredients:result.ingredients,steps:result.steps,tip:result.tip,
+      isImported:true,sourceUrl:result.sourceUrl,sourceName:result.sourceName,
+    });
+    onClose();
+  };
+
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>🔗 Import from URL</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste a link from any recipe website</div></div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+
+        <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
+          <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.5}}>Works with BBC Good Food, AllRecipes, Taste.com.au, and most recipe blogs. The recipe is always linked back to the original source.</div>
+        </div>
+
+        <div style={{display:"flex",gap:10,marginBottom:16}}>
+          <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&importRecipe()} placeholder="https://www.bbcgoodfood.com/recipes/..." style={{flex:1,padding:"11px 14px",borderRadius:14,border:`2px solid ${url?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",transition:"border-color .18s"}}/>
+          <Btn onClick={importRecipe} disabled={!url.trim()||loading} style={{padding:"11px 16px",flexShrink:0}}>{loading?"…":"Import"}</Btn>
+        </div>
+
+        {loading&&(
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:40,display:"inline-block",animation:"spin 1.2s linear infinite",marginBottom:12}}>🍳</div>
+            <div style={{fontSize:14,color:C.muted}}>Reading the recipe…</div>
+          </div>
+        )}
+
+        {error&&<div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"12px 14px",fontSize:13,color:C.flame,lineHeight:1.5}}>{error}</div>}
+
+        {result&&!loading&&(
+          <div>
+            <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
+              {result.photo&&<img src={result.photo} alt="" style={{width:"100%",height:160,objectFit:"cover",borderRadius:12,marginBottom:12}}/>}
+              <div style={{fontWeight:900,fontSize:18,fontFamily:DF}}>{result.name}</div>
+              <div style={{fontSize:11,opacity:.6,marginTop:4}}>from {result.sourceName} · ⏱ {result.time}</div>
+              <div style={{fontSize:11,marginTop:8,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
+            </div>
+            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:14,border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8}}>INGREDIENTS PREVIEW</div>
+              {result.ingredients.slice(0,5).map((ing,i)=><div key={i} style={{fontSize:13,color:C.bark,padding:"3px 0",borderBottom:i<4?`1px solid ${C.border}`:"none"}}>{ing}</div>)}
+              {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>+{result.ingredients.length-5} more</div>}
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <Btn onClick={()=>{setResult(null);setUrl("");}} outline color={C.muted} style={{flex:1}}>Try another</Btn>
+              <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Add to My Recipes ✓</Btn>
+            </div>
+          </div>
+        )}
+      </div>
+    </Sheet>
+  );
+}
 
 /* ═══ NOTIFICATIONS TAB ════════════════════════════════════════════════════ */
 function NotificationsTab({notifications,setNotifications,setTab}){
@@ -1594,6 +1995,8 @@ export default function App(){
   const [earnedBadges,setEarnedBadges]=useState([]);
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
   const [cookLog,    setCookLog]    = useState([]); // Goodreads-style library
+  const [showCreate,  setShowCreate]  = useState(false);
+  const [showImport,  setShowImport]  = useState(false);
   const [notifications,setNotifications] = useState([
     {id:"n1", type:"mwah",      read:false, avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2m ago",  emoji:"🍳"},
     {id:"n2", type:"friend_req",read:false, avatar:"🧑‍🍳", name:"Jake M.",    text:"sent you a friend request",                   time:"15m ago", emoji:null},
@@ -1749,7 +2152,7 @@ export default function App(){
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo}/>}
-          {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe}/>}
+          {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes}/>}
@@ -1768,6 +2171,8 @@ export default function App(){
       </div>
 
       {showGoal&&<GoalPicker goal={goal} onSelect={g=>{setGoal(g);setShowGoal(false);}} onClose={()=>setShowGoal(false)}/>}
+      {showCreate&&<CreateRecipeSheet onSave={r=>{setAllRecipes(rs=>[r,...rs]);}} onClose={()=>setShowCreate(false)}/>}
+      {showImport&&<URLImportSheet onSave={r=>{setAllRecipes(rs=>[r,...rs]);}} onClose={()=>setShowImport(false)}/>}
     </>
   );
 }
