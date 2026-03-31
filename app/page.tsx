@@ -1355,7 +1355,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
           </div>
         </div>
       )}
-      )}
     </div>
   );
 }
