@@ -730,18 +730,16 @@ function StepTimer({seconds}){
           <button onClick={()=>{setRem(total);setRun(false);setDone(false);}} className="tap" style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:11,padding:"9px 12px",color:C.muted,fontWeight:700,fontSize:13,cursor:"pointer"}}>↺</button>
         </div>
       </div>
-      {/* Progress bar */}
-      <XPBar pct={pct} color={run?urgent:C.sky} h={6}/>
-      {/* Slider to scrub timer position */}
-      <div style={{marginTop:10}}>
+      {/* Single slider — goes left to right as time counts down */}
+      <div style={{marginTop:12}}>
         <input
           type="range" min={0} max={total} value={rem}
           onChange={handleSlider}
-          style={{width:"100%",accentColor:run?urgent:C.sky,cursor:"pointer"}}
+          style={{width:"100%",accentColor:run?urgent:C.sky,cursor:"pointer",height:6}}
         />
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:C.muted,marginTop:2}}>
-          <span>0</span>
-          <span style={{fontSize:10,color:C.muted,fontWeight:600}}>Drag to adjust</span>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:C.muted,marginTop:3}}>
+          <span style={{fontWeight:600,color:run?urgent:C.sky}}>{fmt(rem)} left</span>
+          <span>Drag to resume from any point</span>
           <span>{fmt(total)}</span>
         </div>
       </div>
@@ -1292,7 +1290,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
         </div>
       )}
 
-      {cookLog.length>0&&(
+      {libTab==="log"&&cookLog.length>0&&(
         <div style={{padding:"0 16px"}}>
           {/* Filters */}
           <div style={{display:"flex",gap:8,marginBottom:8,overflowX:"auto"}}>
@@ -1354,6 +1352,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
             ))}
           </div>
         </div>
+      </>
       )}
     </div>
   );
