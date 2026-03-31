@@ -30,7 +30,7 @@ export function useAuth() {
   }, []);
 
   const loadProfile = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -49,15 +49,20 @@ export function useAuth() {
     setLoading(false);
   };
 
-  const saveXp = async (userId: string, xp: number) => {
-    console.log('Saving XP:', userId, xp);
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ xp, updated_at: new Date().toISOString() })
-      .eq('id', userId)
-      .select();
-    console.log('saveXp result:', data, error);
-  };
+const saveXp = async (userId: string, xp: number) => {
+  console.log('Saving XP:', userId, xp);
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert({ 
+      id: userId, 
+      xp: xp,
+      updated_at: new Date().toISOString() 
+    }, { 
+      onConflict: 'id' 
+    })
+    .select();
+  console.log('saveXp result:', data, error);
+};
 
   const logCompletedRecipe = async (userId: string, recipe: any) => {
     const { error } = await supabase
