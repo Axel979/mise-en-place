@@ -57,12 +57,13 @@ export function useAuth() {
     setLoading(false);
   };
 
-  const saveXp = async (userId: string, xp: number) => {
-    await supabase
-      .from('profiles')
-      .update({ xp, updated_at: new Date().toISOString() })
-      .eq('id', userId);
-  };
+ const saveXp = async (userId: string, xp: number) => {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ xp, level: 1, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+  if (error) console.error('saveXp error:', error);
+};
 
   const logCompletedRecipe = async (userId: string, recipe: any) => {
     await supabase.from('completed_recipes').insert({
