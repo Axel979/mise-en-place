@@ -2671,7 +2671,11 @@ function SignatureDishSheet({allRecipes, signatureDish, onSelect, onClose}){
 /* ═══ ROOT APP ════════════════════════════════════════════════════════════ */
 export default function App(){
   const { user, profile, loading, saveXp, logCompletedRecipe, signOut } = useAuth();
-  useEffect(()=>{ console.log("Auth user:", user?.email || "NOT LOGGED IN"); },[user]);
+  const userIdRef = useRef<string|null>(null);
+  useEffect(()=>{
+    if(user?.id) userIdRef.current = user.id;
+    console.log("Auth user:", user?.email || "NOT LOGGED IN");
+  },[user]);
   const [onboarded,  setOnboarded]  = useState(false);
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
@@ -2748,8 +2752,9 @@ export default function App(){
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
-    if(user) saveXp(user.id, newXp);
-    if(user) logCompletedRecipe(user.id, {...recipe, rating});
+    const uid = user?.id || userIdRef.current;
+    if(uid) saveXp(uid, newXp);
+    if(uid) logCompletedRecipe(uid, {...recipe, rating});
     setWeeklyXp(w=>w+recipe.xp);
     const di=new Date().getDay();const idx=di===0?6:di-1;
     setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});
