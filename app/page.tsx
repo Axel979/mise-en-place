@@ -1,5 +1,12 @@
 'use client';
+const { user, profile, loading, saveXp, logCompletedRecipe, signOut } = useAuth();
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useAuth } from "@/lib/hooks/useAuth";
+```
+
+**Step 3** — Find the line inside `export default function App()` that says:
+```
+const [mounted, setMounted] = useState(false);
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
@@ -2742,6 +2749,8 @@ export default function App(){
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
+    if (user) saveXp(user.id, newXp);
+    if (user) logCompletedRecipe(user.id, {...recipe, rating}); 
     setWeeklyXp(w=>w+recipe.xp);
     const di=new Date().getDay();const idx=di===0?6:di-1;
     setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});
