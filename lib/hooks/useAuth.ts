@@ -12,14 +12,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) loadProfile(session.user.id);
       else setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user ?? null);
@@ -32,7 +30,7 @@ export function useAuth() {
   }, []);
 
   const loadProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -41,15 +39,9 @@ export function useAuth() {
     if (data) {
       setProfile(data);
     } else {
-      // Create profile if it doesn't exist
       const { data: newProfile } = await supabase
         .from('profiles')
-        .insert({
-          id: userId,
-          username: null,
-          xp: 0,
-          level: 1,
-        })
+        .insert({ id: userId, username: null, xp: 0, level: 1 })
         .select()
         .single();
       setProfile(newProfile);
@@ -57,22 +49,27 @@ export function useAuth() {
     setLoading(false);
   };
 
- const saveXp = async (userId: string, xp: number) => {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ xp, level: 1, updated_at: new Date().toISOString() })
-    .eq('id', userId);
-  if (error) console.error('saveXp error:', error);
-};
+  const saveXp = async (userId: string, xp: number) => {
+    console.log('Saving XP:', userId, xp);
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ xp, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select();
+    console.log('saveXp result:', data, error);
+  };
 
   const logCompletedRecipe = async (userId: string, recipe: any) => {
-    await supabase.from('completed_recipes').insert({
-      user_id: userId,
-      recipe_id: recipe.id,
-      cooked_at: new Date().toISOString(),
-      rating: recipe.rating || null,
-      notes: recipe.notes || null,
-    });
+    const { error } = await supabase
+      .from('completed_recipes')
+      .insert({
+        user_id: userId,
+        recipe_id: recipe.id,
+        cooked_at: new Date().toISOString(),
+        rating: recipe.rating || null,
+        notes: recipe.notes || null,
+      });
+    if (error) console.error('logCompletedRecipe error:', error);
   };
 
   const signOut = async () => {

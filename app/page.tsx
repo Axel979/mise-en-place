@@ -2671,6 +2671,7 @@ function SignatureDishSheet({allRecipes, signatureDish, onSelect, onClose}){
 /* ═══ ROOT APP ════════════════════════════════════════════════════════════ */
 export default function App(){
   const { user, profile, loading, saveXp, logCompletedRecipe, signOut } = useAuth();
+  useEffect(()=>{ console.log("Auth user:", user?.email || "NOT LOGGED IN"); },[user]);
   const [onboarded,  setOnboarded]  = useState(false);
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
@@ -2872,6 +2873,14 @@ export default function App(){
               <span style={{fontSize:17}}>🔔</span>
               {notifications.filter(n=>!n.read).length>0&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</div>}
             </button>
+            {user
+              ?<button onClick={signOut} className="tap" style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                <span style={{fontSize:16}}>👤</span>
+              </button>
+              :<button onClick={()=>window.location.href='/login'} className="tap" style={{background:C.flame,border:"none",borderRadius:10,padding:"5px 10px",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
+                Sign In
+              </button>
+            }
             <div style={{background:`${levelInfo.current.color}18`,border:`1.5px solid ${levelInfo.current.color}44`,borderRadius:10,padding:"4px 8px",fontSize:11,fontWeight:800,color:levelInfo.current.color,whiteSpace:"nowrap"}}>
               {levelInfo.current.icon} Lv.{levelInfo.current.level}
             </div>
