@@ -1352,7 +1352,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
                       <div style={{fontSize:11,fontWeight:700,color:C.sage,marginTop:2}}>+{entry.xp} 🔥 Heat</div>
                     </div>
                   </div>
-                  {entry.caption&&<div style={{fontSize:13,color:"#6A5C52",lineHeight:1.55,padding:"10px 12px",background:C.cream,borderRadius:10,fontStyle:"italic"}}>"{entry.caption}"</div>}
+                  {entry.caption&&<div style={{fontSize:13,color:"#6A5C52",lineHeight:1.55,padding:"10px 12px",background:C.cream,borderRadius:10,fontStyle:"italic"}}>{entry.caption}</div>}
                   {!entry.caption&&<div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>No notes added</div>}
                 </div>
               </div>
@@ -1361,7 +1361,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
         </div>
       )}
     </div>
-    </div>}
   );
 }
 
