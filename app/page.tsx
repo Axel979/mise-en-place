@@ -1236,7 +1236,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
         <div style={{fontWeight:900,fontSize:22,fontFamily:DF,marginBottom:4}}>📚 Cook Library</div>
         <div style={{fontSize:13,opacity:.7,marginBottom:18}}>Everything you've ever cooked — your personal food journal.</div>
         <div style={{display:"flex",gap:10}}>
-          {[["Dishes Cooked",cookLog.length],["Cuisines",uniqueCuisines.length],["Avg Rating",avgRating||"—"]].map(([l,v])=>(
+          {[["Cooked",cookLog.length],["Cuisines",uniqueCuisines.length],["Avg Rating",avgRating||"—"]].map(([l,v])=>(
             <div key={l} style={{flex:1,background:"rgba(255,255,255,.1)",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
               <div style={{fontSize:22,fontWeight:900}}>{v}</div>
               <div style={{fontSize:9,opacity:.6,textTransform:"uppercase",letterSpacing:".08em",marginTop:3}}>{l}</div>
@@ -1373,7 +1373,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   const [newComment,setNewComment]=useState("");
   const league=getLeague(5);
 
-  const giveMwah=(pid)=>setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah}));
+  const giveMwah=(pid)=>{ setPosts(ps=>[...ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah})]); };
   const addComment=(pid)=>{
     if(!newComment.trim())return;
     setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,comments:[...(p.comments||[]),{user:"You",text:newComment.trim()}]}));
@@ -1499,8 +1499,8 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
                 {post.caption&&<div style={{fontSize:14,color:C.bark,lineHeight:1.55,marginBottom:12}}><span style={{fontWeight:700}}>{post.user.name.split(" ")[0]}</span> {post.caption}</div>}
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:10}}>
                   <button onClick={()=>giveMwah(post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
-                    <span style={{fontSize:22,transition:"transform .2s",transform:post.myMwah?"scale(1.15)":"scale(1)"}}>{post.myMwah?"👏":"🤍"}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah} 🤌 mwah{post.mwah!==1?"s":""}</span>
+                    <span style={{fontSize:13,fontWeight:800,color:post.myMwah?C.flame:C.muted,border:`1.5px solid ${post.myMwah?C.flame:C.border}`,borderRadius:8,padding:"4px 10px",background:post.myMwah?`${C.flame}10`:"transparent",transition:"all .2s"}}>Mwah</span>
+                    <span style={{fontSize:13,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah} Mwah{post.mwah!==1?"s":""}</span>
                   </button>
                   <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
                     <span style={{fontSize:20}}>💬</span>
@@ -1727,7 +1727,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,onSaveToLibrary
               <div style={{fontSize:12,fontWeight:800,color:C.sky}}>⤵ Import URL</div>
             </button>
           </div>
-          <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(cat=><button key={cat} onClick={()=>setCat(cat)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===cat2?C.flame:C.border}`,background:cat===cat2?C.flame:C.cream,color:cat===c2?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{cat}</button>)}</div>
+          <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(catName=><button key={catName} onClick={()=>setCat(catName)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===cat2?C.flame:C.border}`,background:cat===cat2?C.flame:C.cream,color:cat===c2?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{cat}</button>)}</div>
           <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{DIETS.map(d=><button key={d} onClick={()=>setDiet(d)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}18`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{d==="All"?"🍽️ All":d}</button>)}</div>
           <div style={{display:"flex",gap:8,padding:"0 16px 12px",alignItems:"center",overflowX:"auto"}}>
             <span style={{fontSize:11,color:C.muted,fontWeight:700,flexShrink:0}}>Sort:</span>
@@ -3451,7 +3451,7 @@ export default function App(){
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
-              <span style={{fontSize:14,fontWeight:300,color:C.bark}}>♡</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
               {notifications.filter(n=>!n.read).length>0&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</div>}
             </button>
             <button onClick={()=>setTab("profile")} className="tap" style={{width:34,height:34,borderRadius:10,background:C.pill,border:`1.5px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,fontSize:20}}>
@@ -3481,10 +3481,10 @@ export default function App(){
 
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 env(safe-area-inset-bottom,12px)",zIndex:50,width:"100%"}}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 0",transform:tab===t.id?"scale(1.08)":"scale(1)",transition:"transform .18s"}}>
-              <div style={{fontSize:17,fontWeight:300,color:tab===t.id?C.flame:"#B0A09A",lineHeight:1}}>{t.icon}</div>
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",transition:"transform .18s"}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tab===t.id?C.flame:"#B0A09A"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.svg}}/>
               <div style={{fontSize:9,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:tab===t.id?C.flame:"#B0A09A",transition:"color .18s"}}>{t.label}</div>
-              {tab===t.id&&<div style={{width:16,height:3,borderRadius:99,background:C.flame,marginTop:1}}/>}
+              {tab===t.id&&<div style={{width:16,height:2,borderRadius:99,background:C.flame}}/>}
             </button>
           ))}
         </div>
