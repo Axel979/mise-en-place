@@ -1765,7 +1765,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,onSaveToLibrary
             </div>
           ))}
         </div>
-      </div>
+      </div>}
   );
 }
 
