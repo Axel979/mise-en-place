@@ -1681,10 +1681,12 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
 function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
+  const SORTS=[["default","Default"],["easy","Easiest first"],["cals","Lowest calories"],["protein","Most protein"],["xp","Most Heat"]];
   const [cat,setCat]=useState("All");
   const [diet,setDiet]=useState("All");
-  const [search,setSearch]=useState("");
   const [sort,setSort]=useState("default");
+  const [search,setSearch]=useState("");
+  const [showFilters,setShowFilters]=useState(false);
 
   const filtered=useMemo(()=>{
     let rs=allRecipes.filter(r=>{
@@ -1699,55 +1701,53 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
     return rs;
   },[allRecipes,cat,diet,search,sort]);
 
+  const activeFilters = (cat!=="All"?1:0)+(diet!=="All"?1:0)+(sort!=="default"?1:0);
+  const sortLabel = SORTS.find(([k])=>k===sort)?.[1]||"Default";
+
+  const resetFilters=()=>{setCat("All");setDiet("All");setSort("default");};
+
   return(
     <div style={{paddingBottom:24}}>
-      {/* Create + Import */}
-      <div style={{display:"flex",gap:10,padding:"4px 16px 12px"}}>
-        <button onClick={onShowCreate} className="tap" style={{flex:1,background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:14,padding:"11px 8px",cursor:"pointer",textAlign:"center",fontWeight:800,fontSize:12,color:C.sage}}>+ Create Recipe</button>
-        <button onClick={onShowImport} className="tap" style={{flex:1,background:`${C.sky}14`,border:`2px solid ${C.sky}33`,borderRadius:14,padding:"11px 8px",cursor:"pointer",textAlign:"center",fontWeight:800,fontSize:12,color:C.sky}}>Import from URL</button>
+
+      {/* Search + Filter bar */}
+      <div style={{display:"flex",gap:8,padding:"4px 16px 12px",alignItems:"center"}}>
+        <div style={{flex:1,position:"relative"}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder="Search recipes…"
+            style={{width:"100%",padding:"11px 14px",borderRadius:14,border:`2px solid ${search?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",transition:"border-color .18s"}}/>
+        </div>
+        <button onClick={()=>setShowFilters(true)} className="tap" style={{position:"relative",flexShrink:0,background:activeFilters>0?C.bark:C.cream,border:`2px solid ${activeFilters>0?C.bark:C.border}`,borderRadius:14,padding:"11px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontWeight:700,fontSize:13,color:activeFilters>0?"#fff":C.bark,transition:"all .2s"}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+          Filter
+          {activeFilters>0&&<div style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{activeFilters}</div>}
+        </button>
       </div>
-      {/* Search */}
-      <div style={{padding:"0 16px 10px"}}>
-        <div style={{position:"relative"}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search recipes…"
-            style={{width:"100%",padding:"11px 14px 11px 14px",borderRadius:14,border:`2px solid ${search?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",transition:"border-color .18s"}}/>
+
+      {/* Active filter chips */}
+      {activeFilters>0&&(
+        <div style={{display:"flex",gap:8,padding:"0 16px 12px",flexWrap:"wrap",alignItems:"center"}}>
+          {cat!=="All"&&<div style={{display:"flex",alignItems:"center",gap:5,background:C.bark,borderRadius:99,padding:"4px 10px 4px 12px"}}><span style={{fontSize:12,color:"#fff",fontWeight:700}}>{cat}</span><button onClick={()=>setCat("All")} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:"50%",width:16,height:16,cursor:"pointer",color:"#fff",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>×</button></div>}
+          {diet!=="All"&&<div style={{display:"flex",alignItems:"center",gap:5,background:C.bark,borderRadius:99,padding:"4px 10px 4px 12px"}}><span style={{fontSize:12,color:"#fff",fontWeight:700}}>{diet}</span><button onClick={()=>setDiet("All")} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:"50%",width:16,height:16,cursor:"pointer",color:"#fff",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>×</button></div>}
+          {sort!=="default"&&<div style={{display:"flex",alignItems:"center",gap:5,background:C.bark,borderRadius:99,padding:"4px 10px 4px 12px"}}><span style={{fontSize:12,color:"#fff",fontWeight:700}}>{sortLabel}</span><button onClick={()=>setSort("default")} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:"50%",width:16,height:16,cursor:"pointer",color:"#fff",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>×</button></div>}
+          <button onClick={resetFilters} style={{background:"none",border:"none",fontSize:12,color:C.flame,fontWeight:700,cursor:"pointer",padding:"4px 0"}}>Clear all</button>
+        </div>
+      )}
+
+      {/* Results count + Create/Import */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px",marginBottom:12}}>
+        <span style={{fontSize:12,color:C.muted,fontWeight:600}}>{filtered.length} recipe{filtered.length!==1?"s":""}</span>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={onShowCreate} className="tap" style={{background:`${C.sage}14`,border:`1.5px solid ${C.sage}33`,borderRadius:10,padding:"6px 12px",cursor:"pointer",fontWeight:700,fontSize:12,color:C.sage}}>+ Create</button>
+          <button onClick={onShowImport} className="tap" style={{background:`${C.sky}14`,border:`1.5px solid ${C.sky}33`,borderRadius:10,padding:"6px 12px",cursor:"pointer",fontWeight:700,fontSize:12,color:C.sky}}>Import URL</button>
         </div>
       </div>
-      {/* Category filter */}
-      <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>
-        {CATS.map(name=>(
-          <button key={name} onClick={()=>setCat(name)} className="tap"
-            style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===name?C.flame:C.border}`,background:cat===name?C.flame:C.cream,color:cat===name?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>
-            {name}
-          </button>
-        ))}
-      </div>
-      {/* Diet filter */}
-      <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>
-        {DIETS.map(d=>(
-          <button key={d} onClick={()=>setDiet(d)} className="tap"
-            style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}18`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>
-            {d==="All"?"All":d}
-          </button>
-        ))}
-      </div>
-      {/* Sort */}
-      <div style={{display:"flex",gap:8,padding:"0 16px 12px",alignItems:"center",overflowX:"auto"}}>
-        <span style={{fontSize:11,color:C.muted,fontWeight:700,flexShrink:0}}>Sort:</span>
-        {[["default","Default"],["easy","Easiest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most Heat"]].map(([k,l])=>(
-          <button key={k} onClick={()=>setSort(k)} className="tap"
-            style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:99,border:`1.5px solid ${sort===k?C.sky:C.border}`,background:sort===k?`${C.sky}18`:"transparent",color:sort===k?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>
-            {l}
-          </button>
-        ))}
-      </div>
-      {/* Results */}
+
+      {/* Recipe list */}
       <div style={{padding:"0 16px"}}>
-        <div style={{fontSize:12,color:C.muted,fontWeight:600,marginBottom:10}}>{filtered.length} recipe{filtered.length!==1?"s":""}</div>
         {filtered.length===0&&(
           <div style={{textAlign:"center",padding:"48px 20px",color:C.muted}}>
             <div style={{fontWeight:700,marginBottom:4}}>No recipes match</div>
-            <div style={{fontSize:13}}>Try adjusting the filters</div>
+            <div style={{fontSize:13}}>Try adjusting your filters</div>
           </div>
         )}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1765,7 +1765,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
                   {(r.diets||[]).filter(d=>d!=="No restrictions").slice(0,2).map(d=><Chip key={d} label={d} color={C.sage}/>)}
                 </div>
                 {r.macros&&(
-                  <div style={{display:"flex",gap:8,marginBottom:5}}>
+                  <div style={{display:"flex",gap:10,marginBottom:5}}>
                     <span style={{fontSize:11,color:C.muted}}>{r.macros.calories} kcal</span>
                     <span style={{fontSize:11,color:C.muted}}>{r.macros.protein}g protein</span>
                   </div>
@@ -1779,6 +1779,63 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
           ))}
         </div>
       </div>
+
+      {/* Filter bottom sheet */}
+      {showFilters&&(
+        <Sheet onClose={()=>setShowFilters(false)}>
+          <div style={{padding:"24px 20px 44px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Filter Recipes</div>
+              <CloseBtn onClose={()=>setShowFilters(false)}/>
+            </div>
+
+            {/* Cuisine */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Cuisine</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {CATS.map(name=>(
+                  <button key={name} onClick={()=>setCat(name)} className="tap"
+                    style={{padding:"8px 14px",borderRadius:99,border:`2px solid ${cat===name?C.flame:C.border}`,background:cat===name?C.flame:"transparent",color:cat===name?"#fff":C.bark,fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}>
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dietary */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Dietary</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {DIETS.map(d=>(
+                  <button key={d} onClick={()=>setDiet(d)} className="tap"
+                    style={{padding:"8px 14px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?C.sage:"transparent",color:diet===d?"#fff":C.bark,fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort */}
+            <div style={{marginBottom:24}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Sort by</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {SORTS.map(([k,l])=>(
+                  <button key={k} onClick={()=>setSort(k)} className="tap"
+                    style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:14,border:`2px solid ${sort===k?C.sky:C.border}`,background:sort===k?`${C.sky}08`:"transparent",cursor:"pointer",transition:"all .15s"}}>
+                    <span style={{fontWeight:sort===k?800:600,fontSize:14,color:sort===k?C.sky:C.bark}}>{l}</span>
+                    {sort===k&&<div style={{width:18,height:18,borderRadius:"50%",background:C.sky,display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={resetFilters} className="tap" style={{flex:1,padding:"13px",borderRadius:14,border:`2px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer"}}>Reset</button>
+              <Btn onClick={()=>setShowFilters(false)} style={{flex:2}}>Show {filtered.length} recipes</Btn>
+            </div>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }
@@ -2987,105 +3044,136 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
   const [sortBy,setSortBy]=useState("popular");
   const [selected,setSelected]=useState(null);
 
-  const COMMUNITY_RECIPES = [
-    {id:"c1",name:"Grandma's Carbonara",emoji:"🍝",photo:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80&fit=crop",author:"Sofia R.",avatar:"👩‍🍳",rating:4.8,saves:124,category:"Italian",difficulty:"Medium",time:"25 min",diets:["Vegetarian"],xp:80,desc:"The real deal — no cream, ever. My grandmother's recipe from Naples, unchanged for 40 years.",reviews:42},
-    {id:"c2",name:"Spicy Miso Ramen",emoji:"🍜",photo:"https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80&fit=crop",author:"Jake M.",avatar:"🧑‍🍳",rating:4.9,saves:89,category:"Japanese",difficulty:"Hard",time:"2 hrs",diets:["Dairy-free"],xp:130,desc:"6 hours of love. Real tonkotsu broth, chashu pork, marinated soft egg. Worth every minute.",reviews:31},
-    {id:"c3",name:"Mum's Butter Chicken",emoji:"🍗",photo:"https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600&q=80&fit=crop",author:"Priya K.",avatar:"👩‍🦱",rating:4.7,saves:203,category:"Indian",difficulty:"Medium",time:"1 hr",diets:["Gluten-free"],xp:100,desc:"Not the restaurant version. This is the one my mum made every Sunday. The secret is whole spices toasted fresh.",reviews:78},
-    {id:"c4",name:"Sunday Roast Potatoes",emoji:"🥔",photo:"https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80&fit=crop",author:"Marcus T.",avatar:"🧔",rating:4.6,saves:156,category:"Comfort",difficulty:"Easy",time:"1 hr 20 min",diets:["Vegan","Gluten-free"],xp:60,desc:"The crunchiest roast potatoes you will ever eat. The trick is parboiling, roughing up the edges, and a screaming hot oven.",reviews:55},
-    {id:"c5",name:"Açaí Power Bowl",emoji:"🫐",photo:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80&fit=crop",author:"Yuki A.",avatar:"👩",rating:4.5,saves:67,category:"Healthy",difficulty:"Easy",time:"10 min",diets:["Vegan","Gluten-free","Dairy-free"],xp:35,desc:"Morning ritual. Frozen açaí, oat milk, banana, topped with granola and everything good.",reviews:23},
-    {id:"c6",name:"Tres Leches Cake",emoji:"🎂",photo:"https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600&q=80&fit=crop",author:"Liam B.",avatar:"👨",rating:4.8,saves:112,category:"Baking",difficulty:"Medium",time:"1 hr",diets:["Vegetarian"],xp:90,desc:"Soaked in three milks overnight. The most tender, creamy cake you've ever had. Brazilian dinner party staple.",reviews:44},
+  // Unsplash food photos — free to use, no attribution required under Unsplash license
+  const COMMUNITY_RECIPES=[
+    {id:"c1",name:"Grandma's Carbonara",emoji:"🍝",
+     photo:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80&fit=crop&auto=format",
+     author:"Sofia R.",avatar:"👩‍🍳",rating:4.8,saves:124,category:"Italian",difficulty:"Medium",time:"25 min",xp:80,
+     desc:"The real deal — no cream, ever. My grandmother's recipe from Naples, unchanged for 40 years.",reviews:42},
+    {id:"c2",name:"Spicy Miso Ramen",emoji:"🍜",
+     photo:"https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80&fit=crop&auto=format",
+     author:"Jake M.",avatar:"🧑‍🍳",rating:4.9,saves:89,category:"Japanese",difficulty:"Hard",time:"2 hrs",xp:130,
+     desc:"6 hours of love. Real tonkotsu broth, chashu pork, soft egg. Worth every minute.",reviews:31},
+    {id:"c3",name:"Mum's Butter Chicken",emoji:"🍗",
+     photo:"https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600&q=80&fit=crop&auto=format",
+     author:"Priya K.",avatar:"👩‍🦱",rating:4.7,saves:203,category:"Indian",difficulty:"Medium",time:"1 hr",xp:100,
+     desc:"Not the restaurant version. The one my mum made every Sunday. The secret is whole spices toasted fresh.",reviews:78},
+    {id:"c4",name:"Crispy Roast Potatoes",emoji:"🥔",
+     photo:"https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80&fit=crop&auto=format",
+     author:"Marcus T.",avatar:"🧔",rating:4.6,saves:156,category:"Comfort",difficulty:"Easy",time:"1h 20m",xp:60,
+     desc:"The crunchiest roast potatoes you will ever eat. Parboil, rough up the edges, screaming hot oven.",reviews:55},
+    {id:"c5",name:"Açaí Power Bowl",emoji:"🫐",
+     photo:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80&fit=crop&auto=format",
+     author:"Yuki A.",avatar:"👩",rating:4.5,saves:67,category:"Healthy",difficulty:"Easy",time:"10 min",xp:35,
+     desc:"Morning ritual. Frozen açaí, oat milk, banana, topped with granola and everything good.",reviews:23},
+    {id:"c6",name:"Tres Leches Cake",emoji:"🎂",
+     photo:"https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80&fit=crop&auto=format",
+     author:"Liam B.",avatar:"👨",rating:4.8,saves:112,category:"Baking",difficulty:"Medium",time:"1 hr",xp:90,
+     desc:"Soaked in three milks overnight. The most tender, creamy cake you have ever had.",reviews:44},
+    {id:"c7",name:"Thai Basil Fried Rice",emoji:"🍚",
+     photo:"https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80&fit=crop&auto=format",
+     author:"Sofia R.",avatar:"👩‍🍳",rating:4.6,saves:98,category:"Asian",difficulty:"Easy",time:"15 min",xp:55,
+     desc:"Proper Thai street food at home. Day-old rice, holy basil, a fried egg on top. Done in 15 minutes.",reviews:36},
+    {id:"c8",name:"Shakshuka with Feta",emoji:"🍳",
+     photo:"https://images.unsplash.com/photo-1590412200988-a436970781fa?w=600&q=80&fit=crop&auto=format",
+     author:"Priya K.",avatar:"👩‍🦱",rating:4.7,saves:145,category:"Breakfast",difficulty:"Easy",time:"25 min",xp:65,
+     desc:"The ultimate weekend breakfast. Bold tomato sauce, soft-set eggs, crumbled feta. Eat from the pan.",reviews:61},
   ];
 
-  const FILTERS=["all","Italian","Indian","Japanese","Healthy","Baking","Comfort"];
-  const filtered = COMMUNITY_RECIPES
+  const FILTERS=["all","Italian","Indian","Japanese","Healthy","Baking","Comfort","Asian","Breakfast"];
+
+  const filtered=COMMUNITY_RECIPES
     .filter(r=>filter==="all"||r.category===filter)
     .sort((a,b)=>sortBy==="popular"?b.saves-a.saves:b.rating-a.rating);
 
-  // Community recipe detail view
+  // Detail view
   if(selected){
     return(
-      <div style={{background:C.paper,minHeight:"100vh"}}>
-        <div style={{position:"relative",overflow:"hidden"}}>
-          <img src={selected.photo} alt={selected.name} style={{width:"100%",height:260,objectFit:"cover"}}/>
-          <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.2),rgba(59,42,26,.9))"}}/>
+      <div style={{background:C.paper,minHeight:"100%"}}>
+        <div style={{position:"relative",height:280,overflow:"hidden",flexShrink:0}}>
+          <img src={selected.photo} alt={selected.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.15),rgba(20,10,5,.85))"}}/>
           <button onClick={()=>setSelected(null)} style={{position:"absolute",top:16,left:16,background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px"}}>← Back</button>
           <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px"}}>
             <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
-              <span style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{selected.difficulty}</span>
-              <span style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>⏱ {selected.time}</span>
-              <span style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>⭐ {selected.rating}</span>
+              <span style={{background:"rgba(255,255,255,.18)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{selected.difficulty}</span>
+              <span style={{background:"rgba(255,255,255,.18)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>⏱ {selected.time}</span>
+              <span style={{background:"rgba(255,255,255,.18)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>⭐ {selected.rating}</span>
             </div>
             <div style={{fontSize:22,fontWeight:900,color:"#fff",fontFamily:DF,marginBottom:4}}>{selected.name}</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,.7)"}}>by {selected.author} {selected.avatar}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.65)"}}>shared by {selected.author}</div>
           </div>
         </div>
         <div style={{padding:"20px 16px 100px"}}>
           <p style={{fontSize:14,color:"#6A5C52",lineHeight:1.7,marginBottom:16}}>{selected.desc}</p>
-          <div style={{display:"flex",gap:16,marginBottom:20}}>
-            <span style={{fontSize:13,color:C.muted}}>💾 {selected.saves} saves</span>
-            <span style={{fontSize:13,color:C.muted}}>💬 {selected.reviews} reviews</span>
-            <span style={{fontSize:13,color:C.flame,fontWeight:700}}>+{selected.xp} 🔥</span>
+          <div style={{display:"flex",gap:16,marginBottom:24,padding:"14px 16px",background:C.cream,borderRadius:14,border:`1px solid ${C.border}`}}>
+            <div style={{textAlign:"center",flex:1}}><div style={{fontWeight:900,fontSize:18,color:C.bark}}>{selected.saves}</div><div style={{fontSize:11,color:C.muted}}>saves</div></div>
+            <div style={{textAlign:"center",flex:1}}><div style={{fontWeight:900,fontSize:18,color:C.bark}}>{selected.reviews}</div><div style={{fontSize:11,color:C.muted}}>reviews</div></div>
+            <div style={{textAlign:"center",flex:1}}><div style={{fontWeight:900,fontSize:18,color:C.flame}}>+{selected.xp} 🔥</div><div style={{fontSize:11,color:C.muted}}>Heat</div></div>
           </div>
-          <Btn onClick={()=>{onSaveToLibrary(selected);setSelected(null);}} full color={C.sage}>Save to My Recipes 💾</Btn>
+          <Btn onClick={()=>{onSaveToLibrary(selected);setSelected(null);}} full color={C.sage}>Save to My Recipes</Btn>
         </div>
       </div>
     );
   }
 
   return(
-    <div style={{paddingBottom:30}}>
+    <div style={{paddingBottom:24}}>
       {/* Header */}
-      <div style={{margin:"4px 16px 18px",background:C.dark,borderRadius:20,padding:"20px",color:"#fff",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-20,right:-20,fontSize:100,opacity:.06}}>🌍</div>
-        <div style={{fontWeight:900,fontSize:22,fontFamily:DF,marginBottom:6}}>Community Recipes</div>
-        <div style={{fontSize:13,opacity:.7}}>{filtered.length} recipes from the community</div>
+      <div style={{margin:"4px 16px 16px",background:C.dark,borderRadius:20,padding:"18px 20px",color:"#fff"}}>
+        <div style={{fontWeight:900,fontSize:20,fontFamily:DF,marginBottom:4}}>Community Recipes</div>
+        <div style={{fontSize:13,opacity:.6}}>{filtered.length} recipes shared by home cooks</div>
       </div>
-
       {/* Filters */}
       <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>
         {FILTERS.map(f=>(
-          <button key={f} onClick={()=>setFilter(f)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${filter===f?C.flame:C.border}`,background:filter===f?C.flame:C.cream,color:filter===f?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{f==="all"?"🌍 All":f}</button>
+          <button key={f} onClick={()=>setFilter(f)} className="tap"
+            style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${filter===f?C.flame:C.border}`,background:filter===f?C.flame:C.cream,color:filter===f?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>
+            {f==="all"?"All":f}
+          </button>
         ))}
       </div>
-
       {/* Sort */}
-      <div style={{display:"flex",gap:8,padding:"0 16px 14px",alignItems:"center"}}>
+      <div style={{display:"flex",gap:8,padding:"4px 16px 14px",alignItems:"center"}}>
         <span style={{fontSize:11,color:C.muted,fontWeight:700}}>Sort:</span>
         {[["popular","Most Saved"],["rating","Top Rated"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>setSortBy(id)} className="tap" style={{padding:"5px 12px",borderRadius:99,border:`1.5px solid ${sortBy===id?C.sky:C.border}`,background:sortBy===id?`${C.sky}18`:"transparent",color:sortBy===id?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .15s"}}>{lbl}</button>
+          <button key={id} onClick={()=>setSortBy(id)} className="tap"
+            style={{padding:"5px 12px",borderRadius:99,border:`1.5px solid ${sortBy===id?C.sky:C.border}`,background:sortBy===id?`${C.sky}18`:"transparent",color:sortBy===id?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .15s"}}>
+            {lbl}
+          </button>
         ))}
       </div>
-
-      {/* Recipe cards */}
+      {/* Cards */}
       <div style={{padding:"0 16px",display:"flex",flexDirection:"column",gap:14}}>
         {filtered.map((r,idx)=>(
-          <div key={r.id} onClick={()=>setSelected(r)} className="ch" style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 14px rgba(0,0,0,.06)",animation:`fadeUp .3s ease ${idx*.05}s both`,transition:"transform .18s,box-shadow .18s",cursor:"pointer"}}>
+          <div key={r.id} onClick={()=>setSelected(r)} className="ch"
+            style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 14px rgba(0,0,0,.06)",animation:`fadeUp .3s ease ${idx*.05}s both`,transition:"transform .18s,box-shadow .18s",cursor:"pointer"}}>
             <div style={{position:"relative",height:180,overflow:"hidden"}}>
               <img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(0,0,0,.5))"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.55))"}}/>
               <div style={{position:"absolute",bottom:12,left:14,right:14,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
                 <div>
-                  <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF}}>{r.name}</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,.75)",marginTop:2}}>by {r.author}</div>
+                  <div style={{fontWeight:900,fontSize:16,color:"#fff",fontFamily:DF}}>{r.name}</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:2}}>by {r.author}</div>
                 </div>
-                <div style={{background:"rgba(0,0,0,.4)",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4}}>
-                  <span style={{fontSize:12}}>⭐</span>
+                <div style={{background:"rgba(0,0,0,.45)",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:12,color:"#FFD700"}}>★</span>
                   <span style={{fontSize:13,fontWeight:800,color:"#fff"}}>{r.rating}</span>
                 </div>
               </div>
               <div style={{position:"absolute",top:10,left:12,display:"flex",gap:6}}>
                 <span style={{background:"rgba(0,0,0,.45)",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#fff"}}>{r.difficulty}</span>
-                <span style={{background:"rgba(0,0,0,.45)",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#fff"}}>⏱ {r.time}</span>
+                <span style={{background:"rgba(0,0,0,.45)",borderRadius:8,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#fff"}}>{r.time}</span>
               </div>
             </div>
             <div style={{padding:"12px 14px"}}>
               <p style={{fontSize:13,color:"#6A5C52",lineHeight:1.5,margin:"0 0 10px"}}>{r.desc}</p>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div style={{display:"flex",gap:12}}>
-                  <span style={{fontSize:12,color:C.muted}}>💾 {r.saves} saves</span>
-                  <span style={{fontSize:12,color:C.muted}}>💬 {r.reviews} reviews</span>
+                  <span style={{fontSize:12,color:C.muted}}>{r.saves} saves</span>
+                  <span style={{fontSize:12,color:C.muted}}>{r.reviews} reviews</span>
                 </div>
-                <Btn onClick={()=>onSaveToLibrary(r)} sm color={C.sage}>Save to Library</Btn>
+                <Btn onClick={(e)=>{e.stopPropagation();onSaveToLibrary(r);}} sm color={C.sage}>Save</Btn>
               </div>
             </div>
           </div>
@@ -3094,6 +3182,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
     </div>
   );
 }
+
 
 /* ═══ WANT TO COOK SHEET ════════════════════════════════════════════════════ */
 function WantToCookSheet({wantToCook,allRecipes,onRemove,onCookNow,onClose}){
