@@ -23,6 +23,8 @@ const CSS = `
   .ch:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(0,0,0,.11)!important}
   *{max-width:100%;box-sizing:border-box}
   img{max-width:100%;height:auto}
+  ::-webkit-scrollbar{display:none}
+  html,body{height:100%;overflow:hidden}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
 `;
 
@@ -1254,7 +1256,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
       {libTab==="log"&&(
         <div style={{display:"flex",gap:10,margin:"0 16px 16px"}}>
           <button onClick={onShowCalendar} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"10px 8px",cursor:"pointer",textAlign:"center"}}>
-            <div style={{fontSize:18,marginBottom:2}}>📅</div>
+            <div style={{fontSize:18,marginBottom:2}}></div>
             <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Streak Calendar</div>
           </button>
           <button onClick={onShowSignature} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"10px 8px",cursor:"pointer",textAlign:"center"}}>
@@ -1626,15 +1628,15 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
       {/* Action buttons row */}
       <div style={{margin:"0 16px 18px",display:"flex",gap:10}}>
         <button onClick={onQuickLog} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}>⚡</div>
+          <div style={{fontSize:20,marginBottom:3}}></div>
           <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Quick Log</div>
         </button>
         <button onClick={onShowCalendar} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}>📅</div>
+          <div style={{fontSize:20,marginBottom:3}}></div>
           <div style={{fontSize:11,fontWeight:800,color:C.bark}}>History</div>
         </button>
         <button onClick={onShowRecap} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}>📊</div>
+          <div style={{fontSize:20,marginBottom:3}}></div>
           <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Weekly Recap</div>
         </button>
         {signatureDish&&(
@@ -1719,12 +1721,10 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,onSaveToLibrary
           </div>
           <div style={{display:"flex",gap:10,padding:"0 16px 12px"}}>
             <button onClick={onShowCreate} className="tap" style={{flex:1,background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:14,padding:"12px",cursor:"pointer",textAlign:"center"}}>
-              <div style={{fontSize:20,marginBottom:3}}>✍️</div>
-              <div style={{fontSize:12,fontWeight:800,color:C.sage}}>Create Recipe</div>
+              <div style={{fontSize:12,fontWeight:800,color:C.sage}}>+ Create</div>
             </button>
             <button onClick={onShowImport} className="tap" style={{flex:1,background:`${C.sky}14`,border:`2px solid ${C.sky}33`,borderRadius:14,padding:"12px",cursor:"pointer",textAlign:"center"}}>
-              <div style={{fontSize:20,marginBottom:3}}>🔗</div>
-              <div style={{fontSize:12,fontWeight:800,color:C.sky}}>Import URL</div>
+              <div style={{fontSize:12,fontWeight:800,color:C.sky}}>⤵ Import URL</div>
             </button>
           </div>
           <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(cat=><button key={cat} onClick={()=>setCat(cat)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===cat2?C.flame:C.border}`,background:cat===cat2?C.flame:C.cream,color:cat===c2?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{cat}</button>)}</div>
@@ -3219,7 +3219,7 @@ export default function App(){
     if(user?.id) userIdRef.current = user.id;
     console.log("Auth user:", user?.email || "NOT LOGGED IN");
   },[user]);
-  const [onboarded,  setOnboarded]  = useState(()=>{ try{ return localStorage.getItem('mep_onboarded')==='true'; }catch{ return false; } });
+  const [onboarded,  setOnboarded]  = useState(()=>{ try{ return localStorage.getItem("mep_onboarded")==="true"; }catch{ return false; } });
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
   const [xp,         setXp]         = useState(0);
@@ -3255,7 +3255,7 @@ export default function App(){
   const [activeTab,       setActiveTab]       = useState("home");
   const [signatureDish,setSignatureDish]=useState(null);
   const [seasonalEvent] = useState({
-    name:"Basics Month 🌱",
+    name:"Basics Month",
     desc:"Master 3 foundational techniques this month",
     ends:"Apr 30",
     goal:3,
@@ -3279,7 +3279,14 @@ export default function App(){
 
   useEffect(()=>{setTimeout(()=>setMounted(true),60);},[]);
   useEffect(()=>{
-    if(profile&&profile.xp>0) setXp(profile.xp);
+    if(profile){
+      if(profile.xp>0) setXp(profile.xp);
+      // If user has a profile, they've been onboarded
+      if(!onboarded){
+        setOnboarded(true);
+        try{ localStorage.setItem("mep_onboarded","true"); }catch{}
+      }
+    }
   },[profile]);
 
   const levelInfo=useMemo(()=>getLevelInfo(xp),[xp]);
@@ -3435,7 +3442,7 @@ export default function App(){
     <>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)",overflowX:"hidden",width:"100%"}}>
+      <div style={{fontFamily:BF,background:C.paper,height:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)",overflowX:"hidden",overflowY:"hidden",width:"100%",display:"flex",flexDirection:"column"}}>
         {/* Header — no AI button */}
         <div style={{background:C.paper,padding:"12px 16px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`,width:"100%"}}>
           <div>
@@ -3444,7 +3451,7 @@ export default function App(){
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
-              <span style={{fontSize:17}}>🔔</span>
+              <span style={{fontSize:14,fontWeight:300,color:C.bark}}>♡</span>
               {notifications.filter(n=>!n.read).length>0&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</div>}
             </button>
             <button onClick={()=>setTab("profile")} className="tap" style={{width:34,height:34,borderRadius:10,background:C.pill,border:`1.5px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,fontSize:20}}>
@@ -3459,7 +3466,7 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
+        <div style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingTop:84,paddingBottom:80}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} onSaveToLibrary={saveToLibrary}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
@@ -3475,7 +3482,7 @@ export default function App(){
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 env(safe-area-inset-bottom,12px)",zIndex:50,width:"100%"}}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 0",transform:tab===t.id?"scale(1.08)":"scale(1)",transition:"transform .18s"}}>
-              <div style={{fontSize:19}}>{t.emoji}</div>
+              <div style={{fontSize:17,fontWeight:300,color:tab===t.id?C.flame:"#B0A09A",lineHeight:1}}>{t.icon}</div>
               <div style={{fontSize:9,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:tab===t.id?C.flame:"#B0A09A",transition:"color .18s"}}>{t.label}</div>
               {tab===t.id&&<div style={{width:16,height:3,borderRadius:99,background:C.flame,marginTop:1}}/>}
             </button>
