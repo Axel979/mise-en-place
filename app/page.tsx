@@ -1361,6 +1361,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
         </div>
       )}
     </div>
+    </div>}
   );
 }
 
@@ -1676,7 +1677,8 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
 }
 
 /* ═══ RECIPES TAB ═════════════════════════════════════════════════════════ */
-function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
+function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,onSaveToLibrary}){
+  const [recipesTab,setRecipesTab]=useState("mine"); // mine | community
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
   const [cat,setCat]=useState("All");
@@ -1699,6 +1701,14 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
 
   return(
     <div style={{paddingBottom:24}}>
+      {/* Sub-tab toggle */}
+      <div style={{display:"flex",margin:"4px 16px 12px",background:C.pill,borderRadius:14,padding:4,gap:4}}>
+        {[["mine","My Recipes"],["community","Community"]].map(([id,lbl])=>(
+          <button key={id} onClick={()=>setRecipesTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:recipesTab===id?"#fff":"transparent",color:recipesTab===id?C.bark:C.muted,boxShadow:recipesTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
+        ))}
+      </div>
+      {recipesTab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={onOpen} onSaveToLibrary={onSaveToLibrary}/>}
+      {recipesTab==="mine"&&<div style={{padding:"0px 0px 0px"}}>
       <div style={{padding:"4px 16px 10px"}}>
         <div style={{position:"relative"}}>
           <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
@@ -3389,11 +3399,11 @@ export default function App(){
   },[xp]);
 
   const TABS=[
-    {id:"home",       label:"Today",    emoji:"🍳"},
-    {id:"recipes",    label:"Recipes",  emoji:"📖"},
-    {id:"community",  label:"Community",emoji:"🌍"},
-    {id:"feed",       label:"Feed",     emoji:"👥"},
-    {id:"library",    label:"Library",  emoji:"📚"},
+    {id:"home",       label:"Today",      emoji:"🍳"},
+    {id:"recipes",    label:"Recipes",    emoji:"📖"},
+    {id:"challenges", label:"Challenges", emoji:"🏃"},
+    {id:"feed",       label:"Feed",       emoji:"👥"},
+    {id:"library",    label:"Library",    emoji:"📚"},
   ];
 
   const weekDone=cookedDays.filter(Boolean).length;
@@ -3447,11 +3457,12 @@ export default function App(){
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
-          {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
+          {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} onSaveToLibrary={saveToLibrary}/>}
+          {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
-          {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
+          {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
           {tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
