@@ -20,6 +20,7 @@ const css = `
   .fade3 { animation: fadeUp .5s .2s cubic-bezier(.4,0,.2,1) both; }
   .fade4 { animation: fadeUp .5s .3s cubic-bezier(.4,0,.2,1) both; }
   input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #2A1A0E inset !important; -webkit-text-fill-color: #F5E6D3 !important; }
+  input:focus { border-color: #C4814A !important; }
 `;
 
 export default function LoginPage() {
@@ -34,7 +35,7 @@ export default function LoginPage() {
   const [checkingUser, setCheckingUser] = useState(false);
   const [userAvailable, setUserAvailable] = useState<boolean|null>(null);
   const [pendingUser, setPendingUser] = useState<any>(null);
-  const [focusedField, setFocusedField] = useState('');
+
 
   const checkUsername = async (val: string) => {
     setUsername(val);
@@ -88,16 +89,15 @@ export default function LoginPage() {
     window.location.href = '/';
   };
 
-  const inputStyle = (field: string) => ({
+  const inputStyle = () => ({
     width: '100%' as const,
     padding: '16px 18px',
     borderRadius: 16,
-    border: `1.5px solid ${focusedField===field ? '#C4814A' : 'rgba(255,255,255,.08)'}`,
+    border: '1.5px solid rgba(255,255,255,.12)',
     background: 'rgba(255,255,255,.04)',
     fontSize: 15,
     color: '#F5E6D3',
     outline: 'none',
-    transition: 'border-color .2s',
     letterSpacing: '.01em',
   });
 
@@ -202,7 +202,7 @@ export default function LoginPage() {
             onFocus={() => setFocusedField('username')}
             onBlur={() => setFocusedField('')}
             placeholder="e.g. chef_axel" maxLength={20}
-            style={{ ...inputStyle('username'), borderColor: userAvailable===true?'rgba(146,179,131,.6)':userAvailable===false?'rgba(224,122,95,.6)':focusedField==='username'?'#C4814A':'rgba(255,255,255,.08)', paddingRight: 44 }}
+            style={{ ...inputStyle(), borderColor: userAvailable===true?'rgba(146,179,131,.6)':userAvailable===false?'rgba(224,122,95,.6)':focusedField==='username'?'#C4814A':'rgba(255,255,255,.08)', paddingRight: 44 }}
           />
           <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: userAvailable===true?'#92B383':userAvailable===false?'#E07A5F':'transparent' }}>
             {checkingUser ? '…' : userAvailable===true ? '✓' : userAvailable===false ? '✗' : ''}
@@ -233,9 +233,9 @@ export default function LoginPage() {
       </div>
       <form onSubmit={handleReset} className="fade3">
         <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-          onFocus={()=>setFocusedField('email')} onBlur={()=>setFocusedField('')}
+         
           placeholder="Email address" required
-          style={{ ...inputStyle('email'), marginBottom: 16 }}/>
+          style={{ ...inputStyle(), marginBottom: 16 }}/>
         <Err msg={error}/>
         <Info msg={info}/>
         <button type="submit" disabled={loading||!email} style={primaryBtn(loading||!email)}>
@@ -257,11 +257,11 @@ export default function LoginPage() {
       </div>
       <form onSubmit={handleSignup}>
         <input className="fade2" type="email" value={email} onChange={e=>setEmail(e.target.value)}
-          onFocus={()=>setFocusedField('email')} onBlur={()=>setFocusedField('')}
-          placeholder="Email address" required style={{ ...inputStyle('email'), marginBottom: 12 }}/>
+         
+          placeholder="Email address" required style={{ ...inputStyle(), marginBottom: 12 }}/>
         <input className="fade3" type="password" value={password} onChange={e=>setPassword(e.target.value)}
-          onFocus={()=>setFocusedField('password')} onBlur={()=>setFocusedField('')}
-          placeholder="Password — at least 6 characters" required style={{ ...inputStyle('password'), marginBottom: 20 }}/>
+         
+          placeholder="Password — at least 6 characters" required style={{ ...inputStyle(), marginBottom: 20 }}/>
         <Err msg={error}/>
         <button type="submit" disabled={loading||!email||!password} className="fade4" style={primaryBtn(loading||!email||!password)}>
           {loading ? 'Creating account…' : 'Create account'}
@@ -282,11 +282,11 @@ export default function LoginPage() {
       </div>
       <form onSubmit={handleLogin}>
         <input className="fade2" type="email" value={email} onChange={e=>setEmail(e.target.value)}
-          onFocus={()=>setFocusedField('email')} onBlur={()=>setFocusedField('')}
-          placeholder="Email address" required style={{ ...inputStyle('email'), marginBottom: 12 }}/>
+         
+          placeholder="Email address" required style={{ ...inputStyle(), marginBottom: 12 }}/>
         <input className="fade3" type="password" value={password} onChange={e=>setPassword(e.target.value)}
-          onFocus={()=>setFocusedField('password')} onBlur={()=>setFocusedField('')}
-          placeholder="Password" required style={{ ...inputStyle('password'), marginBottom: 8 }}/>
+         
+          placeholder="Password" required style={{ ...inputStyle(), marginBottom: 8 }}/>
         <div style={{ textAlign: 'right', marginBottom: 20 }}>
           <button type="button" onClick={()=>setMode('reset')} style={{ background: 'none', border: 'none', color: 'rgba(196,129,74,.7)', fontSize: 13, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
             Forgot password?
