@@ -1752,21 +1752,20 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,onSaveToLibrary
                 </div>
                 {r.macros&&(
                   <div style={{display:"flex",gap:5,marginBottom:5,flexWrap:"wrap"}}>
-                    {[["🔥",r.macros.calories,"kcal",C.flame],["💪",r.macros.protein,"g protein",C.sky]].map(([icon,val,unit,color])=>(
-                      <span key={unit} style={{fontSize:9,fontWeight:700,color,background:`${color}12`,borderRadius:5,padding:"2px 5px"}}>{icon} {val}{unit}</span>
+                    {[[r.macros.calories,"kcal",C.flame],[r.macros.protein,"g protein",C.sky]].map(([val,unit,color])=>(
+                      <span key={unit} style={{fontSize:9,fontWeight:700,color,background:`${color}12`,borderRadius:5,padding:"2px 5px"}}>{val}{unit}</span>
                     ))}
                   </div>
                 )}
                 <div style={{display:"flex",justifyContent:"space-between"}}>
                   <span style={{fontSize:11,color:C.muted}}>⏱ {r.time}</span>
-                  <span style={{fontSize:12,fontWeight:800,color:r.done?C.sage:C.flame}}>{r.done?"✓ Cooked":`+${r.xp} XP`}</span>
+                  <span style={{fontSize:12,fontWeight:800,color:r.done?C.sage:C.flame}}>{r.done?"✓ Cooked":`+${r.xp} 🔥`}</span>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
-    </div>
   );
 }
 
