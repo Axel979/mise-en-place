@@ -2717,7 +2717,6 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
             <div style={{fontWeight:900,fontSize:22,color:"#fff",fontFamily:DF}}>
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
             </div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,.6)",marginTop:2}}>{user?.email||""}</div>
             <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
               <div style={{background:levelInfo.current.color,borderRadius:8,padding:"3px 10px",fontSize:12,fontWeight:800,color:"#fff"}}>
                 {levelInfo.current.icon} {levelInfo.current.title}
@@ -2726,16 +2725,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
           </div>
         </div>
 
-        {/* Signature dish */}
-        {signatureDish&&(
-          <div style={{background:"rgba(255,255,255,.1)",borderRadius:14,padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:24}}>{signatureDish.emoji}</span>
-            <div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:".08em"}}>Signature Dish</div>
-              <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{signatureDish.name}</div>
-            </div>
-          </div>
-        )}
+
 
         {/* Stats row */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
@@ -2763,9 +2753,9 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"12px 16px 0"}}>
         {[
           {icon:"📅",label:"Cooking History",action:onShowCalendar,color:C.sky},
-          {icon:"🍳",label:"Signature Dish",action:onShowSignature,color:C.flame},
+
           {icon:"📊",label:"Year in Review",action:onShowYearReview,color:C.sage},
-          {icon:"🏅",label:"My Badges",action:null,color:C.gold},
+          {icon:"🏅",label:"My Badges",action:()=>setTab("library"),color:C.gold},
         ].map(({icon,label,action,color})=>(
           <button key={label} onClick={action||undefined} className="tap" style={{background:C.cream,border:`2px solid ${color}22`,borderRadius:16,padding:"14px 12px",cursor:"pointer",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
             <span style={{fontSize:28}}>{icon}</span>
@@ -2796,12 +2786,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
         </div>
       )}
 
-      {/* Library shortcut */}
-      <div style={{margin:"12px 16px 0"}}>
-        <button onClick={()=>setTab("library")} className="tap" style={{width:"100%",padding:"13px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,color:C.bark,fontWeight:700,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          📚 View Full Cook Library
-        </button>
-      </div>
+
       {/* Sign out */}
       <div style={{margin:"12px 16px 0"}}>
         <button onClick={signOut} className="tap" style={{width:"100%",padding:"13px",borderRadius:14,border:`2px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer"}}>
@@ -2934,8 +2919,8 @@ function SettingsSheet({user,profile,onClose,supabase,onProfileUpdate}){
 function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
   const [filter,setFilter]=useState("all");
   const [sortBy,setSortBy]=useState("popular");
+  const [selected,setSelected]=useState(null);
 
-  // Community recipes = custom ones + imported ones from all users (mock for now)
   const COMMUNITY_RECIPES = [
     {id:"c1",name:"Grandma's Carbonara",emoji:"🍝",photo:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80&fit=crop",author:"Sofia R.",avatar:"👩‍🍳",rating:4.8,saves:124,category:"Italian",difficulty:"Medium",time:"25 min",diets:["Vegetarian"],xp:80,desc:"The real deal — no cream, ever. My grandmother's recipe from Naples, unchanged for 40 years.",reviews:42},
     {id:"c2",name:"Spicy Miso Ramen",emoji:"🍜",photo:"https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80&fit=crop",author:"Jake M.",avatar:"🧑‍🍳",rating:4.9,saves:89,category:"Japanese",difficulty:"Hard",time:"2 hrs",diets:["Dairy-free"],xp:130,desc:"6 hours of love. Real tonkotsu broth, chashu pork, marinated soft egg. Worth every minute.",reviews:31},
@@ -2950,21 +2935,44 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
     .filter(r=>filter==="all"||r.category===filter)
     .sort((a,b)=>sortBy==="popular"?b.saves-a.saves:b.rating-a.rating);
 
+  // Community recipe detail view
+  if(selected){
+    return(
+      <div style={{background:C.paper,minHeight:"100vh"}}>
+        <div style={{position:"relative",overflow:"hidden"}}>
+          <img src={selected.photo} alt={selected.name} style={{width:"100%",height:260,objectFit:"cover"}}/>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.2),rgba(59,42,26,.9))"}}/>
+          <button onClick={()=>setSelected(null)} style={{position:"absolute",top:16,left:16,background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px"}}>← Back</button>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px"}}>
+            <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
+              <span style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{selected.difficulty}</span>
+              <span style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>⏱ {selected.time}</span>
+              <span style={{background:"rgba(255,255,255,.2)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>⭐ {selected.rating}</span>
+            </div>
+            <div style={{fontSize:22,fontWeight:900,color:"#fff",fontFamily:DF,marginBottom:4}}>{selected.name}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.7)"}}>by {selected.author} {selected.avatar}</div>
+          </div>
+        </div>
+        <div style={{padding:"20px 16px 100px"}}>
+          <p style={{fontSize:14,color:"#6A5C52",lineHeight:1.7,marginBottom:16}}>{selected.desc}</p>
+          <div style={{display:"flex",gap:16,marginBottom:20}}>
+            <span style={{fontSize:13,color:C.muted}}>💾 {selected.saves} saves</span>
+            <span style={{fontSize:13,color:C.muted}}>💬 {selected.reviews} reviews</span>
+            <span style={{fontSize:13,color:C.flame,fontWeight:700}}>+{selected.xp} 🔥</span>
+          </div>
+          <Btn onClick={()=>{onSaveToLibrary(selected);setSelected(null);}} full color={C.sage}>Save to My Recipes 💾</Btn>
+        </div>
+      </div>
+    );
+  }
+
   return(
     <div style={{paddingBottom:30}}>
       {/* Header */}
       <div style={{margin:"4px 16px 18px",background:C.dark,borderRadius:20,padding:"20px",color:"#fff",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-20,right:-20,fontSize:100,opacity:.06}}>🌍</div>
         <div style={{fontWeight:900,fontSize:22,fontFamily:DF,marginBottom:6}}>Community Recipes</div>
-        <div style={{fontSize:13,opacity:.7,lineHeight:1.6}}>Recipes shared by cooks like you. Save any recipe to your library and cook it yourself.</div>
-        <div style={{display:"flex",gap:10,marginTop:14}}>
-          {[["📖",filtered.length+" recipes"],["⭐","Community rated"],["💾","Save to library"]].map(([e,t])=>(
-            <div key={t} style={{flex:1,background:"rgba(255,255,255,.08)",borderRadius:10,padding:"8px 4px",textAlign:"center"}}>
-              <div style={{fontSize:18,marginBottom:3}}>{e}</div>
-              <div style={{fontSize:9,fontWeight:700,opacity:.65}}>{t}</div>
-            </div>
-          ))}
-        </div>
+        <div style={{fontSize:13,opacity:.7}}>{filtered.length} recipes from the community</div>
       </div>
 
       {/* Filters */}
@@ -2985,7 +2993,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
       {/* Recipe cards */}
       <div style={{padding:"0 16px",display:"flex",flexDirection:"column",gap:14}}>
         {filtered.map((r,idx)=>(
-          <div key={r.id} className="ch" style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 14px rgba(0,0,0,.06)",animation:`fadeUp .3s ease ${idx*.05}s both`,transition:"transform .18s,box-shadow .18s"}}>
+          <div key={r.id} onClick={()=>setSelected(r)} className="ch" style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 14px rgba(0,0,0,.06)",animation:`fadeUp .3s ease ${idx*.05}s both`,transition:"transform .18s,box-shadow .18s",cursor:"pointer"}}>
             <div style={{position:"relative",height:180,overflow:"hidden"}}>
               <img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
               <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(0,0,0,.5))"}}/>
@@ -3148,7 +3156,7 @@ function YearInReviewSheet({cookLog,xp,levelInfo,earnedBadges,allRecipes,onClose
 
 /* ═══ ROOT APP ════════════════════════════════════════════════════════════ */
 export default function App(){
-  const { user, profile, loading, saveXp, logCompletedRecipe, signOut } = useAuth();
+  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase } = useAuth();
   const userIdRef = useRef<string|null>(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -3342,7 +3350,7 @@ export default function App(){
     {id:"recipes",    label:"Recipes",  emoji:"📖"},
     {id:"community",  label:"Community",emoji:"🌍"},
     {id:"feed",       label:"Feed",     emoji:"👥"},
-    {id:"profile",    label:"Profile",  emoji:"👤"},
+    {id:"library",    label:"Library",  emoji:"📚"},
   ];
 
   const weekDone=cookedDays.filter(Boolean).length;
@@ -3401,7 +3409,8 @@ export default function App(){
           {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
           {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
-          {tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowSignature={()=>setShowSignature(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress}/>}
+          {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
+          {tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress}/>}
           {tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
@@ -3426,7 +3435,7 @@ export default function App(){
       {showSignature&&<SignatureDishSheet allRecipes={allRecipes} signatureDish={signatureDish} onSelect={setSignatureDish} onClose={()=>setShowSignature(false)}/>}
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
-      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate}/>}
+      {showSettings&&supabase&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>setWantToCook(w=>w.filter(x=>x!==id))} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
     </>
