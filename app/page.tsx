@@ -1247,7 +1247,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
 
       {/* Sub tabs */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:4}}>
-        {[["log","📖 My Cooks"],["badges","🏅 Badges"]].map(([id,lbl])=>(
+        {[["log","My Cooks"],["badges","Badges"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setLibTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
         ))}
       </div>
@@ -1500,7 +1500,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:10}}>
                   <button onClick={()=>giveMwah(post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
                     <span style={{fontSize:13,fontWeight:800,color:post.myMwah?C.flame:C.muted,border:`1.5px solid ${post.myMwah?C.flame:C.border}`,borderRadius:8,padding:"4px 10px",background:post.myMwah?`${C.flame}10`:"transparent",transition:"all .2s"}}>Mwah</span>
-                    <span style={{fontSize:13,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah} Mwah{post.mwah!==1?"s":""}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>Mwah {post.mwah}</span>
                   </button>
                   <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
                     <span style={{fontSize:20}}>💬</span>
@@ -1727,7 +1727,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,onSaveToLibrary
               <div style={{fontSize:12,fontWeight:800,color:C.sky}}>⤵ Import URL</div>
             </button>
           </div>
-          <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(catName=><button key={catName} onClick={()=>setCat(catName)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===cat2?C.flame:C.border}`,background:cat===cat2?C.flame:C.cream,color:cat===c2?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{cat}</button>)}</div>
+          <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(catName=><button key={catName} onClick={()=>setCat(catName)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===cat2?C.flame:C.border}`,background:cat===cat2?C.flame:C.cream,color:cat===c2?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{catName}</button>)}</div>
           <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{DIETS.map(d=><button key={d} onClick={()=>setDiet(d)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}18`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{d==="All"?"🍽️ All":d}</button>)}</div>
           <div style={{display:"flex",gap:8,padding:"0 16px 12px",alignItems:"center",overflowX:"auto"}}>
             <span style={{fontSize:11,color:C.muted,fontWeight:700,flexShrink:0}}>Sort:</span>
@@ -1877,7 +1877,7 @@ function CreateRecipeSheet({onSave,onClose}){
             <div>
               <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>Category</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                {CATS.map(cat=><button key={cat} onClick={()=>setCategory(cat)} style={{padding:"6px 12px",borderRadius:99,border:`2px solid ${category===cat?C.sage:C.border}`,background:category===cat?C.sage:"transparent",color:category===cat?"#fff":C.muted,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .15s"}}>{cat}</button>)}
+                {CATS.map(cat=><button key={cat} onClick={()=>setCategory(cat)} style={{padding:"6px 12px",borderRadius:99,border:`2px solid ${category===cat?C.sage:C.border}`,background:category===cat?C.sage:"transparent",color:category===cat?"#fff":C.muted,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .15s"}}>{catName}</button>)}
               </div>
             </div>
             <div style={{marginTop:14}}>
@@ -3410,11 +3410,11 @@ export default function App(){
   },[xp]);
 
   const TABS=[
-    {id:"home",       label:"Today",      emoji:"🍳"},
-    {id:"recipes",    label:"Recipes",    emoji:"📖"},
-    {id:"challenges", label:"Challenges", emoji:"🏃"},
-    {id:"feed",       label:"Feed",       emoji:"👥"},
-    {id:"library",    label:"Library",    emoji:"📚"},
+    {id:"home",      label:"Today",     svg:'<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'},
+    {id:"recipes",   label:"Recipes",   svg:'<path d="M4 6h16M4 12h16M4 18h10"/>'},
+    {id:"community", label:"Community", svg:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>'},
+    {id:"feed",      label:"Feed",      svg:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>'},
+    {id:"library",   label:"Library",   svg:'<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>'},
   ];
 
   const weekDone=cookedDays.filter(Boolean).length;
@@ -3442,7 +3442,7 @@ export default function App(){
     <>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,height:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)",overflowX:"hidden",overflowY:"hidden",width:"100%",display:"flex",flexDirection:"column"}}>
+      <div style={{fontFamily:BF,background:C.paper,maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)",overflow:"hidden",width:"100%",position:"fixed",inset:0,display:"flex",flexDirection:"column"}}>
         {/* Header — no AI button */}
         <div style={{background:C.paper,padding:"12px 16px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`,width:"100%"}}>
           <div>
@@ -3466,7 +3466,7 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingTop:84,paddingBottom:80}}>
+        <div style={{flex:1,overflowY:"scroll",overflowX:"hidden",paddingTop:84,paddingBottom:80,WebkitOverflowScrolling:"touch"}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} onSaveToLibrary={saveToLibrary}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
@@ -3481,10 +3481,10 @@ export default function App(){
 
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 env(safe-area-inset-bottom,12px)",zIndex:50,width:"100%"}}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0",transition:"transform .18s"}}>
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 0",transition:"all .18s"}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tab===t.id?C.flame:"#B0A09A"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.svg}}/>
               <div style={{fontSize:9,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:tab===t.id?C.flame:"#B0A09A",transition:"color .18s"}}>{t.label}</div>
-              {tab===t.id&&<div style={{width:16,height:2,borderRadius:99,background:C.flame}}/>}
+              {tab===t.id&&<div style={{width:16,height:2,borderRadius:99,background:C.flame,marginTop:1}}/>}
             </button>
           ))}
         </div>
