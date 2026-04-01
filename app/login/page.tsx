@@ -1,28 +1,29 @@
 'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0';
-
 const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_KEY);
 
 const AVATARS = ['🧑‍🍳','👩‍🍳','🧔','👩‍🦱','👨‍🦰','👩‍🦰','🧑‍🦱','👴','👩','👨','🧒','👧'];
 
-const S = {
-  page:    { minHeight:'100vh', background:'#FAF4EE', fontFamily:'Georgia,serif', padding:'24px 20px' },
-  card:    { background:'#FFF8F0', borderRadius:20, padding:'28px 22px', border:'2px solid #EEE5DC', marginBottom:16 },
-  label:   { fontSize:12, fontWeight:700, color:'#9E8C7E', display:'block', marginBottom:6, textTransform:'uppercase' as const, letterSpacing:'.07em' },
-  input:   { width:'100%', padding:'12px 14px', borderRadius:14, border:'2px solid #EEE5DC', background:'#FAF4EE', fontSize:14, color:'#3B2A1A', outline:'none', boxSizing:'border-box' as const, fontFamily:'Georgia,serif' },
-  btn:     { width:'100%', padding:'13px', borderRadius:14, border:'none', background:'#FF4D1C', color:'#fff', fontWeight:800, fontSize:15, cursor:'pointer', fontFamily:'Georgia,serif', transition:'all .18s' },
-  btnGrey: { width:'100%', padding:'13px', borderRadius:14, border:'2px solid #EEE5DC', background:'transparent', color:'#9E8C7E', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:'Georgia,serif' },
-  err:     { fontSize:13, color:'#FF4D1C', padding:'9px 12px', background:'#FF4D1C18', borderRadius:10, marginBottom:12 },
-  ok:      { fontSize:13, color:'#5C7A4E', padding:'9px 12px', background:'#5C7A4E18', borderRadius:10, marginBottom:12 },
-};
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:wght@300;400;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1A0F08; font-family: 'Source Serif 4', Georgia, serif; }
+  input, button, textarea { font-family: inherit; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+  @keyframes shimmer { 0%,100% { opacity:.4; } 50% { opacity:.7; } }
+  .fade { animation: fadeUp .5s cubic-bezier(.4,0,.2,1) both; }
+  .fade2 { animation: fadeUp .5s .1s cubic-bezier(.4,0,.2,1) both; }
+  .fade3 { animation: fadeUp .5s .2s cubic-bezier(.4,0,.2,1) both; }
+  .fade4 { animation: fadeUp .5s .3s cubic-bezier(.4,0,.2,1) both; }
+  input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #2A1A0E inset !important; -webkit-text-fill-color: #F5E6D3 !important; }
+`;
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<'login'|'signup'|'onboard'>( 'login');
+  const [mode, setMode] = useState<'login'|'signup'|'onboard'|'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -30,22 +31,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
-  const [checkingUsername, setCheckingUsername] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean|null>(null);
+  const [checkingUser, setCheckingUser] = useState(false);
+  const [userAvailable, setUserAvailable] = useState<boolean|null>(null);
   const [pendingUser, setPendingUser] = useState<any>(null);
+  const [focusedField, setFocusedField] = useState('');
 
   const checkUsername = async (val: string) => {
     setUsername(val);
-    setUsernameAvailable(null);
+    setUserAvailable(null);
     if (val.length < 3) return;
-    setCheckingUsername(true);
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', val.toLowerCase().trim())
-      .single();
-    setUsernameAvailable(!data);
-    setCheckingUsername(false);
+    setCheckingUser(true);
+    const { data } = await supabase.from('profiles').select('id').eq('username', val.toLowerCase().trim()).single();
+    setUserAvailable(!data);
+    setCheckingUser(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -66,161 +64,242 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const handleOnboard = async () => {
-    if (!username.trim() || !avatar || !usernameAvailable) return;
-    setLoading(true); setError('');
-    const userId = pendingUser?.id;
-    if (!userId) { setError('Something went wrong. Please try again.'); setLoading(false); return; }
-
-    // Check username one more time
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', username.toLowerCase().trim())
-      .single();
-
-    if (existing) { setError('Username taken — please choose another'); setUsernameAvailable(false); setLoading(false); return; }
-
-    // Upsert profile
-    const { error } = await supabase.from('profiles').upsert({
-      id: userId,
-      username: username.toLowerCase().trim(),
-      avatar_url: avatar,
-      xp: 0,
-      level: 1,
-      updated_at: new Date().toISOString(),
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true); setError(''); setInfo('');
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
     });
+    if (error) setError(error.message);
+    else setInfo('Check your email for a reset link.');
+    setLoading(false);
+  };
 
+  const handleOnboard = async () => {
+    if (!username.trim() || !avatar || !userAvailable) return;
+    setLoading(true); setError('');
+    const { data: existing } = await supabase.from('profiles').select('id').eq('username', username.toLowerCase().trim()).single();
+    if (existing) { setError('Username taken'); setUserAvailable(false); setLoading(false); return; }
+    const { error } = await supabase.from('profiles').upsert({
+      id: pendingUser?.id, username: username.toLowerCase().trim(),
+      avatar_url: avatar, xp: 0, level: 1, updated_at: new Date().toISOString(),
+    });
     if (error) { setError(error.message); setLoading(false); return; }
     window.location.href = '/';
   };
 
-  const Header = () => (
-    <div style={{ textAlign:'center', marginBottom:28 }}>
-      <div style={{ fontSize:52, marginBottom:10 }}>🍳</div>
-      <div style={{ fontSize:26, fontWeight:900, color:'#3B2A1A' }}>
-        mise<span style={{ color:'#FF4D1C' }}>.</span>en<span style={{ color:'#FF4D1C' }}>.</span>place
+  const inputStyle = (field: string) => ({
+    width: '100%' as const,
+    padding: '16px 18px',
+    borderRadius: 16,
+    border: `1.5px solid ${focusedField===field ? '#C4814A' : 'rgba(255,255,255,.08)'}`,
+    background: 'rgba(255,255,255,.04)',
+    fontSize: 15,
+    color: '#F5E6D3',
+    outline: 'none',
+    transition: 'border-color .2s',
+    letterSpacing: '.01em',
+  });
+
+  const primaryBtn = (disabled=false) => ({
+    width: '100%' as const,
+    padding: '16px',
+    borderRadius: 16,
+    border: 'none',
+    background: disabled ? 'rgba(196,129,74,.3)' : 'linear-gradient(135deg, #C4814A, #A0622E)',
+    color: disabled ? 'rgba(245,230,211,.3)' : '#FAF4EE',
+    fontWeight: 700,
+    fontSize: 15,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    letterSpacing: '.03em',
+    transition: 'all .2s',
+    boxShadow: disabled ? 'none' : '0 4px 20px rgba(196,129,74,.35)',
+  });
+
+  const ghostBtn = {
+    width: '100%' as const,
+    padding: '15px',
+    borderRadius: 16,
+    border: '1.5px solid rgba(255,255,255,.1)',
+    background: 'transparent',
+    color: 'rgba(245,230,211,.5)',
+    fontWeight: 600,
+    fontSize: 14,
+    cursor: 'pointer',
+    letterSpacing: '.02em',
+    transition: 'all .2s',
+  };
+
+  // ── SHARED LAYOUT ─────────────────────────────────────────────────────
+  const Wrap = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ minHeight: '100vh', background: '#1A0F08', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', position: 'relative', overflow: 'hidden' }}>
+      <style>{css}</style>
+      {/* Background texture */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 20%, rgba(196,129,74,.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(92,122,78,.08) 0%, transparent 50%)', pointerEvents: 'none' }}/>
+      <div style={{ width: '100%', maxWidth: 390, position: 'relative', zIndex: 1 }}>
+        {children}
       </div>
-      <div style={{ fontSize:13, color:'#9E8C7E', marginTop:3 }}>your daily cooking habit</div>
     </div>
   );
 
-  // ── ONBOARDING SCREEN ──────────────────────────────────────────────────
+  const Logo = () => (
+    <div className="fade" style={{ textAlign: 'center', marginBottom: 44 }}>
+      <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 32, fontWeight: 900, color: '#F5E6D3', letterSpacing: '-.02em', lineHeight: 1 }}>
+        mise<span style={{ color: '#C4814A' }}>.</span>en<span style={{ color: '#C4814A' }}>.</span>place
+      </div>
+      <div style={{ fontSize: 12, color: 'rgba(245,230,211,.35)', marginTop: 8, letterSpacing: '.15em', textTransform: 'uppercase' }}>
+        your daily cooking habit
+      </div>
+    </div>
+  );
+
+  const Err = ({ msg }: { msg: string }) => msg ? (
+    <div style={{ fontSize: 13, color: '#E07A5F', padding: '10px 14px', background: 'rgba(224,122,95,.1)', borderRadius: 12, marginBottom: 14, border: '1px solid rgba(224,122,95,.2)' }}>
+      {msg}
+    </div>
+  ) : null;
+
+  const Info = ({ msg }: { msg: string }) => msg ? (
+    <div style={{ fontSize: 13, color: '#92B383', padding: '10px 14px', background: 'rgba(146,179,131,.1)', borderRadius: 12, marginBottom: 14, border: '1px solid rgba(146,179,131,.2)' }}>
+      {msg}
+    </div>
+  ) : null;
+
+  const Divider = ({ label }: { label: string }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.06)' }}/>
+      <span style={{ fontSize: 11, color: 'rgba(245,230,211,.25)', letterSpacing: '.1em', textTransform: 'uppercase' }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.06)' }}/>
+    </div>
+  );
+
+  // ── ONBOARDING ────────────────────────────────────────────────────────
   if (mode === 'onboard') return (
-    <div style={S.page}>
-      <Header/>
-      <div style={{ background:'#5C7A4E18', border:'2px solid #5C7A4E33', borderRadius:14, padding:'11px 14px', marginBottom:16, fontSize:13, color:'#5C7A4E', fontWeight:600 }}>
-        ✅ Account created! Now set up your profile.
+    <Wrap>
+      <Logo/>
+      <div className="fade2" style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 11, color: 'rgba(245,230,211,.4)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 10 }}>Step 1 of 2</div>
+        <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#F5E6D3', marginBottom: 6 }}>Choose your avatar</div>
+        <div style={{ fontSize: 14, color: 'rgba(245,230,211,.45)', lineHeight: 1.5 }}>How friends will see you across the app</div>
+      </div>
+      <div className="fade3" style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8, marginBottom: 28 }}>
+        {AVATARS.map(a => (
+          <button key={a} onClick={() => setAvatar(a)} style={{
+            fontSize: 26, background: avatar===a ? 'rgba(196,129,74,.2)' : 'rgba(255,255,255,.04)',
+            border: `1.5px solid ${avatar===a ? '#C4814A' : 'rgba(255,255,255,.07)'}`,
+            borderRadius: 14, padding: '10px 4px', cursor: 'pointer', transition: 'all .15s', aspectRatio: '1',
+            boxShadow: avatar===a ? '0 0 0 3px rgba(196,129,74,.15)' : 'none',
+          }}>{a}</button>
+        ))}
       </div>
 
-      <div style={S.card}>
-        <div style={{ fontWeight:900, fontSize:18, color:'#3B2A1A', marginBottom:4, fontFamily:'Georgia,serif' }}>Pick your avatar</div>
-        <div style={{ fontSize:12, color:'#9E8C7E', marginBottom:14 }}>This is how friends will see you</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:8, marginBottom:4 }}>
-          {AVATARS.map(a => (
-            <button key={a} onClick={() => setAvatar(a)} style={{
-              fontSize:28, background:avatar===a?'#FF4D1C18':'#F0EBE6',
-              border:`2px solid ${avatar===a?'#FF4D1C':'#EEE5DC'}`,
-              borderRadius:12, padding:'8px 4px', cursor:'pointer',
-              transition:'all .15s', aspectRatio:'1'
-            }}>{a}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={S.card}>
-        <label style={S.label}>Choose a username</label>
-        <div style={{ position:'relative' }}>
+      <div className="fade3" style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 11, color: 'rgba(245,230,211,.4)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 10 }}>Step 2 of 2 — Choose a username</div>
+        <div style={{ position: 'relative' }}>
           <input
             value={username}
             onChange={e => checkUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g,''))}
-            placeholder="e.g. chef_axel"
-            maxLength={20}
-            style={{
-              ...S.input,
-              borderColor: usernameAvailable===true?'#5C7A4E':usernameAvailable===false?'#FF4D1C':'#EEE5DC',
-              paddingRight:40,
-            }}
+            onFocus={() => setFocusedField('username')}
+            onBlur={() => setFocusedField('')}
+            placeholder="e.g. chef_axel" maxLength={20}
+            style={{ ...inputStyle('username'), borderColor: userAvailable===true?'rgba(146,179,131,.6)':userAvailable===false?'rgba(224,122,95,.6)':focusedField==='username'?'#C4814A':'rgba(255,255,255,.08)', paddingRight: 44 }}
           />
-          <div style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', fontSize:16 }}>
-            {checkingUsername?'⏳':usernameAvailable===true?'✅':usernameAvailable===false?'❌':''}
+          <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: userAvailable===true?'#92B383':userAvailable===false?'#E07A5F':'transparent' }}>
+            {checkingUser ? '…' : userAvailable===true ? '✓' : userAvailable===false ? '✗' : ''}
           </div>
         </div>
-        {username.length>0&&username.length<3&&<div style={{ fontSize:11, color:'#9E8C7E', marginTop:5 }}>At least 3 characters</div>}
-        {usernameAvailable===true&&<div style={{ fontSize:11, color:'#5C7A4E', marginTop:5, fontWeight:700 }}>✓ Available!</div>}
-        {usernameAvailable===false&&<div style={{ fontSize:11, color:'#FF4D1C', marginTop:5, fontWeight:700 }}>✗ Already taken — try another</div>}
-        <div style={{ fontSize:11, color:'#9E8C7E', marginTop:6 }}>Letters, numbers, _ and . only. Cannot be changed later.</div>
+        {userAvailable===true && <div style={{ fontSize: 12, color: '#92B383', marginTop: 6 }}>Available</div>}
+        {userAvailable===false && <div style={{ fontSize: 12, color: '#E07A5F', marginTop: 6 }}>Already taken — try another</div>}
+        <div style={{ fontSize: 11, color: 'rgba(245,230,211,.25)', marginTop: 8 }}>Letters, numbers, _ and . only</div>
       </div>
 
-      {error&&<div style={S.err}>{error}</div>}
-
-      <button
-        onClick={handleOnboard}
-        disabled={!avatar||!username||username.length<3||!usernameAvailable||loading}
-        style={{
-          ...S.btn,
-          background:(!avatar||!username||username.length<3||!usernameAvailable||loading)?'#D8D0C8':'#FF4D1C',
-          cursor:(!avatar||!username||username.length<3||!usernameAvailable||loading)?'not-allowed':'pointer',
-        }}
-      >
-        {loading?'Setting up your profile…':'Start Cooking 🍳'}
-      </button>
-    </div>
-  );
-
-  // ── LOGIN SCREEN ───────────────────────────────────────────────────────
-  if (mode === 'login') return (
-    <div style={S.page}>
-      <Header/>
-      <div style={S.card}>
-        <div style={{ fontWeight:900, fontSize:18, color:'#3B2A1A', marginBottom:16 }}>Sign in</div>
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom:12 }}>
-            <label style={S.label}>Email</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" required style={S.input}/>
-          </div>
-          <div style={{ marginBottom:16 }}>
-            <label style={S.label}>Password</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" required style={S.input}/>
-          </div>
-          {error&&<div style={S.err}>{error}</div>}
-          {info&&<div style={S.ok}>{info}</div>}
-          <button type="submit" disabled={loading||!email||!password} style={{...S.btn,background:loading||!email||!password?'#D8D0C8':'#FF4D1C',cursor:loading||!email||!password?'not-allowed':'pointer'}}>
-            {loading?'Signing in…':'Sign In'}
-          </button>
-        </form>
-      </div>
-
-      <button onClick={()=>setMode('signup')} style={S.btnGrey}>
-        No account? Create one →
-      </button>
-    </div>
-  );
-
-  // ── SIGNUP SCREEN ──────────────────────────────────────────────────────
-  return (
-    <div style={S.page}>
-      <Header/>
-      <div style={S.card}>
-        <div style={{ fontWeight:900, fontSize:18, color:'#3B2A1A', marginBottom:16 }}>Create account</div>
-        <form onSubmit={handleSignup}>
-          <div style={{ marginBottom:12 }}>
-            <label style={S.label}>Email</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" required style={S.input}/>
-          </div>
-          <div style={{ marginBottom:16 }}>
-            <label style={S.label}>Password</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 6 characters" required style={S.input}/>
-          </div>
-          {error&&<div style={S.err}>{error}</div>}
-          <button type="submit" disabled={loading||!email||!password} style={{...S.btn,background:loading||!email||!password?'#D8D0C8':'#FF4D1C',cursor:loading||!email||!password?'not-allowed':'pointer',marginBottom:12}}>
-            {loading?'Creating account…':'Create Account →'}
-          </button>
-        </form>
-        <button onClick={()=>setMode('login')} style={S.btnGrey}>
-          Already have an account? Sign in
+      <Err msg={error}/>
+      <div className="fade4">
+        <button onClick={handleOnboard} disabled={!avatar||!username||username.length<3||!userAvailable||loading}
+          style={primaryBtn(!avatar||!username||username.length<3||!userAvailable||loading)}>
+          {loading ? 'Setting up your profile…' : 'Start cooking'}
         </button>
       </div>
-    </div>
+    </Wrap>
+  );
+
+  // ── RESET ────────────────────────────────────────────────────────────
+  if (mode === 'reset') return (
+    <Wrap>
+      <Logo/>
+      <div className="fade2" style={{ marginBottom: 28 }}>
+        <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#F5E6D3', marginBottom: 6 }}>Reset password</div>
+        <div style={{ fontSize: 14, color: 'rgba(245,230,211,.45)', lineHeight: 1.6 }}>Enter your email and we'll send you a link.</div>
+      </div>
+      <form onSubmit={handleReset} className="fade3">
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          onFocus={()=>setFocusedField('email')} onBlur={()=>setFocusedField('')}
+          placeholder="Email address" required
+          style={{ ...inputStyle('email'), marginBottom: 16 }}/>
+        <Err msg={error}/>
+        <Info msg={info}/>
+        <button type="submit" disabled={loading||!email} style={primaryBtn(loading||!email)}>
+          {loading ? 'Sending…' : 'Send reset link'}
+        </button>
+      </form>
+      <Divider label="or"/>
+      <button onClick={()=>setMode('login')} style={ghostBtn} className="fade4">Back to sign in</button>
+    </Wrap>
+  );
+
+  // ── SIGNUP ────────────────────────────────────────────────────────────
+  if (mode === 'signup') return (
+    <Wrap>
+      <Logo/>
+      <div className="fade2" style={{ marginBottom: 28 }}>
+        <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#F5E6D3', marginBottom: 6 }}>Create an account</div>
+        <div style={{ fontSize: 14, color: 'rgba(245,230,211,.45)' }}>Join the community of home cooks.</div>
+      </div>
+      <form onSubmit={handleSignup}>
+        <input className="fade2" type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          onFocus={()=>setFocusedField('email')} onBlur={()=>setFocusedField('')}
+          placeholder="Email address" required style={{ ...inputStyle('email'), marginBottom: 12 }}/>
+        <input className="fade3" type="password" value={password} onChange={e=>setPassword(e.target.value)}
+          onFocus={()=>setFocusedField('password')} onBlur={()=>setFocusedField('')}
+          placeholder="Password — at least 6 characters" required style={{ ...inputStyle('password'), marginBottom: 20 }}/>
+        <Err msg={error}/>
+        <button type="submit" disabled={loading||!email||!password} className="fade4" style={primaryBtn(loading||!email||!password)}>
+          {loading ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
+      <Divider label="already have an account"/>
+      <button onClick={()=>setMode('login')} style={ghostBtn}>Sign in</button>
+    </Wrap>
+  );
+
+  // ── LOGIN ────────────────────────────────────────────────────────────
+  return (
+    <Wrap>
+      <Logo/>
+      <div className="fade2" style={{ marginBottom: 28 }}>
+        <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#F5E6D3', marginBottom: 6 }}>Welcome back</div>
+        <div style={{ fontSize: 14, color: 'rgba(245,230,211,.45)' }}>Sign in to continue cooking.</div>
+      </div>
+      <form onSubmit={handleLogin}>
+        <input className="fade2" type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          onFocus={()=>setFocusedField('email')} onBlur={()=>setFocusedField('')}
+          placeholder="Email address" required style={{ ...inputStyle('email'), marginBottom: 12 }}/>
+        <input className="fade3" type="password" value={password} onChange={e=>setPassword(e.target.value)}
+          onFocus={()=>setFocusedField('password')} onBlur={()=>setFocusedField('')}
+          placeholder="Password" required style={{ ...inputStyle('password'), marginBottom: 8 }}/>
+        <div style={{ textAlign: 'right', marginBottom: 20 }}>
+          <button type="button" onClick={()=>setMode('reset')} style={{ background: 'none', border: 'none', color: 'rgba(196,129,74,.7)', fontSize: 13, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+            Forgot password?
+          </button>
+        </div>
+        <Err msg={error}/>
+        <Info msg={info}/>
+        <button type="submit" disabled={loading||!email||!password} className="fade4" style={primaryBtn(loading||!email||!password)}>
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+      <Divider label="new here"/>
+      <button onClick={()=>setMode('signup')} style={ghostBtn} className="fade4">Create an account</button>
+    </Wrap>
   );
 }

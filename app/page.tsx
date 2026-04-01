@@ -1534,7 +1534,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 }
 
 /* ═══ HOME TAB ════════════════════════════════════════════════════════════ */
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,signatureDish,hearts,hasFreeze,setHearts,setHasFreeze}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,signatureDish,hearts,hasFreeze,setHearts,setHasFreeze}){
 
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
@@ -1554,7 +1554,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
               <span style={{fontSize:16,opacity:.7}}>{goal.icon}</span>
             </div>
           </div>
-          <button onClick={onEditGoal} className="tap" style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:700}}>Edit Goal</button>
+
         </div>
         <div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:10,overflow:"hidden",marginBottom:5}}>
           <div style={{width:`${pct}%`,height:"100%",background:goalDone?C.gold:goal.color,borderRadius:99,transition:"width .9s cubic-bezier(.4,0,.2,1)"}}/>
@@ -1660,7 +1660,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:800,fontSize:14,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>{r.name}</div>
                 <div style={{display:"flex",gap:8,marginTop:4}}><span style={{fontSize:11,color:C.muted}}>⏱ {r.time}</span><DiffBadge level={r.difficulty}/></div>
-                {r.macros&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>🔥 {r.macros.calories} kcal · 💪 {r.macros.protein}g protein</div>}
+                {r.macros&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>{r.macros.calories} kcal · {r.macros.protein}g protein</div>}
               </div>
               {!r.done&&(
                 <div style={{background:`${C.flame}12`,borderRadius:12,padding:"6px 10px",flexShrink:0}}>
@@ -2692,7 +2692,7 @@ function HeartsBar({hearts,maxHearts=5,hasFreeze,onUseFreeze}){
 }
 
 /* ═══ PROFILE TAB ══════════════════════════════════════════════════════════ */
-function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,signatureDish,onShowSettings,onShowSignature,onShowCalendar,onShowYearReview,signOut,weeklyXp,challengeProgress}){
+function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,signatureDish,onShowSettings,onShowSignature,onShowCalendar,onShowYearReview,signOut,weeklyXp,challengeProgress,goal,onEditGoal}){
   const totalCooked = allRecipes.filter(r=>r.done).length;
   const uniqueCuisines = [...new Set(cookLog.map(e=>e.category).filter(Boolean))].length;
   const totalHeat = xp;
@@ -2739,8 +2739,24 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
         </div>
       </div>
 
-      {/* Rank progress */}
+      {/* Cooking Goal */}
       <div style={{margin:"16px 16px 0",background:C.cream,borderRadius:18,padding:"16px",border:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontWeight:800,fontSize:14,color:C.bark}}>Cooking Goal</div>
+          <button onClick={onEditGoal} className="tap" style={{background:`${C.flame}14`,border:`1.5px solid ${C.flame}30`,borderRadius:10,padding:"5px 12px",fontSize:12,fontWeight:700,color:C.flame,cursor:"pointer"}}>Change</button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:44,height:44,borderRadius:12,background:`${goal.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{goal.icon}</div>
+          <div>
+            <div style={{fontWeight:800,fontSize:15,color:C.bark}}>{goal.label}</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{goal.sub}</div>
+          </div>
+          <div style={{marginLeft:"auto",fontWeight:900,fontSize:20,color:goal.color}}>{goal.target}×/wk</div>
+        </div>
+      </div>
+
+      {/* Rank progress */}
+      <div style={{margin:"12px 16px 0",background:C.cream,borderRadius:18,padding:"16px",border:`1px solid ${C.border}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{fontWeight:800,fontSize:14,color:C.bark}}>Rank Progress</div>
           {levelInfo.next&&<div style={{fontSize:12,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</div>}
@@ -2807,106 +2823,133 @@ function SettingsSheet({user,profile,onClose,supabase,onProfileUpdate}){
   const [saving,setSaving]=useState(false);
   const [saved,setSaved]=useState(false);
   const [section,setSection]=useState("profile");
+  const [notifs,setNotifs]=useState({streaks:true,followers:true,mwah:true,challenges:false,recap:true});
 
-  const checkUsername=async(val:string)=>{
+  const checkUsername=async(val)=>{
     setUsername(val);setAvailable(null);
     if(val.length<3||val===profile?.username){setAvailable(val===profile?.username?true:null);return;}
     setChecking(true);
+    if(!supabase){setChecking(false);return;}
     const{data}=await supabase.from("profiles").select("id").eq("username",val.toLowerCase().trim()).single();
     setAvailable(!data);setChecking(false);
   };
 
   const handleSave=async()=>{
-    if(!user?.id)return;
+    if(!user?.id||!supabase)return;
     setSaving(true);
     const updates={avatar_url:avatar,updated_at:new Date().toISOString()};
-    if(username&&username!==profile?.username&&available){
+    if(username&&username!==profile?.username&&available===true){
       updates.username=username.toLowerCase().trim();
     }
-    await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});
-    onProfileUpdate({...profile,...updates});
-    setSaving(false);setSaved(true);
-    setTimeout(()=>setSaved(false),2500);
+    const{error}=await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});
+    if(!error){
+      onProfileUpdate({...profile,...updates});
+      setSaved(true);
+      setTimeout(()=>setSaved(false),2500);
+    }
+    setSaving(false);
   };
+
+  const tabStyle=(id)=>({
+    flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"8px 4px",
+    fontWeight:800,fontSize:11,
+    background:section===id?"#fff":"transparent",
+    color:section===id?C.bark:C.muted,
+    transition:"all .18s"
+  });
 
   return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 48px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>⚙️ Settings</div>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Settings</div>
           <CloseBtn onClose={onClose}/>
         </div>
 
-        {/* Section tabs */}
         <div style={{display:"flex",background:C.pill,borderRadius:14,padding:4,gap:4,marginBottom:20}}>
-          {[["profile","👤 Profile"],["notifications","🔔 Notifs"],["about","ℹ️ About"]].map(([id,lbl])=>(
-            <button key={id} onClick={()=>setSection(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"8px 4px",fontWeight:800,fontSize:11,background:section===id?"#fff":"transparent",color:section===id?C.bark:C.muted,transition:"all .18s"}}>{lbl}</button>
+          {[["profile","Profile"],["notifications","Notifications"],["about","About"]].map(([id,lbl])=>(
+            <button key={id} onClick={()=>setSection(id)} style={tabStyle(id)}>{lbl}</button>
           ))}
         </div>
 
         {section==="profile"&&(
-          <>
-            {/* Avatar picker */}
-            <div style={{marginBottom:20}}>
+          <div>
+            <div style={{marginBottom:18}}>
               <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".08em"}}>Avatar</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
                 {AVATARS.map(a=>(
-                  <button key={a} onClick={()=>setAvatar(a)} style={{fontSize:28,background:avatar===a?`${C.flame}18`:"#F0EBE6",border:`2px solid ${avatar===a?C.flame:"#EEE5DC"}`,borderRadius:12,padding:"8px 4px",cursor:"pointer",transition:"all .15s",aspectRatio:"1"}}>
-                    {a}
-                  </button>
+                  <button key={a} onClick={()=>setAvatar(a)} style={{
+                    fontSize:28,background:avatar===a?`${C.flame}18`:"#F0EBE6",
+                    border:`2px solid ${avatar===a?C.flame:"#EEE5DC"}`,
+                    borderRadius:12,padding:"8px 4px",cursor:"pointer",transition:"all .15s",aspectRatio:"1"
+                  }}>{a}</button>
                 ))}
               </div>
             </div>
 
-            {/* Username */}
             <div style={{marginBottom:20}}>
               <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".08em"}}>Username</div>
               <div style={{position:"relative"}}>
                 <input value={username} onChange={e=>checkUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g,""))} maxLength={20}
-                  style={{width:"100%",padding:"11px 40px 11px 14px",borderRadius:14,border:`2px solid ${available===true?C.sage:available===false?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box" as any}}/>
+                  style={{width:"100%",padding:"11px 40px 11px 14px",borderRadius:14,border:`2px solid ${available===true?C.sage:available===false?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
                 <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:16}}>
                   {checking?"⏳":available===true?"✅":available===false?"❌":""}
                 </div>
               </div>
               {available===false&&<div style={{fontSize:11,color:C.flame,marginTop:4}}>Username already taken</div>}
               {available===true&&username!==profile?.username&&<div style={{fontSize:11,color:C.sage,marginTop:4}}>✓ Available!</div>}
+              <div style={{fontSize:11,color:C.muted,marginTop:5}}>Letters, numbers, _ and . only</div>
             </div>
 
             {saved&&<div style={{background:`${C.sage}18`,border:`1.5px solid ${C.sage}33`,borderRadius:12,padding:"10px 14px",fontSize:13,color:C.sage,fontWeight:700,marginBottom:12}}>✓ Profile saved!</div>}
             <Btn onClick={handleSave} disabled={saving} full>{saving?"Saving…":"Save Changes"}</Btn>
-          </>
+          </div>
         )}
 
         {section==="notifications"&&(
           <div>
-            {[["Streak reminders","Get reminded to cook before your streak resets",true],["New followers","When someone follows you",true],["Mwah received","When someone mwahs your post",true],["Challenge updates","Progress updates on your challenges",false],["Weekly recap","Sunday summary of your cooking week",true]].map(([title,desc,def],i)=>{
-              const [on,setOn]=useState(def as boolean);
-              return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:i<4?`1px solid ${C.border}`:"none"}}>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{title as string}</div>
-                    <div style={{fontSize:12,color:C.muted,marginTop:2}}>{desc as string}</div>
-                  </div>
-                  <button onClick={()=>setOn(!on)} style={{width:44,height:26,borderRadius:13,background:on?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
-                    <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:on?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
-                  </button>
+            {[
+              ["streaks","Streak reminders","Get reminded before your streak resets"],
+              ["followers","New followers","When someone follows you"],
+              ["mwah","Mwah received","When someone mwahs your post"],
+              ["challenges","Challenge updates","Progress on your challenges"],
+              ["recap","Weekly recap","Sunday summary of your week"],
+            ].map(([key,title,desc],i,arr)=>(
+              <div key={key} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{title}</div>
+                  <div style={{fontSize:12,color:C.muted,marginTop:2}}>{desc}</div>
                 </div>
-              );
-            })}
+                <button onClick={()=>setNotifs(n=>({...n,[key]:!n[key]}))} style={{
+                  width:44,height:26,borderRadius:13,
+                  background:notifs[key]?C.sage:"#D8D0C8",
+                  border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0
+                }}>
+                  <div style={{
+                    width:20,height:20,borderRadius:"50%",background:"#fff",
+                    position:"absolute",top:3,left:notifs[key]?21:3,
+                    transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"
+                  }}/>
+                </button>
+              </div>
+            ))}
+            <div style={{marginTop:16}}>
+              <Btn onClick={onClose} full>Save Preferences</Btn>
+            </div>
           </div>
         )}
 
         {section==="about"&&(
           <div>
-            {[["Version","v9.0"],["Build","mise.en.place"],["Made with","🍳 + ❤️"],["Support","hello@misenplace.app"]].map(([k,v])=>(
-              <div key={k as string} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
-                <span style={{fontSize:14,color:C.muted}}>{k as string}</span>
-                <span style={{fontSize:14,fontWeight:700,color:C.bark}}>{v as string}</span>
+            {[["App","mise.en.place"],["Version","v9.0"],["Support","hello@misenplace.app"],["Made with","🍳 + ❤️"]].map(([k,v],i,arr)=>(
+              <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
+                <span style={{fontSize:14,color:C.muted}}>{k}</span>
+                <span style={{fontSize:14,fontWeight:700,color:C.bark}}>{v}</span>
               </div>
             ))}
-            <div style={{marginTop:20,padding:"14px",background:`${C.sky}0E`,borderRadius:14,border:`1.5px solid ${C.sky}28`}}>
-              <div style={{fontSize:12,color:C.sky,fontWeight:700,marginBottom:4}}>📖 Privacy & Terms</div>
-              <div style={{fontSize:12,color:C.muted,lineHeight:1.5}}>We only store your cooking activity and profile. We never sell your data. Your posts and recipes are yours.</div>
+            <div style={{marginTop:16,background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"13px 14px"}}>
+              <div style={{fontSize:12,color:C.sky,fontWeight:700,marginBottom:4}}>Privacy</div>
+              <div style={{fontSize:12,color:C.muted,lineHeight:1.55}}>We only store your cooking activity and profile info. We never sell your data. Your recipes and posts are always yours.</div>
             </div>
           </div>
         )}
@@ -3396,21 +3439,21 @@ export default function App(){
             <div style={{background:`${levelInfo.current.color}18`,border:`1.5px solid ${levelInfo.current.color}44`,borderRadius:10,padding:"4px 8px",fontSize:11,fontWeight:800,color:levelInfo.current.color,whiteSpace:"nowrap"}}>
               {levelInfo.current.icon} Lv.{levelInfo.current.level}
             </div>
-            <div onClick={()=>setShowGoal(true)} className="tap" style={{background:`linear-gradient(135deg,${goal.color},${goal.color}BB)`,borderRadius:12,padding:"6px 12px",color:"#fff",fontWeight:800,fontSize:13,boxShadow:`0 4px 12px ${goal.color}44`,cursor:"pointer",userSelect:"none",whiteSpace:"nowrap"}}>
+            <div style={{background:`linear-gradient(135deg,${goal.color},${goal.color}BB)`,borderRadius:12,padding:"6px 12px",color:"#fff",fontWeight:800,fontSize:13,boxShadow:`0 4px 12px ${goal.color}44`,whiteSpace:"nowrap"}}>
               {goal.icon} {weekDone}/{goal.target}
             </div>
           </div>
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
+          {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
           {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
           {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
-          {tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress}/>}
+          {tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
@@ -3435,7 +3478,7 @@ export default function App(){
       {showSignature&&<SignatureDishSheet allRecipes={allRecipes} signatureDish={signatureDish} onSelect={setSignatureDish} onClose={()=>setShowSignature(false)}/>}
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
-      {showSettings&&supabase&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>setWantToCook(w=>w.filter(x=>x!==id))} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
     </>
