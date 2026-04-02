@@ -4225,7 +4225,7 @@ export default function App(){
     <>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"opacity .35s,transform .35s",position:"fixed",top:0,left:0,right:0,bottom:0,overflow:"hidden"}}>
+      <div style={{fontFamily:BF,background:C.paper,maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"opacity .35s,transform .35s",minHeight:"100vh",maxWidth:420,margin:"0 auto"}}>
         {/* Header — no AI button */}
         <div style={{background:C.paper,padding:"12px 16px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`,width:"100%"}}>
           <div>
