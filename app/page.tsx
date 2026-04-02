@@ -1605,10 +1605,10 @@ function RecipeDetail({recipe,onBack,onComplete}){
               <button onClick={()=>{
                 const ings = (recipe.ingredients||[]);
                 setToast({emoji:"🛒",title:"Added to grocery list!",subtitle:`${ings.length} ingredients from ${recipe.name}`});
-              }} className="tap" style={{flex:1,padding:"10px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
+              }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
-              <Btn onClick={()=>setMode("cook")} style={{flex:2}} sm>Start Cooking</Btn>
+              <Btn onClick={()=>setMode("cook")} style={{flex:2}}>Start Cooking</Btn>
             </div>
             {recipe.tip&&<div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}55`,borderRadius:18,padding:"14px 18px",marginBottom:16}}><div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:6}}>💡 Chef's Tip</div><div style={{fontSize:13,color:"#6A5C52",lineHeight:1.65}}>{recipe.tip}</div></div>}
             {recipe.isImported&&recipe.sourceUrl&&(
@@ -4139,12 +4139,22 @@ export default function App(){
 
   const openRecipe=useCallback((recipe)=>{
     setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);
-    // Scroll to top when opening a recipe
+    // Push history state so Android back button works within app
+    window.history.pushState({recipe:true},'','');
     setTimeout(()=>{
       const el=document.querySelector('[data-scroll-area]');
       if(el) el.scrollTop=0;
     },10);
   },[allRecipes]);
+
+  // Handle Android/browser back button
+  useEffect(()=>{
+    const handlePop=()=>{
+      if(detailRecipe) setDetailRecipe(null);
+    };
+    window.addEventListener('popstate',handlePop);
+    return()=>window.removeEventListener('popstate',handlePop);
+  },[detailRecipe]);
 
   const toggleWantToCook=(recipeId:number)=>{
     setWantToCook(w=>w.includes(recipeId)?w.filter(id=>id!==recipeId):[...w,recipeId]);
@@ -4203,7 +4213,7 @@ export default function App(){
       <>
         <style>{CSS}</style>
         <div style={{maxWidth:420,margin:"0 auto",height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+          <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain"}}>
             <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c,rating)=>{handleComplete(r,p,c,rating);setDetailRecipe(null);}}/>
           </div>
         </div>
