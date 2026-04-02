@@ -1549,18 +1549,18 @@ function RecipeDetail({recipe,onBack,onComplete}){
           </div>
           <div style={{fontSize:24,fontWeight:900,color:"#fff",lineHeight:1.25,marginBottom:8,fontFamily:DF}}>{recipe.name}</div>
           <div style={{display:"flex",gap:16,color:"rgba(255,255,255,.65)",fontSize:13}}>
-            <span>⏱ {recipe.time}</span><span>🔥 {recipe.xp} Heat</span><span>📋 {(recipe.ingredients||[]).length} ingredients</span>
+            <span>{recipe.time}</span><span>{recipe.xp} Heat</span><span>{(recipe.ingredients||[]).length} ingredients</span>
           </div>
         </div>
       </div>
 
       <div style={{display:"flex",margin:"16px 16px 0",background:C.pill,borderRadius:14,padding:4,gap:4}}>
-        {[["overview","📋 Overview"],["cook","👨‍🍳 Cook Mode"]].map(([m,lbl])=>(
+        {[["overview","Overview"],["cook","Cook Mode"]].map(([m,lbl])=>(
           <button key={m} onClick={()=>setMode(m)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:mode===m?"#fff":"transparent",color:mode===m?C.bark:C.muted,boxShadow:mode===m?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
         ))}
       </div>
 
-      <div style={{padding:"16px 16px 140px"}}>
+      <div style={{padding:"16px 16px 200px"}}>
         {mode==="overview"?(
           <>
             {recipe.macros&&(
@@ -1600,13 +1600,18 @@ function RecipeDetail({recipe,onBack,onComplete}){
               ))}
             </div>
             <div style={{display:"flex",gap:10,marginBottom:12}}>
-              {/* Save for later button - uses parent recipe id */}
-              <Btn onClick={()=>setMode("cook")} style={{flex:2}} sm>👨‍🍳 Start Cooking</Btn>
+              <button onClick={()=>{
+                const ings = (recipe.ingredients||[]);
+                setToast({emoji:"🛒",title:"Added to grocery list!",subtitle:`${ings.length} ingredients from ${recipe.name}`});
+              }} className="tap" style={{flex:1,padding:"10px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
+                + Grocery List
+              </button>
+              <Btn onClick={()=>setMode("cook")} style={{flex:2}} sm>Start Cooking</Btn>
             </div>
             {recipe.tip&&<div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}55`,borderRadius:18,padding:"14px 18px",marginBottom:16}}><div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:6}}>💡 Chef's Tip</div><div style={{fontSize:13,color:"#6A5C52",lineHeight:1.65}}>{recipe.tip}</div></div>}
             {recipe.isImported&&recipe.sourceUrl&&(
               <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>🔗</span>
+                
                 <div>
                   <div style={{fontSize:12,fontWeight:700,color:C.sky}}>Imported from {recipe.sourceName}</div>
                   <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:C.muted,textDecoration:"underline"}}>View original recipe →</a>
@@ -1634,7 +1639,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
               {step<nSteps-1
                 ?<Btn onClick={()=>setStep(s=>s+1)} style={{flex:2}}>Next Step →</Btn>
                 :<Btn onClick={()=>!done&&handleComplete()} color={C.sage} style={{flex:2,background:done?C.sage:`linear-gradient(135deg,${C.sage},${C.moss})`}}>
-                  {done?"✓ Cooked!":`Complete · +${recipe.xp}xp 🎉`}
+                  {done?"Cooked!":`Complete · +${recipe.xp} Heat`}
                 </Btn>
               }
             </div>
@@ -1646,7 +1651,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
         <Sheet onClose={handleSkip}>
           <div style={{padding:"24px 20px 44px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>🎉 Dish complete!</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Add it to your cook library and share it</div></div>
+              <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Dish complete!</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Add it to your cook library and share it</div></div>
               <CloseBtn onClose={handleSkip}/>
             </div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center"}}>
@@ -1665,7 +1670,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
             </div>
             {!photoPreview
               ?<div onClick={()=>fileRef.current?.click()} style={{border:`3px dashed ${C.border}`,borderRadius:18,padding:"24px 20px",textAlign:"center",cursor:"pointer",background:C.cream,marginBottom:14}}>
-                <div style={{fontSize:36,marginBottom:8}}>📸</div>
+                <div style={{fontWeight:700,fontSize:14,color:C.muted,marginBottom:8}}>Add a photo</div>
                 <div style={{fontWeight:800,fontSize:14,color:C.bark,marginBottom:4}}>Add a photo</div>
                 <div style={{fontSize:12,color:C.muted}}>Saved to your cook library + shared with friends</div>
               </div>
@@ -1678,7 +1683,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
             <textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder="What happened? What worked? What would you change?" style={{width:"100%",minHeight:80,borderRadius:16,border:`2px solid ${caption?C.ember:C.border}`,background:C.cream,padding:"12px 16px",fontSize:14,color:C.bark,resize:"none",outline:"none",lineHeight:1.55,boxSizing:"border-box",marginBottom:14,transition:"border-color .18s"}}/>
             <div style={{display:"flex",gap:10}}>
               <Btn onClick={handleSkip} outline color={C.muted} style={{flex:1}}>Skip</Btn>
-              <Btn onClick={handlePost} color={C.sage} style={{flex:2}}>Save & Share 🚀</Btn>
+              <Btn onClick={handlePost} color={C.sage} style={{flex:2}}>Save & Share</Btn>
             </div>
           </div>
         </Sheet>
