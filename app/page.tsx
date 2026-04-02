@@ -4201,17 +4201,7 @@ export default function App(){
     </>
   );
 
-  if(detailRecipe){
-    const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;
-    return(
-      <>
-        <style>{CSS}</style>
-        <div style={{maxWidth:420,margin:"0 auto"}}>
-          <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c,rating)=>{handleComplete(r,p,c,rating);setDetailRecipe(null);}}/>
-        </div>
-      </>
-    );
-  }
+
 
   return(
     <>
@@ -4242,13 +4232,14 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
-          {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
-          {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
-          {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
-          {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
-          {tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
-          {tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}}/>;})()}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
+          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
+          {!detailRecipe&&tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
+          {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
+          {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
+          {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 env(safe-area-inset-bottom,12px)",zIndex:50,width:"100%"}}>
