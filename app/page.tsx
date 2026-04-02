@@ -1324,7 +1324,7 @@ const DiffBadge=({level})=>{const c={Easy:C.sage,Medium:C.ember,Hard:C.flame}[le
 const Chip=({label,color=C.muted,bg})=><span style={{fontSize:10,fontWeight:700,color,background:bg||`${color}18`,borderRadius:6,padding:"2px 8px",whiteSpace:"nowrap"}}>{label}</span>;
 const Sheet=({children,onClose})=>(
   <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-    <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"94vh",overflowY:"auto",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>{children}</div>
+    <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"92vh",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>{children}</div>
   </div>
 );
 const CloseBtn=({onClose})=><button onClick={onClose} style={{background:C.pill,border:"none",borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:18,color:C.muted,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>;
@@ -1532,7 +1532,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
   const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0);};
 
   return(
-    <div style={{background:C.paper,minHeight:"100vh"}}>
+    <div style={{background:C.paper,paddingBottom:30}}>
       <div style={{position:"relative",overflow:"hidden",background:`linear-gradient(160deg,${C.bark},#5A3520)`}}>
         {recipe.photo&&(
           <div style={{position:"relative",height:220,overflow:"hidden"}}>
@@ -1560,7 +1560,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
         ))}
       </div>
 
-      <div style={{padding:"16px 16px 100px"}}>
+      <div style={{padding:"16px 16px 140px"}}>
         {mode==="overview"?(
           <>
             {recipe.macros&&(
@@ -1696,7 +1696,7 @@ function ChallengeDetail({ch,progress,onBack,onInvite}){
   const nextM=ch.milestones.find(m=>m>prog);
   const friendData=[{name:"Sofia R.",avatar:"👩‍🍳",prog:Math.min(ch.target,prog+2)},{name:"Jake M.",avatar:"🧑‍🍳",prog:Math.min(ch.target,Math.floor(prog*0.6))}];
   return(
-    <div style={{background:C.paper,minHeight:"100vh"}}>
+    <div style={{background:C.paper}}>
       <div style={{background:`linear-gradient(160deg,${ch.color},${ch.dark})`,padding:"20px 20px 28px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",right:-10,top:-10,fontSize:120,opacity:.15,lineHeight:1}}>{ch.emoji}</div>
         <button onClick={onBack} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:18}}>← Back</button>
@@ -3748,7 +3748,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
   // Detail view
   if(selected){
     return(
-      <div style={{background:C.paper,minHeight:"100%"}}>
+      <div style={{background:C.paper}}>
         <div style={{position:"relative",height:280,overflow:"hidden",flexShrink:0}}>
           <img src={selected.photo} alt={selected.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
           <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.15),rgba(20,10,5,.85))"}}/>
@@ -4130,7 +4130,14 @@ export default function App(){
     checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,mwah:0});
   },[xp,allRecipes,cookedDays,skillData,challengeProgress,levelInfo,checkBadges]);
 
-  const openRecipe=useCallback((recipe)=>setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe),[allRecipes]);
+  const openRecipe=useCallback((recipe)=>{
+    setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);
+    // Scroll to top when opening a recipe
+    setTimeout(()=>{
+      const el=document.querySelector('[data-scroll-area]');
+      if(el) el.scrollTop=0;
+    },10);
+  },[allRecipes]);
 
   const toggleWantToCook=(recipeId:number)=>{
     setWantToCook(w=>w.includes(recipeId)?w.filter(id=>id!==recipeId):[...w,recipeId]);
@@ -4223,7 +4230,7 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{flex:"1 1 0",overflowY:"auto",overflowX:"hidden",paddingTop:84,paddingBottom:80,WebkitOverflowScrolling:"touch",minHeight:0}}>
+        <div data-scroll-area style={{flex:"1 1 0",overflowY:"auto",overflowX:"hidden",paddingTop:84,paddingBottom:80,WebkitOverflowScrolling:"touch",minHeight:0}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
