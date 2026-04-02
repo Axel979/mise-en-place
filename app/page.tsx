@@ -216,6 +216,7 @@ const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600;700&display=swap');
   *,*::before,*::after{box-sizing:border-box} body{margin:0;background:${C.paper};font-family:${BF}}
   ::-webkit-scrollbar{display:none}
+  [data-scroll-area]{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes pop{0%,100%{transform:scale(1)}45%{transform:scale(1.42)}}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -225,7 +226,8 @@ const CSS = `
   *{max-width:100%;box-sizing:border-box}
   img{max-width:100%;height:auto}
   ::-webkit-scrollbar{display:none}
-  html,body{height:100%;overflow:hidden;position:fixed;width:100%}
+  [data-scroll-area]{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+  html,body{height:100%;overflow:hidden}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
 `;
 
@@ -4211,7 +4213,7 @@ export default function App(){
     <>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"opacity .35s,transform .35s",position:"fixed",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{fontFamily:BF,background:C.paper,maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"opacity .35s,transform .35s",position:"fixed",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",overflow:"hidden",touchAction:"none"}}>
         {/* Header — no AI button */}
         <div style={{background:C.paper,padding:"12px 16px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`,width:"100%"}}>
           <div>
@@ -4235,7 +4237,7 @@ export default function App(){
           </div>
         </div>
 
-        <div data-scroll-area style={{flex:"1 1 0",overflowY:"auto",overflowX:"hidden",paddingTop:84,paddingBottom:80,WebkitOverflowScrolling:"touch",minHeight:0}}>
+        <div data-scroll-area style={{flex:"1 1 0",overflowY:"auto",overflowX:"hidden",paddingTop:84,paddingBottom:80,WebkitOverflowScrolling:"touch",minHeight:0,touchAction:"pan-y"}}>
           {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/>}
