@@ -4202,8 +4202,10 @@ export default function App(){
     return(
       <>
         <style>{CSS}</style>
-        <div style={{maxWidth:420,margin:"0 auto"}}>
-          <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c,rating)=>{handleComplete(r,p,c,rating);setDetailRecipe(null);}}/>
+        <div style={{maxWidth:420,margin:"0 auto",height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+            <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c,rating)=>{handleComplete(r,p,c,rating);setDetailRecipe(null);}}/>
+          </div>
         </div>
       </>
     );
