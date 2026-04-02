@@ -1602,9 +1602,8 @@ function RecipeDetail({recipe,onBack,onComplete}){
               }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
-              <Btn onClick={()=>setMode("cook")} style={{flex:2}}>Start Cooking</Btn>
             </div>
-            {recipe.tip&&<div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}55`,borderRadius:18,padding:"14px 18px",marginBottom:16}}><div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:6}}>💡 Chef's Tip</div><div style={{fontSize:13,color:"#6A5C52",lineHeight:1.65}}>{recipe.tip}</div></div>}
+            {recipe.tip&&<div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}55`,borderRadius:18,padding:"14px 18px",marginBottom:16}}><div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:6}}>Chef's Tip</div><div style={{fontSize:13,color:"#6A5C52",lineHeight:1.65}}>{recipe.tip}</div></div>}
             {recipe.isImported&&recipe.sourceUrl&&(
               <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
                 
@@ -1614,7 +1613,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
                 </div>
               </div>
             )}
-            {done?<div style={{textAlign:"center",padding:"12px",fontWeight:700,color:C.sage,fontSize:15}}>✓ Cooked! Great work.</div>:<Btn onClick={()=>setMode("cook")} full>Start Cooking 👨‍🍳</Btn>}
+            {done?<div style={{textAlign:"center",padding:"12px",fontWeight:700,color:C.sage,fontSize:15}}>Cooked!</div>:null}
           </>
         ):(
           <div>
@@ -1635,7 +1634,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
               {step<nSteps-1
                 ?<Btn onClick={()=>setStep(s=>s+1)} style={{flex:2}}>Next Step →</Btn>
                 :<Btn onClick={()=>!done&&handleComplete()} color={C.sage} style={{flex:2,background:done?C.sage:`linear-gradient(135deg,${C.sage},${C.moss})`}}>
-                  {done?"Cooked!":`Complete · +${recipe.xp} Heat`}
+                  {done?"Cooked!":"Complete"}
                 </Btn>
               }
             </div>
@@ -4019,7 +4018,7 @@ export default function App(){
     goal:3,
     progress:0,
     color:"#5C7A4E",
-    badge:{emoji:"🌟",label:"Foundations Master"},
+    badge:{emoji:"",label:"Foundations Master"},
   });
   const [notifications,setNotifications] = useState([
     {id:"n1", type:"mwah",      read:false, avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2m ago",  emoji:"🍳"},
