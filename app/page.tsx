@@ -1429,7 +1429,7 @@ function Onboarding({onComplete}){
   const screens=[
     ()=>(
       <div style={{padding:"40px 28px 36px",textAlign:"center"}}>
-        <div style={{fontSize:80,marginBottom:16}}>🍳</div>
+        <div style={{width:80,height:80,borderRadius:24,background:C.flame,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,margin:"0 auto 16px"}}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div>
         <div style={{fontWeight:900,fontSize:32,color:C.bark,fontFamily:DF,lineHeight:1.2,marginBottom:16}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
         <div style={{fontSize:15,color:"#6A5C52",lineHeight:1.7,marginBottom:32}}>Cook more. Level up your skills.<br/>Share the journey with friends.</div>
         <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:36,textAlign:"left"}}>
@@ -1445,7 +1445,7 @@ function Onboarding({onComplete}){
     ()=>(
       <div style={{padding:"28px 24px 36px"}}>
         <div style={{textAlign:"center",marginBottom:22}}>
-          <div style={{fontSize:44,marginBottom:10}}>🎯</div>
+          <div style={{width:52,height:52,borderRadius:16,background:`${C.flame}18`,border:`2px solid ${C.flame}33`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12,margin:"0 auto 12px"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
           <div style={{fontWeight:900,fontSize:24,color:C.bark,fontFamily:DF,marginBottom:8}}>How often will you cook?</div>
           <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Pick an honest goal. You can change this any time.</div>
         </div>
@@ -1468,12 +1468,12 @@ function Onboarding({onComplete}){
     ()=>(
       <div style={{padding:"28px 24px 36px"}}>
         <div style={{textAlign:"center",marginBottom:22}}>
-          <div style={{fontSize:44,marginBottom:10}}>👨‍🍳</div>
+          <div style={{width:52,height:52,borderRadius:16,background:`${C.sage}18`,border:`2px solid ${C.sage}33`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12,margin:"0 auto 12px"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
           <div style={{fontWeight:900,fontSize:24,color:C.bark,fontFamily:DF,marginBottom:8}}>How would you rate yourself?</div>
           <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Be honest — we'll match your challenges and recipes to your level.</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:28}}>
-          {[{id:"Beginner",label:"Beginner",sub:"I mostly stick to simple, familiar things",emoji:"🌱"},{id:"Home Cook",label:"Home Cook",sub:"I cook regularly and enjoy it",emoji:"🍳"},{id:"Intermediate",label:"Intermediate",sub:"I can tackle most recipes confidently",emoji:"👨‍🍳"},{id:"Advanced",label:"Advanced",sub:"I seek out complex techniques",emoji:"⭐"},{id:"Chef",label:"Chef-level",sub:"Professional or equivalent experience",emoji:"🏆"}].map(l=>{
+          {[{id:"Beginner",label:"Beginner",sub:"I mostly stick to simple, familiar things",emoji:""},{id:"Home Cook",label:"Home Cook",sub:"I cook regularly and enjoy it",emoji:"🍳"},{id:"Intermediate",label:"Intermediate",sub:"I can tackle most recipes confidently",emoji:"👨‍🍳"},{id:"Advanced",label:"Advanced",sub:"I seek out complex techniques",emoji:"⭐"},{id:"Chef",label:"Chef-level",sub:"Professional or equivalent experience",emoji:"🏆"}].map(l=>{
             const a=skill===l.id;
             return(
               <button key={l.id} className="tap" onClick={()=>setSkill(l.id)} style={{background:a?`${C.flame}12`:C.cream,border:`2px solid ${a?C.flame:C.border}`,borderRadius:16,padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,transition:"all .18s"}}>
@@ -1492,14 +1492,14 @@ function Onboarding({onComplete}){
         <div style={{fontSize:72,marginBottom:20}}></div>
         <div style={{fontWeight:900,fontSize:28,color:C.bark,fontFamily:DF,marginBottom:12}}>You're all set!</div>
         <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"20px",marginBottom:24,color:"#fff",textAlign:"left"}}>
-          {[["🎯 Goal",goal.label],["👨‍🍳 Level",skill],["🌱 Starting rank","Novice — build Heat as you cook"]].map(([k,v])=>(
+          {[["Goal",goal.label],["Skill",skill],["Starting rank","Prep Hand — build Heat as you cook"]].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
               <span style={{fontSize:13,opacity:.7}}>{k}</span><span style={{fontSize:13,fontWeight:700}}>{v}</span>
             </div>
           ))}
         </div>
         <div style={{fontSize:14,color:C.muted,lineHeight:1.7,marginBottom:28}}>Start with a challenge. Cook something. Post it to the feed. Build your cook library.</div>
-        <Btn onClick={()=>onComplete({goal,skill})} full style={{fontSize:16,padding:"15px"}}>Let's Cook 🍳</Btn>
+        <Btn onClick={()=>onComplete({goal,skill})} full style={{fontSize:16,padding:"15px"}}>Start Cooking</Btn>
       </div>
     ),
   ];
@@ -3496,13 +3496,142 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
 }
 
 /* ═══ SETTINGS SHEET ═══════════════════════════════════════════════════════ */
-/* ═══ SIDE DRAWER ═══════════════════════════════════════════════════════════ */
-function SideDrawer({user, profile, xp, levelInfo, goal, cookedDays, onClose, onShowCalendar, onShowRecap, onShowYearReview, onEditGoal, signOut, supabase, onProfileUpdate, onShowChallenges, setTab}){
-  const [section, setSection] = React.useState(null); // null | 'account' | 'privacy' | 'notifications' | 'cooking' | 'data'
+/* ═══ SIDE DRAWER SECTIONS ══════════════════════════════════════════════════ */
+function PrivacySettings({onBack}){
+  const [postVis, setPostVis] = useState('everyone');
+  const [profileVis, setProfileVis] = useState('everyone');
+  const [followers, setFollowers] = useState(true);
+  const opts = ["everyone","friends","only me"];
+  return(
+    <div>
+      <DrawerSectionHeader title="Privacy" onBack={onBack}/>
+      {[["Who can see your posts",postVis,setPostVis],["Who can see your profile",profileVis,setProfileVis]].map(([label,val,set])=>(
+        <div key={label} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
+          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>{label}</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {opts.map(o=>(
+              <button key={o} onClick={()=>set(o)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${val===o?C.flame:C.border}`,background:val===o?`${C.flame}12`:"transparent",color:val===o?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",textTransform:"capitalize"}}>{o}</button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 0"}}>
+        <div>
+          <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Allow followers</div>
+          <div style={{fontSize:11,color:C.muted}}>Let others follow your cooking activity</div>
+        </div>
+        <button onClick={()=>setFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:followers?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+        </button>
+      </div>
+      <div style={{marginTop:16}}><Btn onClick={onBack} full outline color={C.muted}>Save</Btn></div>
+    </div>
+  );
+}
+
+function NotificationSettings({onBack}){
+  const [notifs, setNotifs] = useState({streaks:true,mwah:true,followers:true,challenges:false,recap:true,newRecipes:false});
+  const [reminderTime, setReminderTime] = useState('18:00');
+  return(
+    <div>
+      <DrawerSectionHeader title="Notifications" onBack={onBack}/>
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Daily reminder time</div>
+        <input type="time" value={reminderTime} onChange={e=>setReminderTime(e.target.value)}
+          style={{padding:"8px 12px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit"}}/>
+      </div>
+      {[["streaks","Streak reminders","Before your streak resets"],["mwah","Mwah received","When someone mwahs your post"],["followers","New followers","When someone follows you"],["challenges","Challenge updates","Your challenge progress"],["recap","Weekly recap","Sunday cooking summary"],["newRecipes","New community recipes","Fresh from the community"]].map(([key,title,desc],i,arr)=>(
+        <div key={key} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{title}</div>
+            <div style={{fontSize:11,color:C.muted,marginTop:1}}>{desc}</div>
+          </div>
+          <button onClick={()=>setNotifs(n=>({...n,[key]:!n[key]}))} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:notifs[key]?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+          </button>
+        </div>
+      ))}
+      <div style={{marginTop:16}}><Btn onClick={onBack} full>Save</Btn></div>
+    </div>
+  );
+}
+
+function CookingPrefsSettings({onBack, goal, onEditGoal}){
+  const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
+  const skills = ["Beginner","Intermediate","Advanced","Chef"];
+  const [selectedDiet, setSelectedDiet] = useState("None");
+  const [selectedSkill, setSelectedSkill] = useState("Beginner");
+  return(
+    <div>
+      <DrawerSectionHeader title="Cooking Preferences" onBack={onBack}/>
+      <div style={{marginBottom:20}}>
+        <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {diets.map(d=><button key={d} onClick={()=>setSelectedDiet(d)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.sage:C.border}`,background:selectedDiet===d?`${C.sage}14`:"transparent",color:selectedDiet===d?C.sage:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>{d}</button>)}
+        </div>
+      </div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {skills.map(s=><button key={s} onClick={()=>setSelectedSkill(s)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.flame:C.border}`,background:selectedSkill===s?`${C.flame}14`:"transparent",color:selectedSkill===s?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>{s}</button>)}
+        </div>
+      </div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>Weekly cooking goal</div>
+        <button onClick={onEditGoal} style={{width:"100%",padding:"12px 14px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontWeight:600,fontSize:14,color:C.bark,fontFamily:"inherit"}}>
+          Current: {goal.label} ({goal.target}x / week) →
+        </button>
+      </div>
+      <Btn onClick={onBack} full>Save Preferences</Btn>
+    </div>
+  );
+}
+
+function DataSettings({onBack, signOut}){
+  return(
+    <div>
+      <DrawerSectionHeader title="Your Data" onBack={onBack}/>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {[["Export cook history","Download all your recipes and notes as CSV"],["Download my data","Get a copy of everything we store about you"]].map(([title,sub])=>(
+          <button key={title} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{title}</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{sub}</div>
+          </button>
+        ))}
+        <div style={{height:1,background:C.border}}/>
+        <button onClick={signOut} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
+          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently remove your account and all data</div>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DrawerSectionHeader({title, onBack}){
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.border}`}}>
+      <button onClick={onBack} style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:8,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>{title}</div>
+    </div>
+  );
+}
+
+/* ═══ SIDE DRAWER ════════════════════════════════════════════════════════════ */
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab}){
+  const [section, setSection] = useState(null);
   const weekDone = cookedDays.filter(Boolean).length;
 
-  const MenuItem = ({label, sub, onClick, right}) => (
-    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${C.border}`,background:"none",border:"none",cursor:"pointer",borderBottom:`1px solid ${C.border}`}}>
+  if(section==='account') return <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>;
+  if(section==='privacy') return <PrivacySettings onBack={()=>setSection(null)}/>;
+  if(section==='notifications') return <NotificationSettings onBack={()=>setSection(null)}/>;
+  if(section==='cooking') return <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onEditGoal();onClose();}}/>;
+  if(section==='data') return <DataSettings onBack={()=>setSection(null)} signOut={signOut}/>;
+
+  const MenuItem = ({label,sub,onClick})=>(
+    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",fontFamily:"inherit"}}>
       <div style={{textAlign:"left"}}>
         <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{label}</div>
         {sub&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{sub}</div>}
@@ -3511,204 +3640,29 @@ function SideDrawer({user, profile, xp, levelInfo, goal, cookedDays, onClose, on
     </button>
   );
 
-  const SectionHeader = ({title, onBack}) => (
-    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.border}`}}>
-      <button onClick={onBack} style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:8,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>{title}</div>
-    </div>
-  );
-
-  // ── ACCOUNT SETTINGS ──
-  if(section === 'account') return (
-    <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>
-  );
-
-  // ── PRIVACY SETTINGS ──
-  if(section === 'privacy'){
-    const [postVis, setPostVis] = React.useState('everyone');
-    const [profileVis, setProfileVis] = React.useState('everyone');
-    const [followers, setFollowers] = React.useState(true);
-    return(
-      <div>
-        <SectionHeader title="Privacy" onBack={()=>setSection(null)}/>
-        {[
-          {label:"Who can see your posts", val:postVis, set:setPostVis, opts:["everyone","friends","only me"]},
-          {label:"Who can see your profile", val:profileVis, set:setProfileVis, opts:["everyone","friends","only me"]},
-        ].map(({label,val,set,opts})=>(
-          <div key={label} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
-            <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>{label}</div>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {opts.map(o=>(
-                <button key={o} onClick={()=>set(o)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${val===o?C.flame:C.border}`,background:val===o?`${C.flame}12`:"transparent",color:val===o?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",textTransform:"capitalize"}}>
-                  {o}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 0"}}>
-          <div>
-            <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Allow followers</div>
-            <div style={{fontSize:11,color:C.muted}}>Let others follow your cooking activity</div>
-          </div>
-          <button onClick={()=>setFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:followers?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
-          </button>
-        </div>
-        <div style={{marginTop:16}}>
-          <Btn onClick={()=>setSection(null)} full outline color={C.muted}>Save Privacy Settings</Btn>
-        </div>
-      </div>
-    );
-  }
-
-  // ── NOTIFICATIONS SETTINGS ──
-  if(section === 'notifications'){
-    const [notifs, setNotifs] = React.useState({streaks:true,mwah:true,followers:true,challenges:false,recap:true,newRecipes:false});
-    const [reminderTime, setReminderTime] = React.useState('18:00');
-    return(
-      <div>
-        <SectionHeader title="Notifications" onBack={()=>setSection(null)}/>
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Cooking Reminders</div>
-          <div style={{background:C.cream,borderRadius:14,padding:"12px 14px",border:`1px solid ${C.border}`,marginBottom:10}}>
-            <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>Daily reminder time</div>
-            <input type="time" value={reminderTime} onChange={e=>setReminderTime(e.target.value)}
-              style={{padding:"8px 12px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit"}}/>
-          </div>
-        </div>
-        {[
-          ["streaks","Streak reminders","Before your streak resets"],
-          ["mwah","Mwah received","When someone mwahs your post"],
-          ["followers","New followers","When someone follows you"],
-          ["challenges","Challenge updates","Your challenge progress"],
-          ["recap","Weekly recap","Sunday cooking summary"],
-          ["newRecipes","New community recipes","Fresh recipes from the community"],
-        ].map(([key,title,desc],i,arr)=>(
-          <div key={key} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{title}</div>
-              <div style={{fontSize:11,color:C.muted,marginTop:1}}>{desc}</div>
-            </div>
-            <button onClick={()=>setNotifs(n=>({...n,[key]:!n[key]}))} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
-              <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:notifs[key]?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
-            </button>
-          </div>
-        ))}
-        <div style={{marginTop:16}}><Btn onClick={()=>setSection(null)} full>Save</Btn></div>
-      </div>
-    );
-  }
-
-  // ── COOKING PREFS ──
-  if(section === 'cooking'){
-    const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
-    const skills = ["Beginner","Intermediate","Advanced","Chef"];
-    const [selectedDiet, setSelectedDiet] = React.useState("None");
-    const [selectedSkill, setSelectedSkill] = React.useState("Beginner");
-    return(
-      <div>
-        <SectionHeader title="Cooking Preferences" onBack={()=>setSection(null)}/>
-        <div style={{marginBottom:20}}>
-          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            {diets.map(d=>(
-              <button key={d} onClick={()=>setSelectedDiet(d)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.sage:C.border}`,background:selectedDiet===d?`${C.sage}14`:"transparent",color:selectedDiet===d?C.sage:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>
-                {d}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{marginBottom:20}}>
-          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            {skills.map(s=>(
-              <button key={s} onClick={()=>setSelectedSkill(s)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.flame:C.border}`,background:selectedSkill===s?`${C.flame}14`:"transparent",color:selectedSkill===s?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{marginBottom:20}}>
-          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>Weekly cooking goal</div>
-          <button onClick={onEditGoal} style={{width:"100%",padding:"12px 14px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontWeight:600,fontSize:14,color:C.bark}}>
-            Current: {goal.label} ({goal.target}x / week) →
-          </button>
-        </div>
-        <Btn onClick={()=>setSection(null)} full>Save Preferences</Btn>
-      </div>
-    );
-  }
-
-  // ── DATA SETTINGS ──
-  if(section === 'data'){
-    return(
-      <div>
-        <SectionHeader title="Your Data" onBack={()=>setSection(null)}/>
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          <button style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left"}}>
-            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>Export cook history</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Download all your recipes and notes as CSV</div>
-          </button>
-          <button style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left"}}>
-            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>Download my data</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Get a copy of everything we store about you</div>
-          </button>
-          <div style={{height:1,background:C.border,margin:"4px 0"}}/>
-          <button onClick={signOut} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left"}}>
-            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently delete your account and all data</div>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── MAIN DRAWER ──
   return(
     <div>
       {/* Profile card */}
       <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"18px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:14}}>
         <AvatarIcon username={profile?.username||user?.email||"?"} size={52} fontSize={22}/>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-            {profile?.username||user?.email?.split("@")[0]||"Chef"}
-          </div>
-          <div style={{marginTop:4}}>
-            <span style={{background:levelInfo.current.color,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo.current.title}</span>
-          </div>
+          <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.username||user?.email?.split("@")[0]||"Chef"}</div>
+          <div style={{marginTop:4}}><span style={{background:levelInfo.current.color,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo.current.title}</span></div>
           <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:4}}>{xp} Heat earned</div>
         </div>
       </div>
 
       {/* Quick actions */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
-        {[
-          {label:"Streak Calendar",action:()=>{onShowCalendar();onClose();}},
-          {label:"Weekly Recap",action:()=>{onShowRecap();onClose();}},
-          {label:"Year in Review",action:()=>{onShowYearReview();onClose();}},
-          {label:"Challenges",action:()=>{setTab("challenges");onClose();}},
-        ].map(({label,action})=>(
-          <button key={label} onClick={action} style={{padding:"12px 10px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontSize:12,fontWeight:700,color:C.bark,textAlign:"center"}}>
-            {label}
-          </button>
+        {[["Streak Calendar",()=>{onShowCalendar();onClose();}],["Weekly Recap",()=>{onShowRecap();onClose();}],["Year in Review",()=>{onShowYearReview();onClose();}],["Challenges",()=>{setTab("challenges");onClose();}]].map(([label,action])=>(
+          <button key={label} onClick={action} style={{padding:"12px 10px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontSize:12,fontWeight:700,color:C.bark,textAlign:"center",fontFamily:"inherit"}}>{label}</button>
         ))}
       </div>
 
-      <div style={{height:1,background:C.border,marginBottom:8}}/>
+      <div style={{height:1,background:C.border,marginBottom:4}}/>
 
-      {/* Cooking goal */}
-      <button onClick={()=>{onEditGoal();}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",background:"none",border:"none",cursor:"pointer",borderBottom:`1px solid ${C.border}`}}>
-        <div style={{textAlign:"left"}}>
-          <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Cooking Goal</div>
-          <div style={{fontSize:11,color:C.muted,marginTop:1}}>{goal.label} — {weekDone}/{goal.target} this week</div>
-        </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+      <MenuItem label="Cooking Goal" sub={`${goal.label} — ${weekDone}/${goal.target} this week`} onClick={()=>{onEditGoal();}}/>
 
-      {/* Settings sections */}
       <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",margin:"14px 0 4px"}}>Settings</div>
       <MenuItem label="Account" sub="Email, password, username" onClick={()=>setSection('account')}/>
       <MenuItem label="Privacy" sub="Who can see your activity" onClick={()=>setSection('privacy')}/>
@@ -3724,15 +3678,13 @@ function SideDrawer({user, profile, xp, levelInfo, goal, cookedDays, onClose, on
         <span style={{fontSize:12,color:C.muted}}>mise.en.place</span>
         <span style={{fontSize:12,color:C.muted}}>v9.0</span>
       </div>
-
       <div style={{marginTop:8}}>
-        <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
-          Sign Out
-        </button>
+        <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>Sign Out</button>
       </div>
     </div>
   );
 }
+
 
 /* ═══ ACCOUNT SETTINGS ═══════════════════════════════════════════════════════ */
 function AccountSettings({onBack, user, profile, supabase, onProfileUpdate}){

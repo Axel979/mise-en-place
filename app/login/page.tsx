@@ -6,7 +6,8 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhal
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0';
 const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_KEY);
 
-const AVATARS = ['🧑‍🍳','👩‍🍳','🧔','👩‍🦱','👨‍🦰','👩‍🦰','🧑‍🦱','👴','👩','👨','🧒','👧'];
+const AVATAR_COLORS = ['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#FF4D1C','#CC2200','#4A7A8A','#8BAF78','#C4814A','#6B4A8A'];
+const AVATAR_LABELS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap');
@@ -275,8 +276,11 @@ function OnboardScreen() {
       <div className="f3" style={{marginBottom:24}}>
         <div style={{fontSize:11,color:'rgba(245,230,211,.3)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:10}}>Avatar</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:8}}>
-          {AVATARS.map(a=>(
-            <button key={a} onClick={()=>setAvatar(a)} className={`avatar-btn${avatar===a?' selected':''}`}>{a}</button>
+          {AVATAR_COLORS.map((color,i)=>(
+            <button key={color} onClick={()=>setAvatar(color)}
+              style={{background:color,border:`2.5px solid ${avatar===color?'#fff':'transparent'}`,borderRadius:14,aspectRatio:'1',cursor:'pointer',transition:'all .15s',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:avatar===color?`0 0 0 3px ${color}55`:'none',fontWeight:800,fontSize:16,color:'#fff',fontFamily:"'Playfair Display',Georgia,serif",padding:0,width:'100%'}}>
+              {AVATAR_LABELS[i]}
+            </button>
           ))}
         </div>
       </div>
