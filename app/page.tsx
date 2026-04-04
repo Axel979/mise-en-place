@@ -1303,11 +1303,11 @@ const SEED_POSTS = [
 ];
 
 const STREAK_GOALS=[
-  {id:"daily",  label:"Every day",   sub:"Full commitment",              icon:"🔥",target:7,color:C.flame},
-  {id:"5x",     label:"5× a week",   sub:"Weekday warrior",              icon:"💪",target:5,color:C.ember},
-  {id:"3x",     label:"3× a week",   sub:"Balanced, sustainable",        icon:"🌿",target:3,color:C.sage},
-  {id:"weekend",label:"Weekends",    sub:"Relaxed weekend cooking",      icon:"☀️",target:2,color:C.gold},
-  {id:"weekly", label:"Once a week", sub:"Busy schedule — no pressure",  icon:"🗓️",target:1,color:C.sky},
+  {id:"daily",  label:"Every day",   sub:"Full commitment",              icon:"",target:7,color:C.flame},
+  {id:"5x",     label:"5× a week",   sub:"Weekday warrior",              icon:"",target:5,color:C.ember},
+  {id:"3x",     label:"3× a week",   sub:"Balanced, sustainable",        icon:"",target:3,color:C.sage},
+  {id:"weekend",label:"Weekends",    sub:"Relaxed weekend cooking",      icon:"",target:2,color:C.gold},
+  {id:"weekly", label:"Once a week", sub:"Busy schedule — no pressure",  icon:"",target:1,color:C.sky},
 ];
 const WEEK_LABELS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const fmt=s=>s>=3600?`${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`:s>=60?`${Math.floor(s/60)}m ${s%60}s`:`${s}s`;
@@ -1426,75 +1426,116 @@ function Onboarding({onComplete}){
   const [skill,setSkill]=useState("Home Cook");
   const [goal,setGoal]=useState(STREAK_GOALS[2]);
   const next=()=>setStep(s=>s+1);
+
+  const FEATURES=[
+    ["Cooking challenges — solo or with friends"],
+    ["Strava-style social feed — share your dishes"],
+    ["Heat and rank system — level up as you cook"],
+    ["200+ recipes — beginner to advanced"],
+    ["Streak goals that fit your real life"],
+  ];
+
+  const SKILLS=[
+    {id:"Beginner",     label:"Beginner",     sub:"I mostly stick to simple, familiar things"},
+    {id:"Home Cook",    label:"Home Cook",     sub:"I cook regularly and enjoy it"},
+    {id:"Intermediate", label:"Intermediate",  sub:"I can tackle most recipes confidently"},
+    {id:"Advanced",     label:"Advanced",      sub:"I seek out complex techniques"},
+    {id:"Chef",         label:"Chef-level",    sub:"Professional or equivalent experience"},
+  ];
+
+  const IconBox = ({color, children}) => (
+    <div style={{width:52,height:52,borderRadius:16,background:`${color}18`,border:`2px solid ${color}33`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
+      {children}
+    </div>
+  );
+
   const screens=[
     ()=>(
       <div style={{padding:"40px 28px 36px",textAlign:"center"}}>
-        <div style={{width:80,height:80,borderRadius:24,background:C.flame,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,margin:"0 auto 16px"}}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div>
-        <div style={{fontWeight:900,fontSize:32,color:C.bark,fontFamily:DF,lineHeight:1.2,marginBottom:16}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
-        <div style={{fontSize:15,color:"#6A5C52",lineHeight:1.7,marginBottom:32}}>Cook more. Level up your skills.<br/>Share the journey with friends.</div>
-        <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:36,textAlign:"left"}}>
-          {[["🏃","Cooking challenges — solo or with friends"],["📸","Strava-style feed — share your dishes"],["📈","Level up skills as you cook"],["📚","A library of everything you've ever cooked"],["🔥","Streak goals that fit your real life"]].map(([e,t])=>(
-            <div key={t} style={{display:"flex",alignItems:"center",gap:14,background:C.cream,borderRadius:14,padding:"12px 16px",border:`1px solid ${C.border}`}}>
-              <span style={{fontSize:20,flexShrink:0}}>{e}</span><span style={{fontSize:14,color:C.bark,fontWeight:600}}>{t}</span>
+        <IconBox color={C.flame}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </IconBox>
+        <div style={{fontWeight:900,fontSize:30,color:C.bark,fontFamily:DF,lineHeight:1.2,marginBottom:12}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
+        <div style={{fontSize:14,color:"#6A5C52",lineHeight:1.7,marginBottom:28}}>Cook more. Level up. Share the journey.</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:32,textAlign:"left"}}>
+          {FEATURES.map(([t])=>(
+            <div key={t} style={{display:"flex",alignItems:"center",gap:12,background:C.cream,borderRadius:12,padding:"11px 14px",border:`1px solid ${C.border}`}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:C.flame,flexShrink:0}}/>
+              <span style={{fontSize:14,color:C.bark,fontWeight:600}}>{t}</span>
             </div>
           ))}
         </div>
-        <Btn onClick={next} full style={{fontSize:16,padding:"15px"}}>Get Started →</Btn>
+        <Btn onClick={next} full style={{fontSize:16,padding:"15px"}}>Get Started</Btn>
       </div>
     ),
     ()=>(
       <div style={{padding:"28px 24px 36px"}}>
-        <div style={{textAlign:"center",marginBottom:22}}>
-          <div style={{width:52,height:52,borderRadius:16,background:`${C.flame}18`,border:`2px solid ${C.flame}33`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12,margin:"0 auto 12px"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-          <div style={{fontWeight:900,fontSize:24,color:C.bark,fontFamily:DF,marginBottom:8}}>How often will you cook?</div>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <IconBox color={C.flame}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </IconBox>
+          <div style={{fontWeight:900,fontSize:24,color:C.bark,fontFamily:DF,marginBottom:6}}>How often will you cook?</div>
           <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Pick an honest goal. You can change this any time.</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
           {STREAK_GOALS.map(g=>{
             const a=goal.id===g.id;
             return(
-              <button key={g.id} className="tap" onClick={()=>setGoal(g)} style={{background:a?`${g.color}14`:C.cream,border:`2px solid ${a?g.color:C.border}`,borderRadius:16,padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,transition:"all .18s"}}>
-                <div style={{width:44,height:44,borderRadius:12,background:a?g.color:`${g.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{g.icon}</div>
-                <div style={{flex:1}}><div style={{fontWeight:900,fontSize:14,color:C.bark}}>{g.label}</div><div style={{fontSize:12,color:C.muted}}>{g.sub}</div></div>
-                <div style={{fontWeight:900,fontSize:17,color:a?g.color:C.muted,flexShrink:0,textAlign:"right"}}>{g.target}×/wk</div>
+              <button key={g.id} className="tap" onClick={()=>setGoal(g)} style={{background:a?`${g.color}14`:C.cream,border:`2px solid ${a?g.color:C.border}`,borderRadius:16,padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .18s",fontFamily:"inherit"}}>
+                <div style={{width:40,height:40,borderRadius:10,background:a?g.color:`${g.color}22`,flexShrink:0}}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{g.label}</div>
+                  <div style={{fontSize:12,color:C.muted}}>{g.sub}</div>
+                </div>
+                <div style={{fontWeight:800,fontSize:15,color:a?g.color:C.muted,flexShrink:0}}>{g.target}×/wk</div>
                 {a&&<div style={{width:20,height:20,borderRadius:"50%",background:g.color,color:"#fff",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✓</div>}
               </button>
             );
           })}
         </div>
-        <Btn onClick={next} full>Continue →</Btn>
+        <Btn onClick={next} full>Continue</Btn>
       </div>
     ),
     ()=>(
       <div style={{padding:"28px 24px 36px"}}>
-        <div style={{textAlign:"center",marginBottom:22}}>
-          <div style={{width:52,height:52,borderRadius:16,background:`${C.sage}18`,border:`2px solid ${C.sage}33`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12,margin:"0 auto 12px"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
-          <div style={{fontWeight:900,fontSize:24,color:C.bark,fontFamily:DF,marginBottom:8}}>How would you rate yourself?</div>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <IconBox color={C.sage}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </IconBox>
+          <div style={{fontWeight:900,fontSize:24,color:C.bark,fontFamily:DF,marginBottom:6}}>What's your cooking level?</div>
           <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Be honest — we'll match your challenges and recipes to your level.</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:28}}>
-          {[{id:"Beginner",label:"Beginner",sub:"I mostly stick to simple, familiar things",emoji:""},{id:"Home Cook",label:"Home Cook",sub:"I cook regularly and enjoy it",emoji:"🍳"},{id:"Intermediate",label:"Intermediate",sub:"I can tackle most recipes confidently",emoji:"👨‍🍳"},{id:"Advanced",label:"Advanced",sub:"I seek out complex techniques",emoji:"⭐"},{id:"Chef",label:"Chef-level",sub:"Professional or equivalent experience",emoji:"🏆"}].map(l=>{
+          {SKILLS.map(l=>{
             const a=skill===l.id;
             return(
-              <button key={l.id} className="tap" onClick={()=>setSkill(l.id)} style={{background:a?`${C.flame}12`:C.cream,border:`2px solid ${a?C.flame:C.border}`,borderRadius:16,padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,transition:"all .18s"}}>
-                <span style={{fontSize:26}}>{l.emoji}</span>
-                <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:C.bark}}>{l.label}</div><div style={{fontSize:12,color:C.muted}}>{l.sub}</div></div>
+              <button key={l.id} className="tap" onClick={()=>setSkill(l.id)} style={{background:a?`${C.flame}12`:C.cream,border:`2px solid ${a?C.flame:C.border}`,borderRadius:16,padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .18s",fontFamily:"inherit"}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:a?C.flame:"#D8D0C8",flexShrink:0,transition:"background .18s"}}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{l.label}</div>
+                  <div style={{fontSize:12,color:C.muted}}>{l.sub}</div>
+                </div>
                 {a&&<div style={{width:20,height:20,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✓</div>}
               </button>
             );
           })}
         </div>
-        <Btn onClick={next} full>Continue →</Btn>
+        <Btn onClick={next} full>Continue</Btn>
       </div>
     ),
     ()=>(
       <div style={{textAlign:"center",padding:"40px 28px"}}>
-        <div style={{fontSize:72,marginBottom:20}}></div>
+        <IconBox color={C.sage}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </IconBox>
         <div style={{fontWeight:900,fontSize:28,color:C.bark,fontFamily:DF,marginBottom:12}}>You're all set!</div>
         <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"20px",marginBottom:24,color:"#fff",textAlign:"left"}}>
-          {[["Goal",goal.label],["Skill",skill],["Starting rank","Prep Hand — build Heat as you cook"]].map(([k,v])=>(
-            <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
-              <span style={{fontSize:13,opacity:.7}}>{k}</span><span style={{fontSize:13,fontWeight:700}}>{v}</span>
+          {[["Goal",goal.label],["Skill level",skill],["Starting rank","Prep Hand"]].map(([k,v])=>(
+            <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
+              <span style={{fontSize:13,opacity:.6}}>{k}</span>
+              <span style={{fontSize:13,fontWeight:700}}>{v}</span>
             </div>
           ))}
         </div>
@@ -1503,15 +1544,17 @@ function Onboarding({onComplete}){
       </div>
     ),
   ];
+
   const S=screens[step];
   const pct=(step+1)/4;
   return(
     <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto"}}>
-      {step>0&&<div style={{padding:"20px 24px 0"}}><div style={{background:"#E8DDD4",borderRadius:99,height:5,overflow:"hidden"}}><div style={{width:`${pct*100}%`,height:"100%",background:C.flame,borderRadius:99,transition:"width .4s ease"}}/></div></div>}
+      {step>0&&<div style={{padding:"20px 24px 0"}}><div style={{background:"#E8DDD4",borderRadius:99,height:4,overflow:"hidden"}}><div style={{width:`${pct*100}%`,height:"100%",background:C.flame,borderRadius:99,transition:"width .4s ease"}}/></div></div>}
       <S/>
     </div>
   );
 }
+
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
 function RecipeDetail({recipe,onBack,onComplete}){
@@ -1873,7 +1916,7 @@ function ChallengesTab({challengeProgress,onInvite}){
 }
 
 /* ═══ COOK LIBRARY ════════════════════════════════════════════════════════ */
-function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSignature}){
+function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar}){
   const [filter,setFilter]=useState("all");
   const [sort,setSort]=useState("recent");
   const [libTab,setLibTab]=useState("log"); // log | badges
@@ -2511,7 +2554,7 @@ function GoalPicker({goal,onSelect,onClose}){
             const a=goal.id===g.id;
             return(
               <button key={g.id} className="tap" onClick={()=>onSelect(g)} style={{background:a?`${g.color}14`:C.cream,border:`2px solid ${a?g.color:C.border}`,borderRadius:18,padding:"15px 18px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .18s"}}>
-                <div style={{width:48,height:48,borderRadius:14,background:a?g.color:`${g.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{g.icon}</div>
+                <div style={{width:48,height:48,borderRadius:14,background:a?g.color:`${g.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}></div>
                 <div style={{flex:1}}><div style={{fontWeight:900,fontSize:15,color:C.bark}}>{g.label}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{g.sub}</div></div>
                 <div style={{textAlign:"right",flexShrink:0}}><div style={{fontWeight:900,fontSize:20,color:a?g.color:C.muted}}>{g.target}×</div><div style={{fontSize:10,color:C.muted}}>/week</div></div>
                 {a&&<div style={{width:22,height:22,borderRadius:"50%",background:g.color,color:"#fff",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✓</div>}
@@ -4359,7 +4402,7 @@ export default function App(){
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
-      {showSignature&&<SignatureDishSheet allRecipes={allRecipes} onSelect={setSignatureDish} onClose={()=>setShowSignature(false)}/>}
+
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
       {showDrawer&&(
