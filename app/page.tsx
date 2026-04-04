@@ -220,6 +220,8 @@ const CSS = `
   @keyframes pop{0%,100%{transform:scale(1)}45%{transform:scale(1.42)}}
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+  @keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  @keyframes slideRight{from{transform:translateX(100%)}to{transform:none}}
   @keyframes levelUp{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
   .ch:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(0,0,0,.11)!important}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
@@ -229,15 +231,15 @@ const CSS = `
 // Infinite rank system — ranks repeat with multiplying thresholds
 // You can drop ranks if inactive (weekly activity required above Rank 5)
 const BASE_RANKS = [
-  {title:"Prep Hand",     icon:"🌱", color:"#8BAF78", minDishes:0   },
-  {title:"Home Cook",     icon:"🍳", color:"#FF8C42", minDishes:10  },
-  {title:"Line Cook",     icon:"🔪", color:"#4A90D9", minDishes:25  },
-  {title:"Demi Chef",     icon:"🍲", color:"#9B5DE5", minDishes:50  },
-  {title:"Sous Chef",     icon:"👨‍🍳", color:"#E05C7A", minDishes:100 },
-  {title:"Chef de Partie",icon:"⭐", color:"#F5C842", minDishes:200 },
-  {title:"Head Chef",     icon:"👑", color:"#FF4D1C", minDishes:500 },
-  {title:"Exec Chef",     icon:"🔥", color:"#CC2200", minDishes:1000},
-  {title:"Legend",        icon:"💎", color:"#4A90D9", minDishes:2000},
+  {title:"Prep Hand",     icon:"", color:"#9E8C7E", minDishes:0   },
+  {title:"Home Cook",     icon:"", color:"#FF8C42", minDishes:10  },
+  {title:"Line Cook",     icon:"", color:"#4A90D9", minDishes:25  },
+  {title:"Demi Chef",     icon:"", color:"#5C7A4E", minDishes:50  },
+  {title:"Sous Chef",     icon:"", color:"#9B5DE5", minDishes:100 },
+  {title:"Chef de Partie",icon:"", color:"#F5C842", minDishes:200 },
+  {title:"Head Chef",     icon:"", color:"#E05C7A", minDishes:500 },
+  {title:"Exec Chef",     icon:"", color:"#CC2200", minDishes:1000},
+  {title:"Legend",        icon:"", color:"#1A237E", minDishes:2000},
 ];
 
 function getRankInfo(totalCooked, weeklyActive=true){
@@ -256,7 +258,7 @@ function getRankInfo(totalCooked, weeklyActive=true){
 }
 
 // Keep getLevelInfo as alias using xp (100xp ≈ 1 dish)
-const LEVELS = BASE_RANKS.map((r,i)=>({level:i+1,title:r.title,icon:r.icon,color:r.color,minXp:r.minDishes*60}));
+const LEVELS = BASE_RANKS.map((r,i)=>({level:i+1,title:r.title,icon:"",color:r.color,minXp:r.minDishes*60}));
 function getLevelInfo(xp){
   const dishes = Math.floor(xp/60);
   const info = getRankInfo(dishes, true);
@@ -1296,7 +1298,7 @@ const LEADERBOARD = [
 const SEED_POSTS = [
   {id:"p1",user:{name:"Sofia R.",  avatar:"👩‍🍳",level:"Sous Chef"},  recipe:"Beef Bourguignon",  emoji:"🥩",photo:null,caption:"Three hours of love. Look at that colour 🤤 So worth it #sundaycooking",                   time:"2h ago", mwah:14,myMwah:false,comments:[{user:"Jake M.",text:"This is insane 🔥"},{user:"Priya K.",text:"Recipe?? 👀"}]},
   {id:"p2",user:{name:"Jake M.",   avatar:"🧑‍🍳",level:"Home Cook"}, recipe:"Sourdough Focaccia", emoji:"🍞",photo:null,caption:"Finally nailed the dimples after 4 attempts. Sea salt flakes are everything 🤌",         time:"5h ago", mwah:22,myMwah:false,comments:[{user:"Sofia R.",text:"The crust looks perfect 😍"}]},
-  {id:"p3",user:{name:"Priya K.",  avatar:"👩‍🦱",level:"Intermediate"},recipe:"Miso Ramen",        emoji:"🍜",photo:null,caption:"Homemade tonkotsu broth. 6 hours. My entire flat smells incredible ✨",                    time:"1d ago", mwah:31,myMwah:false,comments:[{user:"Jake M.",text:"6 hours! Absolute legend"},{user:"Marcus T.",text:"Recipe please 🙏"}]},
+  {id:"p3",user:{name:"Priya K.",  avatar:"👩‍🦱",level:"Intermediate"},recipe:"Miso Ramen",        emoji:"🍜",photo:null,caption:"Homemade tonkotsu broth. 6 hours. My entire flat smells incredible ",                    time:"1d ago", mwah:31,myMwah:false,comments:[{user:"Jake M.",text:"6 hours! Absolute legend"},{user:"Marcus T.",text:"Recipe please 🙏"}]},
   {id:"p4",user:{name:"Marcus T.", avatar:"🧔",  level:"Advanced"},   recipe:"Tarte Tatin",        emoji:"🥧",photo:null,caption:"Third attempt at this. Caramelisation is a discipline. Finally nailed it. #persistence",  time:"2d ago", mwah:19,myMwah:false,comments:[{user:"Priya K.",text:"That colour is everything 🙌"}]},
 ];
 
@@ -1487,7 +1489,7 @@ function Onboarding({onComplete}){
     ),
     ()=>(
       <div style={{textAlign:"center",padding:"40px 28px"}}>
-        <div style={{fontSize:72,marginBottom:20}}>🎉</div>
+        <div style={{fontSize:72,marginBottom:20}}></div>
         <div style={{fontWeight:900,fontSize:28,color:C.bark,fontFamily:DF,marginBottom:12}}>You're all set!</div>
         <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"20px",marginBottom:24,color:"#fff",textAlign:"left"}}>
           {[["🎯 Goal",goal.label],["👨‍🍳 Level",skill],["🌱 Starting rank","Novice — build Heat as you cook"]].map(([k,v])=>(
@@ -1650,7 +1652,7 @@ function RecipeDetail({recipe,onBack,onComplete}){
               <CloseBtn onClose={handleSkip}/>
             </div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center"}}>
-              <span style={{fontSize:36}}>{recipe.emoji}</span>
+              <AvatarIcon username={recipe.name} size={44} fontSize={18}/>
               <div><div style={{fontWeight:900,fontSize:16,color:"#fff"}}>{recipe.name}</div><div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginTop:2}}>+{recipe.xp} 🔥 Heat earned</div></div>
             </div>
             {/* Star rating */}
@@ -1918,10 +1920,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
             <div style={{fontSize:18,marginBottom:2}}></div>
             <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Streak Calendar</div>
           </button>
-          <button onClick={onShowSignature} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"10px 8px",cursor:"pointer",textAlign:"center"}}>
-            <div style={{fontSize:18,marginBottom:2}}>🍳</div>
-            <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Signature Dish</div>
-          </button>
+
         </div>
       )}
 
@@ -2009,7 +2008,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onShowSigna
                       </div>
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
-                      {entry.rating>0&&<div style={{fontSize:13}}>{["","⭐","⭐⭐","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐⭐⭐⭐"][entry.rating]}</div>}
+                      {entry.rating>0&&<div style={{fontSize:13}}>{entry.rating > 0 ? Array.from({length:entry.rating}).map((_,i)=><svg key={i} width="12" height="12" viewBox="0 0 24 24" fill="#F5C842" stroke="#F5C842" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>) : null}</div>}
                       <div style={{fontSize:11,fontWeight:700,color:C.sage,marginTop:2}}>+{entry.xp} 🔥 Heat</div>
                     </div>
                   </div>
@@ -2118,14 +2117,14 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
       {/* Level progress */}
       <div style={{margin:"0 16px 20px",background:C.cream,borderRadius:16,padding:"14px 16px",border:`1px solid ${C.border}`}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
-          <div style={{width:44,height:44,borderRadius:"50%",background:`${levelInfo.current.color}18`,border:`2px solid ${levelInfo.current.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{levelInfo.current.icon}</div>
+          <div style={{width:44,height:44,borderRadius:"50%",background:`${levelInfo.current.color}18`,border:`2px solid ${levelInfo.current.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}></div>
           <div style={{flex:1}}>
             <div style={{display:"flex",justifyContent:"space-between"}}>
               <span style={{fontWeight:800,fontSize:14,color:C.bark}}>Lv.{levelInfo.current.level} · {levelInfo.current.title}</span>
               {levelInfo.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 Heat</span>}
             </div>
             <div style={{marginTop:6}}><XPBar pct={levelInfo.pct} color={levelInfo.current.color} h={7}/></div>
-            {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>Next: {levelInfo.next.title} {levelInfo.next.icon}</div>}
+            {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>Next: {levelInfo.next.title} </div>}
           </div>
         </div>
       </div>
@@ -2134,13 +2133,13 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
       <div style={{padding:"0 16px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Following</div>
-          <button onClick={onAddFriends} className="tap" style={{background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:12,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:12,color:C.sage}}>👥 Add Friends</button>
+          <button onClick={onAddFriends} className="tap" style={{background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:12,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:12,color:C.sage}}>Add Friends</button>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:20}}>
           {posts.map((post,idx)=>(
             <div key={post.id} style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,animation:`fadeUp .35s ease ${idx*.06}s both`,boxShadow:"0 2px 14px rgba(0,0,0,.06)"}}>
               <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:42,height:42,borderRadius:13,background:`${C.ember}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{post.user.avatar}</div>
+                <div style={{width:42,height:42,borderRadius:13,background:`${C.ember}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}><AvatarIcon username={post.user.name} size={36} fontSize={15}/></div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{post.user.name}</div>
                   <div style={{fontSize:11,color:C.muted}}>{post.user.level} · {post.time}</div>
@@ -2195,7 +2194,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 }
 
 /* ═══ HOME TAB ════════════════════════════════════════════════════════════ */
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,signatureDish,hearts,hasFreeze,setHearts,setHasFreeze}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze}){
 
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
@@ -2220,7 +2219,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         <div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:10,overflow:"hidden",marginBottom:5}}>
           <div style={{width:`${pct}%`,height:"100%",background:goalDone?C.gold:goal.color,borderRadius:99,transition:"width .9s cubic-bezier(.4,0,.2,1)"}}/>
         </div>
-        <div style={{fontSize:11,opacity:.6,marginBottom:14}}>{goalDone?"🎉 Goal smashed this week!":`${goal.target-weekDone} more cook${goal.target-weekDone===1?"":"s"} to go`}</div>
+        <div style={{fontSize:11,opacity:.6,marginBottom:14}}>{goalDone?" Goal smashed this week!":`${goal.target-weekDone} more cook${goal.target-weekDone===1?"":"s"} to go`}</div>
         <div style={{display:"flex",gap:3,marginBottom:16}}>
           {WEEK_LABELS.map((d,i)=>(
             <div key={i} style={{flex:1,textAlign:"center"}}>
@@ -2236,7 +2235,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         </div>
         <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid rgba(255,255,255,.12)",paddingTop:14}}>
           <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Total Heat</div><div style={{fontSize:20,fontWeight:900}}>{xp.toLocaleString()}</div></div>
-          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Level</div><div style={{fontSize:20,fontWeight:900}}>{levelInfo.current.icon} {levelInfo.current.title}</div></div>
+          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Level</div><div style={{fontSize:20,fontWeight:900}}>{levelInfo.current.title}</div></div>
           <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Cooked</div><div style={{fontSize:20,fontWeight:900}}>{recipes.filter(r=>r.done).length}</div></div>
         </div>
       </div>
@@ -2245,7 +2244,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
       {levelInfo.next&&(
         <div style={{margin:"0 16px 18px"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-            <span style={{fontSize:12,color:C.muted,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"60%"}}>Next: {levelInfo.next.title} {levelInfo.next.icon}</span>
+            <span style={{fontSize:12,color:C.muted,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"60%"}}>Next: {levelInfo.next.title} </span>
             <span style={{fontSize:12,color:levelInfo.current.color,fontWeight:700}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 Heat</span>
           </div>
           <XPBar pct={levelInfo.pct} color={levelInfo.current.color}/>
@@ -2298,12 +2297,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
           <div style={{fontSize:20,marginBottom:3}}></div>
           <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Weekly Recap</div>
         </button>
-        {signatureDish&&(
-          <div style={{flex:1,background:`${C.flame}0F`,border:`2px solid ${C.flame}22`,borderRadius:14,padding:"12px 8px",textAlign:"center"}}>
-            <div style={{fontSize:20,marginBottom:3}}>{signatureDish.emoji}</div>
-            <div style={{fontSize:10,fontWeight:800,color:C.flame}}>Signature</div>
-          </div>
-        )}
+
       </div>
 
       <div style={{padding:"0 16px"}}>
@@ -2316,7 +2310,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
             <div key={r.id} onClick={()=>onOpen(r)} className="ch" style={{background:r.done?"#F5F0EB":C.cream,border:`2px solid ${r.done?"#E0D5CB":C.border}`,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,opacity:r.done?.65:1,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.04)",transition:"transform .18s,box-shadow .18s"}}>
               {r.photo&&!r.done
   ?<img src={r.photo} alt={r.name} style={{width:52,height:52,borderRadius:14,objectFit:"cover",flexShrink:0}}/>
-  :<div style={{width:52,height:52,borderRadius:14,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
+  :<div style={{width:52,height:52,borderRadius:14,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.done?"✓":r.name?.[0]||"?"}</div>
 }
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:800,fontSize:14,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>{r.name}</div>
@@ -2970,7 +2964,7 @@ function InstagramShareSheet({post, onClose}){
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>📸 Share Your Dish</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Share Your Dish</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>Save to camera roll and post to Instagram</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3005,7 +2999,7 @@ function QuickLogSheet({onLog, onClose, goal, cookedDays}){
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>⚡ Quick Log</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Quick Log</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>Cooked something not in the library? Log it here.</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3015,7 +3009,7 @@ function QuickLogSheet({onLog, onClose, goal, cookedDays}){
           <div style={{fontSize:11,opacity:.6,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>This Week</div>
           <div style={{fontSize:36,fontWeight:900,fontFamily:DF}}>{weekDone}/{goal.target} {goal.icon}</div>
           <div style={{fontSize:13,opacity:.7,marginTop:4}}>
-            {weekDone>=goal.target?"🎉 Goal achieved!":
+            {weekDone>=goal.target?" Goal achieved!":
             `${goal.target-weekDone} more to hit your ${goal.label} goal`}
           </div>
         </div>
@@ -3112,7 +3106,7 @@ function CookTogetherSheet({recipe, onClose}){
               <button onClick={()=>setStep(s=>Math.max(0,s-1))} disabled={step===0} style={{flex:1,padding:12,borderRadius:14,border:`2px solid ${C.border}`,background:"transparent",color:step===0?"#CCC":C.bark,fontWeight:800,cursor:step===0?"default":"pointer"}}>← Prev</button>
               {step<nSteps-1
                 ?<Btn onClick={()=>setStep(s=>s+1)} style={{flex:2}}>Next Step →</Btn>
-                :<Btn onClick={onClose} color={C.sage} style={{flex:2}}>Finish! 🎉</Btn>
+                :<Btn onClick={onClose} color={C.sage} style={{flex:2}}>Finish! </Btn>
               }
             </div>
           </>
@@ -3144,7 +3138,7 @@ function AddFriendsSheet({onClose}){
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>👥 Add Friends</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Add Friends</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>Find people to cook with and compete against</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3238,7 +3232,7 @@ function StreakCalendar({cookedDays, onClose}){
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>📅 Cooking History</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Cooking History</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>Every day you cooked, tracked</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3304,7 +3298,7 @@ function WeeklyRecapSheet({cookedDays, xp, weeklyXp, levelInfo, posts, earnedBad
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>📊 Weekly Recap</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Weekly Recap</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>Your cooking week at a glance</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3333,7 +3327,7 @@ function WeeklyRecapSheet({cookedDays, xp, weeklyXp, levelInfo, posts, earnedBad
           </div>
 
           <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid rgba(255,255,255,.12)",display:"flex",alignItems:"center",gap:10}}>
-            <div style={{fontSize:22}}>{levelInfo.current.icon}</div>
+            <div style={{fontSize:22}}></div>
             <div style={{flex:1}}>
               <div style={{fontSize:11,opacity:.6}}>Rank progress</div>
               <div style={{fontWeight:700,fontSize:13}}>{levelInfo.current.title}</div>
@@ -3364,57 +3358,6 @@ function WeeklyRecapSheet({cookedDays, xp, weeklyXp, levelInfo, posts, earnedBad
 }
 
 /* ═══ SIGNATURE DISH SHEET ════════════════════════════════════════════════ */
-function SignatureDishSheet({allRecipes, signatureDish, onSelect, onClose}){
-  return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>🍳 Signature Dish</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Your defining dish — shown on your profile</div>
-          </div>
-          <CloseBtn onClose={onClose}/>
-        </div>
-
-        {signatureDish&&(
-          <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:16,padding:"16px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center",color:"#fff"}}>
-            <span style={{fontSize:40}}>{signatureDish.emoji}</span>
-            <div>
-              <div style={{fontSize:11,opacity:.6,marginBottom:2}}>Current signature</div>
-              <div style={{fontWeight:900,fontSize:16,fontFamily:DF}}>{signatureDish.name}</div>
-            </div>
-          </div>
-        )}
-
-        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Choose from recipes you've cooked:</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {allRecipes.filter(r=>r.done).map(r=>(
-            <button key={r.id} onClick={()=>{onSelect(r);onClose();}} className="tap" style={{display:"flex",alignItems:"center",gap:12,background:signatureDish?.id===r.id?`${C.flame}12`:C.cream,border:`2px solid ${signatureDish?.id===r.id?C.flame:C.border}`,borderRadius:14,padding:"12px 14px",cursor:"pointer",textAlign:"left",transition:"all .18s"}}>
-              <span style={{fontSize:28}}>{r.emoji}</span>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{r.name}</div>
-                <div style={{fontSize:11,color:C.muted}}>{r.category} · {r.difficulty}</div>
-              </div>
-              {signatureDish?.id===r.id&&<span style={{color:C.flame,fontWeight:900}}>✓</span>}
-            </button>
-          ))}
-          {allRecipes.filter(r=>r.done).length===0&&(
-            <div style={{textAlign:"center",padding:"32px 20px",color:C.muted}}>
-              <div style={{fontSize:36,marginBottom:8}}>🍳</div>
-              <div style={{fontWeight:700}}>Cook a recipe first</div>
-              <div style={{fontSize:13,marginTop:4}}>Complete your first dish to set a signature</div>
-            </div>
-          )}
-        </div>
-      </div>
-    </Sheet>
-  );
-}
-
-
-/* ═══ HEARTS SYSTEM ═══════════════════════════════════════════════════════ */
-// 5 hearts max. Lose one per missed day above goal. Gain one per cook day.
-// One free streak freeze per week.
 function HeartsBar({hearts,maxHearts=5,hasFreeze,onUseFreeze}){
   return(
     <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -3431,7 +3374,7 @@ function HeartsBar({hearts,maxHearts=5,hasFreeze,onUseFreeze}){
 }
 
 /* ═══ PROFILE TAB ══════════════════════════════════════════════════════════ */
-function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,signatureDish,onShowSettings,onShowSignature,onShowCalendar,onShowYearReview,signOut,weeklyXp,challengeProgress,goal,onEditGoal}){
+function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,onShowSettings,onShowCalendar,onShowYearReview,signOut,weeklyXp,challengeProgress,goal,onEditGoal}){
   const totalCooked = allRecipes.filter(r=>r.done).length;
   const uniqueCuisines = [...new Set(cookLog.map(e=>e.category).filter(Boolean))].length;
   const totalHeat = xp;
@@ -3440,17 +3383,17 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
     <div style={{paddingBottom:30}}>
       {/* Profile hero */}
       <div style={{background:`linear-gradient(160deg,${C.bark},#5C3A20)`,padding:"28px 20px 32px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-20,right:-20,fontSize:120,opacity:.06}}>{levelInfo.current.icon}</div>
+        <div style={{position:"absolute",top:-20,right:-20,fontSize:120,opacity:.06}}></div>
 
         {/* Settings button */}
         <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
-          <button onClick={onShowSettings} className="tap" style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>⚙️ Settings</button>
+          <button onClick={onShowSettings} className="tap" style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Settings</button>
         </div>
 
         {/* Avatar + name */}
         <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
           <div style={{width:72,height:72,borderRadius:20,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,flexShrink:0,border:"3px solid rgba(255,255,255,.2)"}}>
-            {profile?.avatar_url||"🧑‍🍳"}
+            <AvatarIcon username={profile?.username||user?.email||"?"} size={60} fontSize={26}/>
           </div>
           <div style={{flex:1}}>
             <div style={{fontWeight:900,fontSize:22,color:"#fff",fontFamily:DF}}>
@@ -3458,7 +3401,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
               <div style={{background:levelInfo.current.color,borderRadius:8,padding:"3px 10px",fontSize:12,fontWeight:800,color:"#fff"}}>
-                {levelInfo.current.icon} {levelInfo.current.title}
+                {levelInfo.current.title}
               </div>
             </div>
           </div>
@@ -3501,7 +3444,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
           {levelInfo.next&&<div style={{fontSize:12,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</div>}
         </div>
         <XPBar pct={levelInfo.pct} color={levelInfo.current.color}/>
-        {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>Next rank: {levelInfo.next.icon} {levelInfo.next.title}</div>}
+        {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>Next rank:  {levelInfo.next.title}</div>}
       </div>
 
       {/* Quick actions */}
@@ -3553,149 +3496,328 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
 }
 
 /* ═══ SETTINGS SHEET ═══════════════════════════════════════════════════════ */
-function SettingsSheet({user,profile,onClose,supabase,onProfileUpdate}){
-  const AVATARS=["🧑‍🍳","👩‍🍳","🧔","👩‍🦱","👨‍🦰","👩‍🦰","🧑‍🦱","👴","👩","👨","🧒","👧","🧑","👱","🧓","🧕","👲","🧙","👸","🤴"];
-  const [username,setUsername]=useState(profile?.username||"");
-  const [avatar,setAvatar]=useState(profile?.avatar_url||"🧑‍🍳");
-  const [checking,setChecking]=useState(false);
-  const [available,setAvailable]=useState(null);
-  const [saving,setSaving]=useState(false);
-  const [saved,setSaved]=useState(false);
-  const [section,setSection]=useState("profile");
-  const [notifs,setNotifs]=useState({streaks:true,followers:true,mwah:true,challenges:false,recap:true});
+/* ═══ SIDE DRAWER ═══════════════════════════════════════════════════════════ */
+function SideDrawer({user, profile, xp, levelInfo, goal, cookedDays, onClose, onShowCalendar, onShowRecap, onShowYearReview, onEditGoal, signOut, supabase, onProfileUpdate, onShowChallenges, setTab}){
+  const [section, setSection] = React.useState(null); // null | 'account' | 'privacy' | 'notifications' | 'cooking' | 'data'
+  const weekDone = cookedDays.filter(Boolean).length;
 
-  const checkUsername=async(val)=>{
-    setUsername(val);setAvailable(null);
-    if(val.length<3||val===profile?.username){setAvailable(val===profile?.username?true:null);return;}
+  const MenuItem = ({label, sub, onClick, right}) => (
+    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${C.border}`,background:"none",border:"none",cursor:"pointer",borderBottom:`1px solid ${C.border}`}}>
+      <div style={{textAlign:"left"}}>
+        <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{label}</div>
+        {sub&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{sub}</div>}
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  );
+
+  const SectionHeader = ({title, onBack}) => (
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.border}`}}>
+      <button onClick={onBack} style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:8,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>{title}</div>
+    </div>
+  );
+
+  // ── ACCOUNT SETTINGS ──
+  if(section === 'account') return (
+    <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>
+  );
+
+  // ── PRIVACY SETTINGS ──
+  if(section === 'privacy'){
+    const [postVis, setPostVis] = React.useState('everyone');
+    const [profileVis, setProfileVis] = React.useState('everyone');
+    const [followers, setFollowers] = React.useState(true);
+    return(
+      <div>
+        <SectionHeader title="Privacy" onBack={()=>setSection(null)}/>
+        {[
+          {label:"Who can see your posts", val:postVis, set:setPostVis, opts:["everyone","friends","only me"]},
+          {label:"Who can see your profile", val:profileVis, set:setProfileVis, opts:["everyone","friends","only me"]},
+        ].map(({label,val,set,opts})=>(
+          <div key={label} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
+            <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>{label}</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {opts.map(o=>(
+                <button key={o} onClick={()=>set(o)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${val===o?C.flame:C.border}`,background:val===o?`${C.flame}12`:"transparent",color:val===o?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",textTransform:"capitalize"}}>
+                  {o}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 0"}}>
+          <div>
+            <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Allow followers</div>
+            <div style={{fontSize:11,color:C.muted}}>Let others follow your cooking activity</div>
+          </div>
+          <button onClick={()=>setFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:followers?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+          </button>
+        </div>
+        <div style={{marginTop:16}}>
+          <Btn onClick={()=>setSection(null)} full outline color={C.muted}>Save Privacy Settings</Btn>
+        </div>
+      </div>
+    );
+  }
+
+  // ── NOTIFICATIONS SETTINGS ──
+  if(section === 'notifications'){
+    const [notifs, setNotifs] = React.useState({streaks:true,mwah:true,followers:true,challenges:false,recap:true,newRecipes:false});
+    const [reminderTime, setReminderTime] = React.useState('18:00');
+    return(
+      <div>
+        <SectionHeader title="Notifications" onBack={()=>setSection(null)}/>
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Cooking Reminders</div>
+          <div style={{background:C.cream,borderRadius:14,padding:"12px 14px",border:`1px solid ${C.border}`,marginBottom:10}}>
+            <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>Daily reminder time</div>
+            <input type="time" value={reminderTime} onChange={e=>setReminderTime(e.target.value)}
+              style={{padding:"8px 12px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit"}}/>
+          </div>
+        </div>
+        {[
+          ["streaks","Streak reminders","Before your streak resets"],
+          ["mwah","Mwah received","When someone mwahs your post"],
+          ["followers","New followers","When someone follows you"],
+          ["challenges","Challenge updates","Your challenge progress"],
+          ["recap","Weekly recap","Sunday cooking summary"],
+          ["newRecipes","New community recipes","Fresh recipes from the community"],
+        ].map(([key,title,desc],i,arr)=>(
+          <div key={key} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{title}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:1}}>{desc}</div>
+            </div>
+            <button onClick={()=>setNotifs(n=>({...n,[key]:!n[key]}))} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+              <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:notifs[key]?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+            </button>
+          </div>
+        ))}
+        <div style={{marginTop:16}}><Btn onClick={()=>setSection(null)} full>Save</Btn></div>
+      </div>
+    );
+  }
+
+  // ── COOKING PREFS ──
+  if(section === 'cooking'){
+    const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
+    const skills = ["Beginner","Intermediate","Advanced","Chef"];
+    const [selectedDiet, setSelectedDiet] = React.useState("None");
+    const [selectedSkill, setSelectedSkill] = React.useState("Beginner");
+    return(
+      <div>
+        <SectionHeader title="Cooking Preferences" onBack={()=>setSection(null)}/>
+        <div style={{marginBottom:20}}>
+          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {diets.map(d=>(
+              <button key={d} onClick={()=>setSelectedDiet(d)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.sage:C.border}`,background:selectedDiet===d?`${C.sage}14`:"transparent",color:selectedDiet===d?C.sage:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{marginBottom:20}}>
+          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {skills.map(s=>(
+              <button key={s} onClick={()=>setSelectedSkill(s)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.flame:C.border}`,background:selectedSkill===s?`${C.flame}14`:"transparent",color:selectedSkill===s?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{marginBottom:20}}>
+          <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>Weekly cooking goal</div>
+          <button onClick={onEditGoal} style={{width:"100%",padding:"12px 14px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontWeight:600,fontSize:14,color:C.bark}}>
+            Current: {goal.label} ({goal.target}x / week) →
+          </button>
+        </div>
+        <Btn onClick={()=>setSection(null)} full>Save Preferences</Btn>
+      </div>
+    );
+  }
+
+  // ── DATA SETTINGS ──
+  if(section === 'data'){
+    return(
+      <div>
+        <SectionHeader title="Your Data" onBack={()=>setSection(null)}/>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <button style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left"}}>
+            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>Export cook history</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Download all your recipes and notes as CSV</div>
+          </button>
+          <button style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left"}}>
+            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>Download my data</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Get a copy of everything we store about you</div>
+          </button>
+          <div style={{height:1,background:C.border,margin:"4px 0"}}/>
+          <button onClick={signOut} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently delete your account and all data</div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MAIN DRAWER ──
+  return(
+    <div>
+      {/* Profile card */}
+      <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"18px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:14}}>
+        <AvatarIcon username={profile?.username||user?.email||"?"} size={52} fontSize={22}/>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            {profile?.username||user?.email?.split("@")[0]||"Chef"}
+          </div>
+          <div style={{marginTop:4}}>
+            <span style={{background:levelInfo.current.color,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo.current.title}</span>
+          </div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:4}}>{xp} Heat earned</div>
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        {[
+          {label:"Streak Calendar",action:()=>{onShowCalendar();onClose();}},
+          {label:"Weekly Recap",action:()=>{onShowRecap();onClose();}},
+          {label:"Year in Review",action:()=>{onShowYearReview();onClose();}},
+          {label:"Challenges",action:()=>{setTab("challenges");onClose();}},
+        ].map(({label,action})=>(
+          <button key={label} onClick={action} style={{padding:"12px 10px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontSize:12,fontWeight:700,color:C.bark,textAlign:"center"}}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{height:1,background:C.border,marginBottom:8}}/>
+
+      {/* Cooking goal */}
+      <button onClick={()=>{onEditGoal();}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",background:"none",border:"none",cursor:"pointer",borderBottom:`1px solid ${C.border}`}}>
+        <div style={{textAlign:"left"}}>
+          <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Cooking Goal</div>
+          <div style={{fontSize:11,color:C.muted,marginTop:1}}>{goal.label} — {weekDone}/{goal.target} this week</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+
+      {/* Settings sections */}
+      <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",margin:"14px 0 4px"}}>Settings</div>
+      <MenuItem label="Account" sub="Email, password, username" onClick={()=>setSection('account')}/>
+      <MenuItem label="Privacy" sub="Who can see your activity" onClick={()=>setSection('privacy')}/>
+      <MenuItem label="Notifications" sub="Reminders and alerts" onClick={()=>setSection('notifications')}/>
+      <MenuItem label="Cooking preferences" sub="Diet, skill level, goal" onClick={()=>setSection('cooking')}/>
+      <MenuItem label="Your data" sub="Export or delete your data" onClick={()=>setSection('data')}/>
+
+      <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",margin:"14px 0 4px"}}>About</div>
+      <MenuItem label="Help & support" sub="hello@misenplace.app" onClick={()=>{}}/>
+      <MenuItem label="Privacy policy" sub="How we use your data" onClick={()=>{}}/>
+      <MenuItem label="Terms of service" onClick={()=>{}}/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
+        <span style={{fontSize:12,color:C.muted}}>mise.en.place</span>
+        <span style={{fontSize:12,color:C.muted}}>v9.0</span>
+      </div>
+
+      <div style={{marginTop:8}}>
+        <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ ACCOUNT SETTINGS ═══════════════════════════════════════════════════════ */
+function AccountSettings({onBack, user, profile, supabase, onProfileUpdate}){
+  const [username, setUsername] = React.useState(profile?.username||"");
+  const [checking, setChecking] = React.useState(false);
+  const [available, setAvailable] = React.useState(null);
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  const [resetSent, setResetSent] = React.useState(false);
+
+  const checkUsername = async(val) => {
+    setUsername(val); setAvailable(null);
+    if(val.length < 3 || val === profile?.username){setAvailable(val===profile?.username||null); return;}
     setChecking(true);
     if(!supabase){setChecking(false);return;}
     const{data}=await supabase.from("profiles").select("id").eq("username",val.toLowerCase().trim()).single();
-    setAvailable(!data);setChecking(false);
+    setAvailable(!data); setChecking(false);
   };
 
-  const handleSave=async()=>{
+  const handleSave = async() => {
     if(!user?.id||!supabase)return;
     setSaving(true);
-    const updates={avatar_url:avatar,updated_at:new Date().toISOString()};
-    if(username&&username!==profile?.username&&available===true){
-      updates.username=username.toLowerCase().trim();
+    const updates = {updated_at:new Date().toISOString()};
+    if(username && username !== profile?.username && available===true){
+      updates.username = username.toLowerCase().trim();
     }
-    const{error}=await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});
-    if(!error){
-      onProfileUpdate({...profile,...updates});
-      setSaved(true);
-      setTimeout(()=>setSaved(false),2500);
-    }
-    setSaving(false);
+    await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});
+    onProfileUpdate({...profile,...updates});
+    setSaved(true); setSaving(false);
+    setTimeout(()=>setSaved(false),2500);
   };
 
-  const tabStyle=(id)=>({
-    flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"8px 4px",
-    fontWeight:800,fontSize:11,
-    background:section===id?"#fff":"transparent",
-    color:section===id?C.bark:C.muted,
-    transition:"all .18s"
-  });
+  const handlePasswordReset = async() => {
+    if(!user?.email||!supabase)return;
+    await supabase.auth.resetPasswordForEmail(user.email,{
+      redirectTo:`${window.location.origin}/auth/callback`
+    });
+    setResetSent(true);
+  };
 
   return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 48px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Settings</div>
-          <CloseBtn onClose={onClose}/>
-        </div>
-
-        <div style={{display:"flex",background:C.pill,borderRadius:14,padding:4,gap:4,marginBottom:20}}>
-          {[["profile","Profile"],["notifications","Notifications"],["about","About"]].map(([id,lbl])=>(
-            <button key={id} onClick={()=>setSection(id)} style={tabStyle(id)}>{lbl}</button>
-          ))}
-        </div>
-
-        {section==="profile"&&(
-          <div>
-            <div style={{marginBottom:18}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".08em"}}>Avatar</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
-                {AVATARS.map(a=>(
-                  <button key={a} onClick={()=>setAvatar(a)} style={{
-                    fontSize:28,background:avatar===a?`${C.flame}18`:"#F0EBE6",
-                    border:`2px solid ${avatar===a?C.flame:"#EEE5DC"}`,
-                    borderRadius:12,padding:"8px 4px",cursor:"pointer",transition:"all .15s",aspectRatio:"1"
-                  }}>{a}</button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{marginBottom:20}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".08em"}}>Username</div>
-              <div style={{position:"relative"}}>
-                <input value={username} onChange={e=>checkUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g,""))} maxLength={20}
-                  style={{width:"100%",padding:"11px 40px 11px 14px",borderRadius:14,border:`2px solid ${available===true?C.sage:available===false?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
-                <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:16}}>
-                  {checking?"⏳":available===true?"✅":available===false?"❌":""}
-                </div>
-              </div>
-              {available===false&&<div style={{fontSize:11,color:C.flame,marginTop:4}}>Username already taken</div>}
-              {available===true&&username!==profile?.username&&<div style={{fontSize:11,color:C.sage,marginTop:4}}>✓ Available!</div>}
-              <div style={{fontSize:11,color:C.muted,marginTop:5}}>Letters, numbers, _ and . only</div>
-            </div>
-
-            {saved&&<div style={{background:`${C.sage}18`,border:`1.5px solid ${C.sage}33`,borderRadius:12,padding:"10px 14px",fontSize:13,color:C.sage,fontWeight:700,marginBottom:12}}>✓ Profile saved!</div>}
-            <Btn onClick={handleSave} disabled={saving} full>{saving?"Saving…":"Save Changes"}</Btn>
-          </div>
-        )}
-
-        {section==="notifications"&&(
-          <div>
-            {[
-              ["streaks","Streak reminders","Get reminded before your streak resets"],
-              ["followers","New followers","When someone follows you"],
-              ["mwah","Mwah received","When someone mwahs your post"],
-              ["challenges","Challenge updates","Progress on your challenges"],
-              ["recap","Weekly recap","Sunday summary of your week"],
-            ].map(([key,title,desc],i,arr)=>(
-              <div key={key} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{title}</div>
-                  <div style={{fontSize:12,color:C.muted,marginTop:2}}>{desc}</div>
-                </div>
-                <button onClick={()=>setNotifs(n=>({...n,[key]:!n[key]}))} style={{
-                  width:44,height:26,borderRadius:13,
-                  background:notifs[key]?C.sage:"#D8D0C8",
-                  border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0
-                }}>
-                  <div style={{
-                    width:20,height:20,borderRadius:"50%",background:"#fff",
-                    position:"absolute",top:3,left:notifs[key]?21:3,
-                    transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"
-                  }}/>
-                </button>
-              </div>
-            ))}
-            <div style={{marginTop:16}}>
-              <Btn onClick={onClose} full>Save Preferences</Btn>
-            </div>
-          </div>
-        )}
-
-        {section==="about"&&(
-          <div>
-            {[["App","mise.en.place"],["Version","v9.0"],["Support","hello@misenplace.app"],["Made with","🍳 + ❤️"]].map(([k,v],i,arr)=>(
-              <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
-                <span style={{fontSize:14,color:C.muted}}>{k}</span>
-                <span style={{fontSize:14,fontWeight:700,color:C.bark}}>{v}</span>
-              </div>
-            ))}
-            <div style={{marginTop:16,background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"13px 14px"}}>
-              <div style={{fontSize:12,color:C.sky,fontWeight:700,marginBottom:4}}>Privacy</div>
-              <div style={{fontSize:12,color:C.muted,lineHeight:1.55}}>We only store your cooking activity and profile info. We never sell your data. Your recipes and posts are always yours.</div>
-            </div>
-          </div>
-        )}
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,paddingBottom:14,borderBottom:`1px solid ${C.border}`}}>
+        <button onClick={onBack} style={{background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:8,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>Account</div>
       </div>
-    </Sheet>
+
+      {/* Email - read only */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".07em",marginBottom:6}}>Email</div>
+        <div style={{padding:"11px 14px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"#F5F0EB",fontSize:14,color:C.muted}}>{user?.email||"—"}</div>
+      </div>
+
+      {/* Username */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".07em",marginBottom:6}}>Username</div>
+        <div style={{position:"relative"}}>
+          <input value={username} onChange={e=>checkUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g,""))} maxLength={20}
+            style={{width:"100%",padding:"11px 40px 11px 14px",borderRadius:14,border:`2px solid ${available===true?C.sage:available===false?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+          <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:14}}>
+            {checking?"…":available===true?"✓":available===false?"✗":""}
+          </div>
+        </div>
+        {available===false&&<div style={{fontSize:11,color:C.flame,marginTop:4}}>Username taken</div>}
+        {available===true&&username!==profile?.username&&<div style={{fontSize:11,color:C.sage,marginTop:4}}>Available</div>}
+      </div>
+
+      {saved&&<div style={{background:`${C.sage}18`,borderRadius:12,padding:"10px 14px",fontSize:13,color:C.sage,fontWeight:700,marginBottom:12}}>Saved!</div>}
+      <Btn onClick={handleSave} disabled={saving} full style={{marginBottom:16}}>{saving?"Saving…":"Save Changes"}</Btn>
+
+      {/* Password reset */}
+      <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"14px 16px"}}>
+        <div style={{fontWeight:700,fontSize:14,color:C.bark,marginBottom:4}}>Change password</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>We'll send a reset link to {user?.email}</div>
+        {resetSent
+          ?<div style={{fontSize:13,color:C.sage,fontWeight:600}}>Reset link sent! Check your email.</div>
+          :<Btn onClick={handlePasswordReset} outline color={C.sky} full>Send Reset Link</Btn>
+        }
+      </div>
+    </div>
   );
 }
+
 
 /* ═══ COMMUNITY RECIPES TAB ════════════════════════════════════════════════ */
 function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
@@ -3850,7 +3972,7 @@ function WantToCookSheet({wantToCook,allRecipes,onRemove,onCookNow,onClose}){
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>🔖 Want to Cook</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Want to Cook</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>{wantToCook.length} recipes saved</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3869,7 +3991,7 @@ function WantToCookSheet({wantToCook,allRecipes,onRemove,onCookNow,onClose}){
             return(
               <div key={i} style={{display:"flex",alignItems:"center",gap:12,background:C.cream,borderRadius:16,padding:"12px 14px",border:`1px solid ${C.border}`}}>
                 {r.photo?<img src={r.photo} alt="" style={{width:48,height:48,borderRadius:12,objectFit:"cover",flexShrink:0}}/>
-                  :<div style={{width:48,height:48,borderRadius:12,background:`${C.ember}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{r.emoji}</div>
+                  :<AvatarIcon username={r.name} size={48} fontSize={20}/>
                 }
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:800,fontSize:13,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
@@ -3903,7 +4025,7 @@ function YearInReviewSheet({cookLog,xp,levelInfo,earnedBadges,allRecipes,onClose
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>✨ {year} in Review</div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}> {year} in Review</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>Your cooking year at a glance</div>
           </div>
           <CloseBtn onClose={onClose}/>
@@ -3922,7 +4044,7 @@ function YearInReviewSheet({cookLog,xp,levelInfo,earnedBadges,allRecipes,onClose
           </div>
 
           <div style={{borderTop:"1px solid rgba(255,255,255,.12)",paddingTop:14,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{fontSize:32}}>{levelInfo.current.icon}</div>
+            <div style={{fontSize:32}}></div>
             <div>
               <div style={{fontSize:11,opacity:.5}}>Current Rank</div>
               <div style={{fontWeight:800,fontSize:16}}>{levelInfo.current.title}</div>
@@ -3968,6 +4090,40 @@ function YearInReviewSheet({cookLog,xp,levelInfo,earnedBadges,allRecipes,onClose
   );
 }
 
+/* ═══ STAR RATING ═══════════════════════════════════════════════════════════ */
+function StarRating({value, onChange, size=28}){
+  const [hover,setHover] = React.useState(0);
+  return(
+    <div style={{display:'flex',gap:4}}>
+      {[1,2,3,4,5].map(n=>(
+        <button key={n} onClick={()=>onChange&&onChange(n)}
+          onMouseEnter={()=>setHover(n)} onMouseLeave={()=>setHover(0)}
+          style={{background:'none',border:'none',cursor:'pointer',padding:2}}>
+          <svg width={size} height={size} viewBox="0 0 24 24" fill={(hover||value)>=n?'#F5C842':'none'} stroke={(hover||value)>=n?'#F5C842':'#C8BEB4'} strokeWidth="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+
+/* ═══ AVATAR ICON (initials-based) ══════════════════════════════════════════ */
+const AVATAR_COLORS = ['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#FF4D1C','#CC2200','#4A90D9','#8BAF78','#E05C7A','#FF8C42'];
+function AvatarIcon({username, size=36, fontSize=14}){
+  const name = username || '?';
+  const initial = name[0].toUpperCase();
+  const colorIdx = name.charCodeAt(0) % AVATAR_COLORS.length;
+  const bg = AVATAR_COLORS[colorIdx];
+  return(
+    <div style={{width:size,height:size,borderRadius:size*0.28,background:bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontWeight:800,fontSize,color:'#fff',fontFamily:"'Playfair Display',Georgia,serif",userSelect:'none'}}>
+      {initial}
+    </div>
+  );
+}
+
+
 /* ═══ ROOT APP ════════════════════════════════════════════════════════════ */
 export default function App(){
   const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase } = useAuth();
@@ -3998,10 +4154,11 @@ export default function App(){
   const [showAddFriends,setShowAddFriends]=useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showRecap,    setShowRecap]    = useState(false);
-  const [showSignature,setShowSignature]= useState(false);
+
   const [showInstaShare,setShowInstaShare]=useState(null); // post object
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
   const [showSettings,    setShowSettings]    = useState(false);
+  const [showDrawer,      setShowDrawer]      = useState(false);
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [showCommunity,   setShowCommunity]   = useState(false);
@@ -4010,7 +4167,7 @@ export default function App(){
   const [hasFreeze,       setHasFreeze]       = useState(true);
   const [localProfile,    setLocalProfile]    = useState(null);
   const [activeTab,       setActiveTab]       = useState("home");
-  const [signatureDish,setSignatureDish]=useState(null);
+
   const [seasonalEvent] = useState({
     name:"Basics Month",
     desc:"Master 3 foundational techniques this month",
@@ -4116,7 +4273,7 @@ export default function App(){
         id:`p-${Date.now()}`,
         user:{name:"You",avatar:"👩‍🍳",level:levelInfo.current.title},
         recipe:recipe.name,emoji:recipe.emoji,photo,
-        caption:caption||`Just cooked ${recipe.name}! 🎉`,
+        caption:caption||`Just cooked ${recipe.name}! `,
         time:"just now",mwah:0,myMwah:false,comments:[],
       },...ps]);
     }
@@ -4207,37 +4364,28 @@ export default function App(){
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
       <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}}>
-        {/* Header — no AI button */}
-        <div style={{background:C.paper,padding:"12px 16px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`,width:"100%"}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
-            <div style={{fontSize:11,color:C.muted,marginTop:-1}}>your daily cooking habit</div>
-          </div>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:C.pill,border:`1.5px solid ${C.border}`,borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-              {notifications.filter(n=>!n.read).length>0&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:9,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</div>}
+        {/* Header */}
+        <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`}}>
+          <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
+          <div style={{display:"flex",gap:12,alignItems:"center"}}>
+            <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:"none",border:"none",padding:4,cursor:"pointer",display:"flex",alignItems:"center"}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              {notifications.filter(n=>!n.read).length>0&&<div style={{position:"absolute",top:0,right:0,width:14,height:14,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:8,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifications.filter(n=>!n.read).length}</div>}
             </button>
-            <button onClick={()=>setTab("profile")} className="tap" style={{width:34,height:34,borderRadius:10,background:C.pill,border:`1.5px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,fontSize:20}}>
-              {effectiveProfile?.avatar_url||"👤"}
+            <button onClick={()=>setShowDrawer(true)} className="tap" style={{background:"none",border:"none",padding:4,cursor:"pointer",display:"flex",alignItems:"center"}}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <div style={{background:`${levelInfo.current.color}18`,border:`1.5px solid ${levelInfo.current.color}44`,borderRadius:10,padding:"4px 8px",fontSize:11,fontWeight:800,color:levelInfo.current.color,whiteSpace:"nowrap"}}>
-              {levelInfo.current.icon} Lv.{levelInfo.current.level}
-            </div>
-            <div style={{background:`linear-gradient(135deg,${goal.color},${goal.color}BB)`,borderRadius:12,padding:"6px 12px",color:"#fff",fontWeight:800,fontSize:13,boxShadow:`0 4px 12px ${goal.color}44`,whiteSpace:"nowrap"}}>
-              {goal.icon} {weekDone}/{goal.target}
-            </div>
           </div>
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
-          {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} signatureDish={signatureDish} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)}/>}
+          {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
@@ -4259,9 +4407,22 @@ export default function App(){
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
-      {showSignature&&<SignatureDishSheet allRecipes={allRecipes} signatureDish={signatureDish} onSelect={setSignatureDish} onClose={()=>setShowSignature(false)}/>}
+      {showSignature&&<SignatureDishSheet allRecipes={allRecipes} onSelect={setSignatureDish} onClose={()=>setShowSignature(false)}/>}
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
+      {showDrawer&&(
+        <div style={{position:"fixed",inset:0,zIndex:200}} onClick={e=>e.target===e.currentTarget&&setShowDrawer(false)}>
+          <div style={{background:"rgba(0,0,0,.45)",position:"absolute",inset:0,backdropFilter:"blur(2px)"}} onClick={()=>setShowDrawer(false)}/>
+          <div style={{background:C.paper,width:"88%",maxWidth:360,height:"100%",overflowY:"auto",position:"absolute",right:0,top:0,padding:"0 20px 40px",boxShadow:"-8px 0 40px rgba(0,0,0,.15)",animation:"slideRight .25s cubic-bezier(.4,0,.2,1)"}}>
+            <div style={{display:"flex",justifyContent:"flex-end",padding:"14px 0 8px"}}>
+              <button onClick={()=>setShowDrawer(false)} style={{background:"none",border:"none",cursor:"pointer",padding:4}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}}/>
+          </div>
+        </div>
+      )}
       {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>setWantToCook(w=>w.filter(x=>x!==id))} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
