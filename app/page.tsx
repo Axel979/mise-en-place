@@ -2101,38 +2101,76 @@ function CreateRecipeSheet({onSave,onClose}){
 
 /* ═══ URL IMPORT ══════════════════════════════════════════════════════════ */
 function URLImportSheet({onSave,onClose}){
-  const [url,setUrl]=useState("");
-  const [loading,setLoading]=useState(false);
+  const [text,setText]=useState("");
+  const [name,setName]=useState("");
   const [result,setResult]=useState(null);
   const [error,setError]=useState("");
 
-  const importRecipe=async()=>{
-    if(!url.trim())return;
-    setLoading(true);setError("");setResult(null);
-    try{
-      const res=await fetch("/api/anthropic",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"import",url:url.trim()})
-      });
-      const data=await res.json();
+  const parseRecipe=()=>{
+    if(!text.trim()||text.trim().length<30){
+      setError("Paste at least the ingredients and steps.");
+      return;
+    }
+    if(!name.trim()){
+      setError("Please enter a recipe name.");
+      return;
+    }
+    setError("");
 
-      if(data.error==="no_recipe") throw new Error("no_recipe");
-      if(data.error) throw new Error("fetch_failed");
-      if(!data.name||!data.ingredients?.length||!data.steps?.length) throw new Error("no_recipe");
+    const lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>2);
 
-      setResult({
-        ...data,
-        sourceUrl:url.trim(),
-        sourceName:new URL(url.trim()).hostname.replace("www.",""),
-      });
-    }catch(e){
-      if(e.message==="no_recipe"){
-        setError("No recipe found on that page. Try BBC Good Food, AllRecipes, Taste.com.au, or most recipe blogs.");
-      } else {
-        setError("Couldn't reach that page. Check the URL and try again.");
+    // Detect ingredients - lines that look like measurements
+    const ingPattern=/^(\d+|\d+\/\d+|\d+\.\d+|a |an |some |handful|pinch|splash|bunch|to taste|salt|pepper)/i;
+    const stepPattern=/^(step|\d+\.|\d+\)|method|instructions|directions)/i;
+
+    let ingredients=[];
+    let steps=[];
+    let inIngredients=false;
+    let inSteps=false;
+    let stepNum=0;
+
+    for(const line of lines){
+      // Detect section headers
+      if(/^ingredient/i.test(line)){inIngredients=true;inSteps=false;continue;}
+      if(/^(method|instruction|direction|step|how to|preparation)/i.test(line)){inIngredients=false;inSteps=true;continue;}
+
+      if(inIngredients||ingPattern.test(line)){
+        if(!inSteps) ingredients.push(line);
+      } else if(inSteps||stepPattern.test(line)){
+        const body=line.replace(/^(step\s*\d+[:.]?|\d+[.)]\s*)/i,"").trim();
+        if(body.length>10){
+          stepNum++;
+          steps.push({title:`Step ${stepNum}`,body,timer:0});
+        }
       }
-    }finally{setLoading(false);}
+    }
+
+    // Fallback: if detection failed, split smartly
+    if(ingredients.length===0&&steps.length===0){
+      // Just split everything into steps
+      const chunks=lines.filter(l=>l.length>15);
+      chunks.forEach((body,i)=>steps.push({title:`Step ${i+1}`,body,timer:0}));
+    } else if(ingredients.length===0){
+      // First quarter of lines are probably ingredients
+      const quarter=Math.ceil(lines.length/4);
+      ingredients=lines.slice(0,quarter);
+      if(steps.length===0){
+        lines.slice(quarter).forEach((body,i)=>{
+          if(body.length>15) steps.push({title:`Step ${i+1}`,body,timer:0});
+        });
+      }
+    }
+
+    if(steps.length===0&&ingredients.length===0){
+      setError("Couldn't find a recipe in that text. Try copying just the ingredients and steps.");
+      return;
+    }
+
+    setResult({
+      name:name.trim(),
+      ingredients:ingredients.slice(0,30),
+      steps:steps.slice(0,15),
+    });
   };
 
   const handleSave=()=>{
@@ -2142,20 +2180,20 @@ function URLImportSheet({onSave,onClose}){
       name:result.name,
       emoji:"",
       photo:null,
-      xp:result.difficulty==="Easy"?50:result.difficulty==="Hard"?120:80,
-      difficulty:result.difficulty||"Medium",
-      time:result.time||"30 min",
-      category:result.category||"Comfort",
+      xp:60,
+      difficulty:"Medium",
+      time:"30 min",
+      category:"Comfort",
       diets:["No restrictions"],
       macros:null,
       done:false,
-      ingredients:result.ingredients||[],
-      steps:(result.steps||[]).map(s=>({...s,timer:s.timer||0})),
-      tip:result.tip||null,
+      ingredients:result.ingredients,
+      steps:result.steps,
+      tip:null,
       isImported:true,
       isPersonal:true,
-      sourceUrl:result.sourceUrl,
-      sourceName:result.sourceName,
+      sourceUrl:null,
+      sourceName:null,
     });
     onClose();
   };
@@ -2166,50 +2204,62 @@ function URLImportSheet({onSave,onClose}){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
             <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Import Recipe</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste a link from any recipe website</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Copy from any recipe website</div>
           </div>
           <CloseBtn onClose={onClose}/>
         </div>
 
-        <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
-          <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.6}}>
-            Works with BBC Good Food, AllRecipes, Taste.com.au, Serious Eats and most recipe sites. Free — no AI used.
-          </div>
-        </div>
-
         {!result&&(
           <>
+            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
+              <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.7}}>
+                1. Find a recipe on any website{"
+"}
+                2. Select the ingredients + steps text{"
+"}
+                3. Copy and paste it below
+              </div>
+            </div>
+
+            <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Recipe name</div>
             <input
-              value={url}
-              onChange={e=>setUrl(e.target.value)}
-              onKeyDown={e=>e.key==="Enter"&&importRecipe()}
-              placeholder="https://www.bbcgoodfood.com/recipes/..."
-              style={{width:"100%",padding:"12px 14px",borderRadius:14,border:`2px solid ${url?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:12}}
+              value={name}
+              onChange={e=>setName(e.target.value)}
+              placeholder="e.g. Spaghetti Bolognese"
+              style={{width:"100%",padding:"11px 14px",borderRadius:14,border:`2px solid ${name?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:14,fontFamily:"inherit"}}
             />
-            <Btn onClick={importRecipe} disabled={!url.trim()||loading} full>
-              {loading?"Importing…":"Import Recipe"}
+
+            <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients + steps</div>
+            <textarea
+              value={text}
+              onChange={e=>setText(e.target.value)}
+              placeholder={"Paste the ingredients and instructions here...
+
+e.g.
+200g spaghetti
+100g beef mince
+2 cloves garlic
+
+1. Boil pasta for 10 minutes
+2. Fry beef with garlic..."}
+              style={{width:"100%",minHeight:200,padding:"12px 14px",borderRadius:14,border:`2px solid ${text?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box",marginBottom:8}}
+            />
+            <div style={{fontSize:11,color:C.muted,marginBottom:14}}>
+              {text.length>0?`${text.length} characters pasted`:"Tip: you can paste just the ingredients and steps — no need for the whole page"}
+            </div>
+
+            {error&&<div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:12,padding:"11px 14px",fontSize:13,color:C.flame,marginBottom:12,lineHeight:1.5}}>{error}</div>}
+
+            <Btn onClick={parseRecipe} disabled={!text.trim()||!name.trim()} full>
+              Extract Recipe
             </Btn>
           </>
         )}
 
-        {loading&&(
-          <div style={{textAlign:"center",padding:"24px 0"}}>
-            <div style={{width:44,height:44,borderRadius:"50%",background:`${C.flame}18`,border:`3px solid ${C.flame}`,borderTopColor:"transparent",animation:"spin 1s linear infinite",margin:"0 auto 12px"}}/>
-            <div style={{fontSize:14,color:C.muted,fontWeight:600}}>Reading the recipe…</div>
-          </div>
-        )}
-
-        {error&&(
-          <div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"13px 15px",fontSize:13,color:C.flame,lineHeight:1.6,marginTop:4}}>
-            {error}
-          </div>
-        )}
-
-        {result&&!loading&&(
+        {result&&(
           <div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
               <div style={{fontWeight:900,fontSize:18,fontFamily:DF,marginBottom:4}}>{result.name}</div>
-              <div style={{fontSize:11,opacity:.6,marginBottom:6}}>{result.time} · {result.difficulty} · from {result.sourceName}</div>
               <div style={{fontSize:11,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
             </div>
 
@@ -2221,15 +2271,16 @@ function URLImportSheet({onSave,onClose}){
               {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.ingredients.length-5} more</div>}
             </div>
 
-            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
-              <a href={result.sourceUrl} target="_blank" rel="noopener noreferrer"
-                style={{fontSize:12,color:C.sky,fontWeight:700,textDecoration:"none"}}>
-                View original on {result.sourceName} →
-              </a>
+            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:14,border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Steps</div>
+              {result.steps.slice(0,3).map((s,i)=>(
+                <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(2,result.steps.length-1)?`1px solid ${C.border}`:"none"}}>{s.body.slice(0,80)}{s.body.length>80?"…":""}</div>
+              ))}
+              {result.steps.length>3&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.steps.length-3} more steps</div>}
             </div>
 
             <div style={{display:"flex",gap:10}}>
-              <Btn onClick={()=>{setResult(null);setUrl("");setError("");}} outline color={C.muted} style={{flex:1}}>Try another</Btn>
+              <Btn onClick={()=>{setResult(null);setError("");}} outline color={C.muted} style={{flex:1}}>Edit</Btn>
               <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Save to My Library</Btn>
             </div>
           </div>
