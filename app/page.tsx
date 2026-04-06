@@ -1234,10 +1234,10 @@ function ChallengesTab({challengeProgress,onInvite}){
 }
 
 /* ═══ COOK LIBRARY ════════════════════════════════════════════════════════ */
-function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar}){
+function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen}){
   const [filter,setFilter]=useState("all");
   const [sort,setSort]=useState("recent");
-  const [libTab,setLibTab]=useState("log"); // log | badges
+  const [libTab,setLibTab]=useState("log"); // log | recipes | badges
 
   const filtered=useMemo(()=>{
     let list=[...cookLog];
@@ -1269,7 +1269,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar}){
 
       {/* Sub tabs */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:4}}>
-        {[["log","My Cooks"],["badges","Badges"]].map(([id,lbl])=>(
+        {[["log","My Cooks"],["recipes","My Recipes"],["badges","Badges"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setLibTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
         ))}
       </div>
@@ -1285,6 +1285,27 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar}){
         </div>
       )}
 
+      {libTab==="recipes"&&(
+        <div style={{padding:"0 16px"}}>
+          {allRecipes.filter(r=>r.isPersonal).length===0?(
+            <div style={{textAlign:"center",padding:"48px 20px"}}>
+              <div style={{fontSize:48,marginBottom:12,opacity:.3}}>↓</div>
+              <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:8}}>No imported recipes yet</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Use the Import button to save recipes from any website to your personal library.</div>
+            </div>
+          ):(
+            allRecipes.filter(r=>r.isPersonal).map(r=>(
+              <div key={r.id} onClick={()=>onOpen&&onOpen(r)} className="tap ch" style={{background:C.cream,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:12,cursor:"pointer"}}>
+                <div style={{padding:"14px 16px"}}>
+                  <div style={{fontWeight:800,fontSize:15,color:C.bark,marginBottom:4}}>{r.name}</div>
+                  <div style={{fontSize:12,color:C.muted}}>{r.time} · {r.difficulty} · {r.ingredients?.length||0} ingredients</div>
+                  {r.sourceName&&<div style={{fontSize:11,color:C.sky,marginTop:4}}>Imported</div>}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
       {libTab==="badges"&&(
         <div style={{padding:"0 16px 30px"}}>
           <div style={{marginBottom:16}}>
@@ -2080,40 +2101,38 @@ function CreateRecipeSheet({onSave,onClose}){
 
 /* ═══ URL IMPORT ══════════════════════════════════════════════════════════ */
 function URLImportSheet({onSave,onClose}){
-  const [text,setText]=useState("");
+  const [url,setUrl]=useState("");
   const [loading,setLoading]=useState(false);
   const [result,setResult]=useState(null);
   const [error,setError]=useState("");
 
-  const parseRecipe=async()=>{
-    if(!text.trim()||text.trim().length<50)return;
+  const importRecipe=async()=>{
+    if(!url.trim())return;
     setLoading(true);setError("");setResult(null);
     try{
       const res=await fetch("/api/anthropic",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"parse",html:text.trim().slice(0,10000)})
+        body:JSON.stringify({action:"import",url:url.trim()})
       });
-      const apiData=await res.json();
-      if(!apiData.content?.[0]?.text) throw new Error("api_failed");
+      const data=await res.json();
 
-      let parsed;
-      try{
-        const raw=apiData.content[0].text.replace(/```json|```/g,"").trim();
-        parsed=JSON.parse(raw);
-      }catch{ throw new Error("parse_failed"); }
+      if(data.error==="no_recipe") throw new Error("no_recipe");
+      if(data.error) throw new Error("fetch_failed");
+      if(!data.name||!data.ingredients?.length||!data.steps?.length) throw new Error("no_recipe");
 
-      if(parsed.error==="not_a_recipe") throw new Error("not_a_recipe");
-      if(!parsed.name||!parsed.ingredients?.length||!parsed.steps?.length) throw new Error("not_a_recipe");
-
-      setResult(parsed);
+      setResult({
+        ...data,
+        sourceUrl:url.trim(),
+        sourceName:new URL(url.trim()).hostname.replace("www.",""),
+      });
     }catch(e){
-      if(e.message==="not_a_recipe"){
-        setError("We couldn't find a recipe in that text — make sure you copied the full recipe including ingredients and instructions.");
+      if(e.message==="no_recipe"){
+        setError("No recipe found on that page. Try BBC Good Food, AllRecipes, Taste.com.au, or most recipe blogs.");
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Couldn't reach that page. Check the URL and try again.");
       }
-    }finally{ setLoading(false); }
+    }finally{setLoading(false);}
   };
 
   const handleSave=()=>{
@@ -2135,8 +2154,8 @@ function URLImportSheet({onSave,onClose}){
       tip:result.tip||null,
       isImported:true,
       isPersonal:true,
-      sourceUrl:null,
-      sourceName:null,
+      sourceUrl:result.sourceUrl,
+      sourceName:result.sourceName,
     });
     onClose();
   };
@@ -2147,30 +2166,28 @@ function URLImportSheet({onSave,onClose}){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
             <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Import Recipe</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste any recipe text below</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste a link from any recipe website</div>
           </div>
           <CloseBtn onClose={onClose}/>
         </div>
 
         <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
           <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.6}}>
-            Find a recipe on any website → select all the text → copy → paste here. Works with any recipe site.
+            Works with BBC Good Food, AllRecipes, Taste.com.au, Serious Eats and most recipe sites. Free — no AI used.
           </div>
         </div>
 
         {!result&&(
           <>
-            <textarea
-              value={text}
-              onChange={e=>setText(e.target.value)}
-              placeholder="Paste the full recipe text here — ingredients, instructions, everything..."
-              style={{width:"100%",minHeight:180,padding:"12px 14px",borderRadius:14,border:`2px solid ${text.length>50?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box"}}
+            <input
+              value={url}
+              onChange={e=>setUrl(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&importRecipe()}
+              placeholder="https://www.bbcgoodfood.com/recipes/..."
+              style={{width:"100%",padding:"12px 14px",borderRadius:14,border:`2px solid ${url?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:12}}
             />
-            <div style={{fontSize:11,color:C.muted,marginTop:6,marginBottom:14}}>
-              {text.length > 0 ? `${text.length} characters` : "Tip: on most websites, press Cmd+A then Cmd+C to copy everything"}
-            </div>
-            <Btn onClick={parseRecipe} disabled={text.trim().length<50||loading} full>
-              {loading?"Reading recipe…":"Extract Recipe"}
+            <Btn onClick={importRecipe} disabled={!url.trim()||loading} full>
+              {loading?"Importing…":"Import Recipe"}
             </Btn>
           </>
         )}
@@ -2183,7 +2200,7 @@ function URLImportSheet({onSave,onClose}){
         )}
 
         {error&&(
-          <div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"13px 15px",fontSize:13,color:C.flame,lineHeight:1.6,marginTop:12}}>
+          <div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"13px 15px",fontSize:13,color:C.flame,lineHeight:1.6,marginTop:4}}>
             {error}
           </div>
         )}
@@ -2192,11 +2209,11 @@ function URLImportSheet({onSave,onClose}){
           <div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
               <div style={{fontWeight:900,fontSize:18,fontFamily:DF,marginBottom:4}}>{result.name}</div>
-              <div style={{fontSize:11,opacity:.6,marginBottom:8}}>{result.time} · {result.difficulty} · {result.category}</div>
+              <div style={{fontSize:11,opacity:.6,marginBottom:6}}>{result.time} · {result.difficulty} · from {result.sourceName}</div>
               <div style={{fontSize:11,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
             </div>
 
-            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:14,border:`1px solid ${C.border}`}}>
+            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:12,border:`1px solid ${C.border}`}}>
               <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients</div>
               {result.ingredients.slice(0,5).map((ing,i)=>(
                 <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(4,result.ingredients.length-1)?`1px solid ${C.border}`:"none"}}>{ing}</div>
@@ -2204,8 +2221,15 @@ function URLImportSheet({onSave,onClose}){
               {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.ingredients.length-5} more</div>}
             </div>
 
+            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
+              <a href={result.sourceUrl} target="_blank" rel="noopener noreferrer"
+                style={{fontSize:12,color:C.sky,fontWeight:700,textDecoration:"none"}}>
+                View original on {result.sourceName} →
+              </a>
+            </div>
+
             <div style={{display:"flex",gap:10}}>
-              <Btn onClick={()=>{setResult(null);setText("");setError("");}} outline color={C.muted} style={{flex:1}}>Try again</Btn>
+              <Btn onClick={()=>{setResult(null);setUrl("");setError("");}} outline color={C.muted} style={{flex:1}}>Try another</Btn>
               <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Save to My Library</Btn>
             </div>
           </div>
@@ -3503,7 +3527,7 @@ export default function App(){
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe}/>}
           {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
