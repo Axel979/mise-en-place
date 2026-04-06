@@ -2213,11 +2213,9 @@ function URLImportSheet({onSave,onClose}){
           <>
             <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
               <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.7}}>
-                1. Find a recipe on any website{"
-"}
-                2. Select the ingredients + steps text{"
-"}
-                3. Copy and paste it below
+                <div>1. Find a recipe on any website</div>
+                <div>2. Select the ingredients and steps text</div>
+                <div>3. Copy and paste it below</div>
               </div>
             </div>
 
