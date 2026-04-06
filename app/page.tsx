@@ -3267,10 +3267,10 @@ export default function App(){
   const [showAddFriends,setShowAddFriends]=useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showRecap,    setShowRecap]    = useState(false);
-  const [null,null]= useState(false);
+
   const [showInstaShare,setShowInstaShare]=useState(null); // post object
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
-  const [null,setSignatureDish]=useState(null);
+
   const [seasonalEvent] = useState({
     name:"Basics Month",
     desc:"Master 3 foundational techniques this month",
@@ -3452,7 +3452,7 @@ export default function App(){
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,cap,rating)=>{handleComplete(r,p,cap,rating);setDetailRecipe(null);}}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} null={null}/>}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
           {!detailRecipe&&tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/> }
@@ -3480,7 +3480,7 @@ export default function App(){
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
-      {null&&<SignatureDishSheet allRecipes={allRecipes} null={null} onSelect={setSignatureDish} onClose={()=>null(false)}/>}
+      {false&&<SignatureDishSheet allRecipes={allRecipes} onSelect={setSignatureDish} onClose={()=>null(false)}/>}
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showDrawer&&(
         <div style={{position:"fixed",inset:0,zIndex:200}} onClick={e=>e.target===e.currentTarget&&setShowDrawer(false)}>
