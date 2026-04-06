@@ -901,7 +901,10 @@ function RecipeDetail({recipe,onBack,onComplete}){
         )}
         {!recipe.photo&&<div style={{position:"absolute",top:-10,right:-10,fontSize:108,opacity:.12,lineHeight:1}}>{recipe.emoji}</div>}
         <div style={{padding:"16px 20px 28px",position:"relative"}}>
-          <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:18}}>← Back</button>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:18}}>← Back</button>
+            {recipe.isPersonal&&<button onClick={()=>setShowEdit(true)} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:700}}>Edit</button>}
+          </div>
           <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}>
             <DiffBadge level={recipe.difficulty}/>
             {(recipe.diets||[]).filter(d=>d!=="No restrictions").slice(0,3).map(d=><Chip key={d} label={d} color="rgba(255,255,255,.9)" bg="rgba(255,255,255,.18)"/>)}
@@ -1004,6 +1007,8 @@ function RecipeDetail({recipe,onBack,onComplete}){
           </div>
         )}
       </div>
+
+      {showEdit&&<EditRecipeSheet recipe={recipe} onSave={r=>{onUpdate&&onUpdate(r);setShowEdit(false);}} onClose={()=>setShowEdit(false)}/>}
 
       {postOpen&&(
         <Sheet onClose={handleSkip}>
@@ -3309,6 +3314,86 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
   );
 }
 
+/* ═══ EDIT RECIPE SHEET ════════════════════════════════════════════════════ */
+function EditRecipeSheet({recipe, onSave, onClose}){
+  const [name, setName] = useState(recipe.name||"");
+  const [time, setTime] = useState(recipe.time||"30 min");
+  const [difficulty, setDifficulty] = useState(recipe.difficulty||"Medium");
+  const [ingredients, setIngredients] = useState((recipe.ingredients||[]).join("\n"));
+  const [steps, setSteps] = useState((recipe.steps||[]).map(s=>s.body).join("\n"));
+  const [tip, setTip] = useState(recipe.tip||"");
+
+  const handleSave = () => {
+    const newIngredients = ingredients.split("\n").map(l=>l.trim()).filter(Boolean);
+    const newSteps = steps.split("\n").map((l,i)=>({
+      title: `Step ${i+1}`,
+      body: l.trim(),
+      timer: 0
+    })).filter(s=>s.body.length>0);
+
+    onSave({
+      ...recipe,
+      name: name.trim()||recipe.name,
+      time: time.trim()||recipe.time,
+      difficulty,
+      ingredients: newIngredients,
+      steps: newSteps,
+      tip: tip.trim()||null,
+    });
+    onClose();
+  };
+
+  const Label = ({text}) => (
+    <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>{text}</div>
+  );
+
+  const inputStyle = {width:"100%",padding:"11px 14px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:14,fontFamily:"inherit"};
+
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Edit Recipe</div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+
+        <Label text="Recipe name"/>
+        <input value={name} onChange={e=>setName(e.target.value)} style={inputStyle} placeholder="Recipe name"/>
+
+        <div style={{display:"flex",gap:10,marginBottom:14}}>
+          <div style={{flex:1}}>
+            <Label text="Time"/>
+            <input value={time} onChange={e=>setTime(e.target.value)} style={{...inputStyle,marginBottom:0}} placeholder="30 min"/>
+          </div>
+          <div style={{flex:1}}>
+            <Label text="Difficulty"/>
+            <select value={difficulty} onChange={e=>setDifficulty(e.target.value)}
+              style={{...inputStyle,marginBottom:0,cursor:"pointer"}}>
+              {["Easy","Medium","Hard"].map(d=><option key={d}>{d}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <Label text="Ingredients (one per line)"/>
+        <textarea value={ingredients} onChange={e=>setIngredients(e.target.value)}
+          style={{...inputStyle,minHeight:120,resize:"vertical",lineHeight:1.6}}
+          placeholder={"200g pasta\n2 cloves garlic\n1 onion"}/>
+
+        <Label text="Steps (one per line)"/>
+        <textarea value={steps} onChange={e=>setSteps(e.target.value)}
+          style={{...inputStyle,minHeight:160,resize:"vertical",lineHeight:1.6}}
+          placeholder={"Boil pasta until al dente\nFry garlic in olive oil\nCombine and serve"}/>
+
+        <Label text="Chef tip (optional)"/>
+        <input value={tip} onChange={e=>setTip(e.target.value)} style={inputStyle} placeholder="Any helpful tip..."/>
+
+        <Btn onClick={handleSave} full>Save Changes</Btn>
+      </div>
+    </Sheet>
+  );
+}
+
+
 export default function App(){
   const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase } = useAuth();
   const userIdRef = useRef(null);
@@ -3455,7 +3540,7 @@ export default function App(){
     if(photo||caption){
       setPosts(ps=>[{
         id:`p-${Date.now()}`,
-        user:{name:"You",avatar:"👩‍🍳",level:levelInfo.current.title},
+        user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo.current.title},
         recipe:recipe.name,emoji:recipe.emoji,photo,
         caption:caption||`Just cooked ${recipe.name}! `,
         time:"just now",mwah:0,myMwah:false,comments:[],
@@ -3563,7 +3648,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}}/>;})()}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);}}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
