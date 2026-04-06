@@ -2080,66 +2080,40 @@ function CreateRecipeSheet({onSave,onClose}){
 
 /* ═══ URL IMPORT ══════════════════════════════════════════════════════════ */
 function URLImportSheet({onSave,onClose}){
-  const [url,setUrl]=useState("");
+  const [text,setText]=useState("");
   const [loading,setLoading]=useState(false);
   const [result,setResult]=useState(null);
   const [error,setError]=useState("");
-  const [stage,setStage]=useState(""); // "fetching" | "reading" | "done"
 
-  const importRecipe=async()=>{
-    if(!url.trim())return;
+  const parseRecipe=async()=>{
+    if(!text.trim()||text.trim().length<50)return;
     setLoading(true);setError("");setResult(null);
     try{
-      // Step 1: Fetch the page server-side (avoids CORS + browser blocks)
-      setStage("fetching");
-      const fetchRes=await fetch("/api/anthropic",{
+      const res=await fetch("/api/anthropic",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"fetch",url:url.trim()})
+        body:JSON.stringify({action:"parse",html:text.trim().slice(0,10000)})
       });
-      const fetchData=await fetchRes.json();
-      if(fetchData.error||!fetchData.html) throw new Error("fetch_failed");
-
-      // Step 2: Send HTML to Claude to extract + rewrite recipe
-      setStage("reading");
-      const parseRes=await fetch("/api/anthropic",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"parse",html:fetchData.html})
-      });
-      const apiData=await parseRes.json();
+      const apiData=await res.json();
       if(!apiData.content?.[0]?.text) throw new Error("api_failed");
 
-      // Step 3: Parse the JSON response
       let parsed;
       try{
         const raw=apiData.content[0].text.replace(/```json|```/g,"").trim();
         parsed=JSON.parse(raw);
-      }catch{
-        throw new Error("parse_failed");
-      }
+      }catch{ throw new Error("parse_failed"); }
 
       if(parsed.error==="not_a_recipe") throw new Error("not_a_recipe");
       if(!parsed.name||!parsed.ingredients?.length||!parsed.steps?.length) throw new Error("not_a_recipe");
 
-      setResult({
-        ...parsed,
-        sourceUrl:url.trim(),
-        sourceName:new URL(url.trim()).hostname.replace("www.",""),
-      });
-      setStage("done");
-
+      setResult(parsed);
     }catch(e){
       if(e.message==="not_a_recipe"){
-        setError("We couldn't find a recipe on that page — try a different URL.");
-      } else if(e.message==="fetch_failed"){
-        setError("Couldn't reach that page. The site may block imports.");
+        setError("We couldn't find a recipe in that text — make sure you copied the full recipe including ingredients and instructions.");
       } else {
         setError("Something went wrong. Please try again.");
       }
-    }finally{
-      setLoading(false);
-    }
+    }finally{ setLoading(false); }
   };
 
   const handleSave=()=>{
@@ -2161,15 +2135,10 @@ function URLImportSheet({onSave,onClose}){
       tip:result.tip||null,
       isImported:true,
       isPersonal:true,
-      sourceUrl:result.sourceUrl,
-      sourceName:result.sourceName,
+      sourceUrl:null,
+      sourceName:null,
     });
     onClose();
-  };
-
-  const stageText={
-    fetching:"Fetching the page…",
-    reading:"Reading the recipe…",
   };
 
   return(
@@ -2178,33 +2147,43 @@ function URLImportSheet({onSave,onClose}){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
             <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Import Recipe</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste a link from any recipe website</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste any recipe text below</div>
           </div>
           <CloseBtn onClose={onClose}/>
         </div>
 
         <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
-          <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.5}}>Works with any recipe website. Saved to your personal library only — always links back to the original source.</div>
+          <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.6}}>
+            Find a recipe on any website → select all the text → copy → paste here. Works with any recipe site.
+          </div>
         </div>
 
-        <div style={{display:"flex",gap:10,marginBottom:16}}>
-          <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&importRecipe()}
-            placeholder="https://www.bbcgoodfood.com/recipes/..."
-            style={{flex:1,padding:"11px 14px",borderRadius:14,border:`2px solid ${url?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",transition:"border-color .18s"}}/>
-          <Btn onClick={importRecipe} disabled={!url.trim()||loading} style={{padding:"11px 16px",flexShrink:0}}>
-            {loading?"…":"Import"}
-          </Btn>
-        </div>
+        {!result&&(
+          <>
+            <textarea
+              value={text}
+              onChange={e=>setText(e.target.value)}
+              placeholder="Paste the full recipe text here — ingredients, instructions, everything..."
+              style={{width:"100%",minHeight:180,padding:"12px 14px",borderRadius:14,border:`2px solid ${text.length>50?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box"}}
+            />
+            <div style={{fontSize:11,color:C.muted,marginTop:6,marginBottom:14}}>
+              {text.length > 0 ? `${text.length} characters` : "Tip: on most websites, press Cmd+A then Cmd+C to copy everything"}
+            </div>
+            <Btn onClick={parseRecipe} disabled={text.trim().length<50||loading} full>
+              {loading?"Reading recipe…":"Extract Recipe"}
+            </Btn>
+          </>
+        )}
 
         {loading&&(
-          <div style={{textAlign:"center",padding:"32px 0"}}>
-            <div style={{width:48,height:48,borderRadius:"50%",background:`${C.flame}18`,border:`3px solid ${C.flame}`,borderTopColor:"transparent",animation:"spin 1s linear infinite",margin:"0 auto 14px"}}/>
-            <div style={{fontSize:14,color:C.muted,fontWeight:600}}>{stageText[stage]||"Working…"}</div>
+          <div style={{textAlign:"center",padding:"24px 0"}}>
+            <div style={{width:44,height:44,borderRadius:"50%",background:`${C.flame}18`,border:`3px solid ${C.flame}`,borderTopColor:"transparent",animation:"spin 1s linear infinite",margin:"0 auto 12px"}}/>
+            <div style={{fontSize:14,color:C.muted,fontWeight:600}}>Reading the recipe…</div>
           </div>
         )}
 
         {error&&(
-          <div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"13px 15px",fontSize:13,color:C.flame,lineHeight:1.6}}>
+          <div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"13px 15px",fontSize:13,color:C.flame,lineHeight:1.6,marginTop:12}}>
             {error}
           </div>
         )}
@@ -2213,7 +2192,7 @@ function URLImportSheet({onSave,onClose}){
           <div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
               <div style={{fontWeight:900,fontSize:18,fontFamily:DF,marginBottom:4}}>{result.name}</div>
-              <div style={{fontSize:11,opacity:.6,marginBottom:8}}>{result.time} · {result.difficulty} · from {result.sourceName}</div>
+              <div style={{fontSize:11,opacity:.6,marginBottom:8}}>{result.time} · {result.difficulty} · {result.category}</div>
               <div style={{fontSize:11,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
             </div>
 
@@ -2225,18 +2204,8 @@ function URLImportSheet({onSave,onClose}){
               {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.ingredients.length-5} more</div>}
             </div>
 
-            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
-              <a href={result.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:C.sky,fontWeight:700,textDecoration:"none"}}>
-                View original recipe on {result.sourceName} →
-              </a>
-            </div>
-
-            <div style={{fontSize:11,color:C.muted,marginBottom:14,lineHeight:1.5}}>
-              This recipe is saved to your personal library only. Instructions have been rewritten for personal use.
-            </div>
-
             <div style={{display:"flex",gap:10}}>
-              <Btn onClick={()=>{setResult(null);setUrl("");setError("");}} outline color={C.muted} style={{flex:1}}>Try another</Btn>
+              <Btn onClick={()=>{setResult(null);setText("");setError("");}} outline color={C.muted} style={{flex:1}}>Try again</Btn>
               <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Save to My Library</Btn>
             </div>
           </div>
