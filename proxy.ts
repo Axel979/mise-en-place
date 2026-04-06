@@ -3,7 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  if (pathname.startsWith('/login') || pathname.startsWith('/auth')) {
+  // Allow login, auth, and API routes through without auth check
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api/')
+  ) {
     return NextResponse.next()
   }
 
