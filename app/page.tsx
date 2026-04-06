@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 
@@ -3461,6 +3460,7 @@ export default function App(){
   const prevLevel = useRef(null);
 
   useEffect(()=>{setTimeout(()=>setMounted(true),60);},[]);
+  if(!mounted) return null;
   useEffect(()=>{
     if(profile){
       if(profile.xp>0) setXp(profile.xp);
