@@ -1,34 +1,50 @@
 export async function POST(request: Request) {
-  const { url, action } = await request.json();
+  const body = await request.json();
+  const { action } = body;
 
   // Action: fetch a URL server-side (bypasses CORS)
   if (action === 'fetch') {
+    const { url } = body;
     try {
       const res = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Cache-Control': 'no-cache',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Upgrade-Insecure-Requests': '1',
         },
-        signal: AbortSignal.timeout(15000),
+        redirect: 'follow',
+        signal: AbortSignal.timeout(20000),
       });
+      
       const html = await res.text();
-      return Response.json({ html, ok: res.ok });
-    } catch (e) {
-      return Response.json({ error: 'fetch_failed' }, { status: 400 });
+      
+      // If we got a very short response it's probably a block page
+      if (html.length < 500) {
+        return Response.json({ error: 'blocked', html: '' }, { status: 200 });
+      }
+      
+      return Response.json({ html, ok: true });
+    } catch (e: any) {
+      return Response.json({ error: e.message || 'fetch_failed' }, { status: 200 });
     }
   }
 
-  // Action: call Anthropic API
+  // Action: parse recipe from HTML using Claude
   if (action === 'parse') {
-    const { html } = await request.json().catch(() => ({ html: '' }));
+    const { html } = body;
     
-    // Strip HTML to text
     const stripped = (html || '')
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
+      .trim()
       .slice(0, 8000);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -43,23 +59,14 @@ export async function POST(request: Request) {
         max_tokens: 1500,
         messages: [{
           role: 'user',
-          content: `Extract the recipe from this webpage text and return ONLY a JSON object with no other text, no markdown, no backticks.
+          content: `Extract the recipe from this webpage text and return ONLY valid JSON, nothing else, no markdown.
 
-If this is not a recipe page, return: {"error":"not_a_recipe"}
+If no recipe found: {"error":"not_a_recipe"}
 
-If it is a recipe, return:
-{
-  "name": "recipe name",
-  "time": "total time e.g. 30 min or 1 hr",
-  "difficulty": "Easy or Medium or Hard",
-  "category": "one of: Italian, Asian, Japanese, Indian, Mexican, Mediterranean, Healthy, Baking, Breakfast, Comfort, Quick",
-  "ingredients": ["ingredient 1 with quantity", "ingredient 2 with quantity"],
-  "steps": [{"title": "short title", "body": "rewrite this step clearly in your own words", "timer": 0}],
-  "tip": "one helpful cooking tip in your own words"
-}
+If recipe found:
+{"name":"recipe name","time":"30 min","difficulty":"Easy","category":"Italian","ingredients":["200g pasta","1 onion"],"steps":[{"title":"Cook","body":"rewrite step in your own words","timer":0}],"tip":"one helpful tip in your own words"}
 
-Webpage text:
-${stripped}`
+Text: ${stripped}`
         }]
       }),
     });
