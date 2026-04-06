@@ -3239,13 +3239,13 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
 }
 
 export default function App(){
-  const { user, profile, loading, saveXp, logCompletedRecipe, signOut } = useAuth();
-  const userIdRef = useRef<string|null>(null);
+  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase } = useAuth();
+  const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
     console.log("Auth user:", user?.email || "NOT LOGGED IN");
   },[user]);
-  const [onboarded,  setOnboarded]  = useState(false);
+  const [onboarded,  setOnboarded]  = useState(()=>{ try{ return localStorage.getItem("mep_onboarded")==="true"; }catch{ return false; } });
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
   const [xp,         setXp]         = useState(0);
@@ -3254,7 +3254,7 @@ export default function App(){
   const [detailRecipe,setDetailRecipe]=useState(null);
   const [showGoal,   setShowGoal]   = useState(false);
   const [posts,      setPosts]      = useState(SEED_POSTS);
-  const [goal,       setGoal]       = useState(STREAK_GOALS[2]);
+  const [goal,setGoal]=useState(()=>{ try{ const g=localStorage.getItem('mep_goal'); return g?JSON.parse(g):STREAK_GOALS[2]; }catch{ return STREAK_GOALS[2]; } });
   const [cookedDays, setCookedDays] = useState([false,false,false,false,false,false,false]);
   const [skillData,  setSkillData]  = useState({});
   const [challengeProgress,setChallengeProgress]=useState({});
@@ -3270,6 +3270,16 @@ export default function App(){
 
   const [showInstaShare,setShowInstaShare]=useState(null); // post object
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
+  const [showSettings,    setShowSettings]    = useState(false);
+  const [showDrawer,      setShowDrawer]      = useState(false);
+  const [showWantToCook,  setShowWantToCook]  = useState(false);
+  const [showYearReview,  setShowYearReview]  = useState(false);
+  const [showCommunity,   setShowCommunity]   = useState(false);
+  const [wantToCook,      setWantToCook]      = useState([]);
+  const [hearts,          setHearts]          = useState(5);
+  const [hasFreeze,       setHasFreeze]       = useState(true);
+  const [localProfile,    setLocalProfile]    = useState(null);
+  const [activeTab,       setActiveTab]       = useState("home");
 
   const [seasonalEvent] = useState({
     name:"Basics Month",
@@ -3281,22 +3291,29 @@ export default function App(){
     badge:{emoji:"",label:"Foundations Master"},
   });
   const [notifications,setNotifications] = useState([
-    {id:"n1", type:"mwah",      read:false, avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2m ago",  emoji:""},
+    {id:"n1", type:"mwah",      read:false, avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2m ago",  emoji:"🍳"},
     {id:"n2", type:"friend_req",read:false, avatar:"🧑‍🍳", name:"Jake M.",    text:"sent you a friend request",                   time:"15m ago", emoji:null},
-    {id:"n3", type:"comment",   read:false, avatar:"👩‍🦱", name:"Priya K.",   text:"commented on your Avocado Toast: \"Looks incredible!\"",time:"1h ago",emoji:""},
-    {id:"n4", type:"challenge", read:false, avatar:"",   name:"Marcus T.",  text:"challenged you to the 10 Meal Explorer",      time:"2h ago",  emoji:""},
-    {id:"n5", type:"mwah",      read:true,  avatar:"👩",   name:"Yuki A.",    text:"gave you 🤌 Mwah on your Overnight Oats",     time:"3h ago",  emoji:""},
+    {id:"n3", type:"comment",   read:false, avatar:"👩‍🦱", name:"Priya K.",   text:"commented on your Avocado Toast: \"Looks incredible!\"",time:"1h ago",emoji:"🥑"},
+    {id:"n4", type:"challenge", read:false, avatar:"🧔",   name:"Marcus T.",  text:"challenged you to the 10 Meal Explorer",      time:"2h ago",  emoji:"🗺️"},
+    {id:"n5", type:"mwah",      read:true,  avatar:"👩",   name:"Yuki A.",    text:"gave you 🤌 Mwah on your Overnight Oats",     time:"3h ago",  emoji:"🥣"},
     {id:"n6", type:"streak",    read:true,  avatar:"🔥",   name:"mise.en.place", text:"You're on a 4-day streak. Keep it going!", time:"5h ago",  emoji:null},
     {id:"n7", type:"level",     read:true,  avatar:"⭐",   name:"mise.en.place", text:"You reached Prep Cook! You've earned 500 🔥 Heat",time:"1d ago",emoji:null},
     {id:"n8", type:"friend_req",read:true,  avatar:"👨",   name:"Liam B.",    text:"sent you a friend request",                   time:"1d ago",  emoji:null},
-    {id:"n9", type:"comment",   read:true,  avatar:"",   name:"Marcus T.",  text:"commented on your French Omelette: \"Chef level!\"",time:"2d ago",emoji:""},
-    {id:"n10",type:"mwah",      read:true,  avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2d ago",  emoji:""},
+    {id:"n9", type:"comment",   read:true,  avatar:"🧔",   name:"Marcus T.",  text:"commented on your French Omelette: \"Chef level!\"",time:"2d ago",emoji:"🥚"},
+    {id:"n10",type:"mwah",      read:true,  avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2d ago",  emoji:"🍳"},
   ]);
   const prevLevel = useRef(null);
 
   useEffect(()=>{setTimeout(()=>setMounted(true),60);},[]);
   useEffect(()=>{
-    if(profile&&profile.xp>0) setXp(profile.xp);
+    if(profile){
+      if(profile.xp>0) setXp(profile.xp);
+      // If user has a profile, they've been onboarded
+      if(!onboarded){
+        setOnboarded(true);
+        try{ localStorage.setItem("mep_onboarded","true"); }catch{}
+      }
+    }
   },[profile]);
 
   const levelInfo=useMemo(()=>getLevelInfo(xp),[xp]);
@@ -3383,7 +3400,41 @@ export default function App(){
     checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,mwah:0});
   },[xp,allRecipes,cookedDays,skillData,challengeProgress,levelInfo,checkBadges]);
 
-  const openRecipe=useCallback((recipe)=>setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe),[allRecipes]);
+  const openRecipe=useCallback((recipe)=>{
+    setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);
+    // Push history state so Android back button works within app
+    window.history.pushState({recipe:true},'','');
+    setTimeout(()=>{
+      const el=document.querySelector('[data-scroll-area]');
+      if(el) el.scrollTop=0;
+    },10);
+  },[allRecipes]);
+
+  // Handle Android/browser back button
+  useEffect(()=>{
+    const handlePop=()=>{
+      if(detailRecipe) setDetailRecipe(null);
+    };
+    window.addEventListener('popstate',handlePop);
+    return()=>window.removeEventListener('popstate',handlePop);
+  },[detailRecipe]);
+
+  const toggleWantToCook=(recipeId)=>{
+    setWantToCook(w=>w.includes(recipeId)?w.filter(id=>id!==recipeId):[...w,recipeId]);
+  };
+
+  const saveToLibrary=(communityRecipe)=>{
+    const r={...communityRecipe,id:Date.now(),done:false,isImported:true,
+      ingredients:[],steps:[],tip:null};
+    setAllRecipes(rs=>[r,...rs]);
+    setToast({emoji:"💾",title:"Saved!",subtitle:`${communityRecipe.name} added to your recipes`});
+  };
+
+  const effectiveProfile = localProfile || profile;
+
+  const handleProfileUpdate = (updated) => {
+    setLocalProfile(updated);
+  };
 
   const handleQuickLog=useCallback((note)=>{
     const newXp2 = xp + 30;
@@ -3394,12 +3445,12 @@ export default function App(){
     const today=new Date();
     const dateStr=today.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
     setCookLog(log=>[{
-      id:`log-${Date.now()}`,name:note||"Quick Cook",emoji:"",
+      id:`log-${Date.now()}`,name:note||"Quick Cook",emoji:"⚡",
       category:null,xp:30,difficulty:"Easy",rating:0,photo:null,
       caption:note||"",date:dateStr,
     },...log]);
     setShowQuickLog(false);
-    setToast({emoji:"",title:"Logged!",subtitle:"30 🔥 Heat earned"});
+    setToast({emoji:"⚡",title:"Logged!",subtitle:"30 🔥 Heat earned"});
   },[xp]);
 
   const TABS=[
@@ -3415,27 +3466,17 @@ export default function App(){
   if(!onboarded)return(
     <>
       <style>{CSS}</style>
-      <Onboarding onComplete={({goal:g})=>{setGoal(g);setOnboarded(true);}}/>
+      <Onboarding onComplete={({goal:g})=>{setGoal(g);setOnboarded(true);try{localStorage.setItem('mep_onboarded','true');localStorage.setItem('mep_goal',JSON.stringify(g));}catch{};}}/>
     </>
   );
 
-  if(detailRecipe){
-    const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;
-    return(
-      <>
-        <style>{CSS}</style>
-        <div style={{maxWidth:420,margin:"0 auto"}}>
-          <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c,rating)=>{handleComplete(r,p,c,rating);setDetailRecipe(null);}}/>
-        </div>
-      </>
-    );
-  }
+
 
   return(
     <>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)",overflowX:"hidden",width:"100%"}}>
+      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}}>
         {/* Header */}
         <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
@@ -3451,23 +3492,22 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,cap,rating)=>{handleComplete(r,p,cap,rating);setDetailRecipe(null);}}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent}/>}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}}/>;})()}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
-          {!detailRecipe&&tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/> }
           {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>null(true)}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)}/>}
           {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 env(safe-area-inset-bottom,12px)",zIndex:50,width:"100%"}}>
-          {!detailRecipe&&TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 0",transform:tab===t.id?"scale(1.08)":"scale(1)",transition:"transform .18s"}}>
-              <div style={{fontSize:19}}>{t.emoji}</div>
+          {TABS.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 0",transition:"all .18s"}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tab===t.id?C.flame:"#B0A09A"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:t.svg}}/>
               <div style={{fontSize:9,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:tab===t.id?C.flame:"#B0A09A",transition:"color .18s"}}>{t.label}</div>
-              {tab===t.id&&<div style={{width:16,height:3,borderRadius:99,background:C.flame,marginTop:1}}/>}
+              {tab===t.id&&<div style={{width:16,height:2,borderRadius:99,background:C.flame,marginTop:1}}/>}
             </button>
           ))}
         </div>
@@ -3480,8 +3520,9 @@ export default function App(){
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
-      {false&&<SignatureDishSheet allRecipes={allRecipes} onSelect={setSignatureDish} onClose={()=>null(false)}/>}
+
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
+      {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
       {showDrawer&&(
         <div style={{position:"fixed",inset:0,zIndex:200}} onClick={e=>e.target===e.currentTarget&&setShowDrawer(false)}>
           <div style={{background:"rgba(0,0,0,.45)",position:"absolute",inset:0,backdropFilter:"blur(2px)"}} onClick={()=>setShowDrawer(false)}/>
@@ -3495,7 +3536,9 @@ export default function App(){
           </div>
         </div>
       )}
-      {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
+      {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>setWantToCook(w=>w.filter(x=>x!==id))} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
+      {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
     </>
   );
 }
