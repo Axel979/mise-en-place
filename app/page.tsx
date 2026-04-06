@@ -2090,61 +2090,30 @@ function URLImportSheet({onSave,onClose}){
     if(!url.trim())return;
     setLoading(true);setError("");setResult(null);
     try{
-      // Step 1: Fetch the page via CORS proxy
+      // Step 1: Fetch the page server-side (avoids CORS + browser blocks)
       setStage("fetching");
-      const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(url.trim())}`;
-      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(20000)});
-      if(!res.ok) throw new Error("fetch_failed");
-      const html=await res.text();
-
-      // Step 2: Strip HTML down to readable text to save tokens
-      const stripped=html
-        .replace(/<script[\s\S]*?<\/script>/gi,"")
-        .replace(/<style[\s\S]*?<\/style>/gi,"")
-        .replace(/<[^>]+>/g," ")
-        .replace(/\s+/g," ")
-        .slice(0,8000); // first 8000 chars is usually enough
-
-      // Step 3: Send to Anthropic API to extract and rewrite the recipe
-      setStage("reading");
-      const apiRes=await fetch("/api/anthropic",{
+      const fetchRes=await fetch("/api/anthropic",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-haiku-4-5-20251001",
-          max_tokens:1500,
-          messages:[{
-            role:"user",
-            content:`Extract the recipe from this webpage text and return ONLY a JSON object with no other text, no markdown, no backticks.
-
-If this is not a recipe page, return: {"error":"not_a_recipe"}
-
-If it is a recipe, return:
-{
-  "name": "recipe name",
-  "time": "total time as string e.g. 30 min or 1 hr",
-  "difficulty": "Easy or Medium or Hard",
-  "category": "one of: Italian, Asian, Japanese, Indian, Mexican, Mediterranean, Healthy, Baking, Breakfast, Comfort, Quick",
-  "ingredients": ["ingredient 1 with quantity", "ingredient 2 with quantity"],
-  "steps": [
-    {"title": "short step title", "body": "rewrite this step in your own clear words - do not copy the original text verbatim", "timer": 0}
-  ],
-  "tip": "one helpful cooking tip in your own words"
-}
-
-Webpage text:
-${stripped}`
-          }]
-        })
+        body:JSON.stringify({action:"fetch",url:url.trim()})
       });
+      const fetchData=await fetchRes.json();
+      if(fetchData.error||!fetchData.html) throw new Error("fetch_failed");
 
-      const apiData=await apiRes.json();
+      // Step 2: Send HTML to Claude to extract + rewrite recipe
+      setStage("reading");
+      const parseRes=await fetch("/api/anthropic",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"parse",html:fetchData.html})
+      });
+      const apiData=await parseRes.json();
       if(!apiData.content?.[0]?.text) throw new Error("api_failed");
 
-      // Parse the response
+      // Step 3: Parse the JSON response
       let parsed;
       try{
-        const raw=apiData.content[0].text.replace(/\`\`\`json|\`\`\`/g,"").trim();
+        const raw=apiData.content[0].text.replace(/```json|```/g,"").trim();
         parsed=JSON.parse(raw);
       }catch{
         throw new Error("parse_failed");
@@ -2164,7 +2133,7 @@ ${stripped}`
       if(e.message==="not_a_recipe"){
         setError("We couldn't find a recipe on that page — try a different URL.");
       } else if(e.message==="fetch_failed"){
-        setError("Couldn't reach that page. Check the URL and try again.");
+        setError("Couldn't reach that page. The site may block imports.");
       } else {
         setError("Something went wrong. Please try again.");
       }
