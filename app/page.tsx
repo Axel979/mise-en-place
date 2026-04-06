@@ -1699,7 +1699,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 }
 
 /* ═══ HOME TAB ════════════════════════════════════════════════════════════ */
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,signatureDish}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,null}){
   const [completing,setCompleting]=useState(null);
   const quickComplete=(e,r)=>{
     e.stopPropagation();if(completing)return;
@@ -1802,9 +1802,9 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
           <div style={{fontSize:20,marginBottom:3}}>📊</div>
           <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Weekly Recap</div>
         </button>
-        {signatureDish&&(
+        {null&&(
           <div style={{flex:1,background:`${C.flame}0F`,border:`2px solid ${C.flame}22`,borderRadius:14,padding:"12px 8px",textAlign:"center"}}>
-            <div style={{fontSize:20,marginBottom:3}}>{signatureDish.emoji}</div>
+            <div style={{fontSize:20,marginBottom:3}}>{null.emoji}</div>
             <div style={{fontSize:10,fontWeight:800,color:C.flame}}>Signature</div>
           </div>
         )}
@@ -2790,53 +2790,6 @@ function WeeklyRecapSheet({cookedDays, xp, weeklyXp, levelInfo, posts, earnedBad
 }
 
 /* ═══ SIGNATURE DISH SHEET ════════════════════════════════════════════════ */
-function SignatureDishSheet({allRecipes, signatureDish, onSelect, onClose}){
-  return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>🍳 Signature Dish</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Your defining dish — shown on your profile</div>
-          </div>
-          <CloseBtn onClose={onClose}/>
-        </div>
-
-        {signatureDish&&(
-          <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:16,padding:"16px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center",color:"#fff"}}>
-            <span style={{fontSize:40}}>{signatureDish.emoji}</span>
-            <div>
-              <div style={{fontSize:11,opacity:.6,marginBottom:2}}>Current signature</div>
-              <div style={{fontWeight:900,fontSize:16,fontFamily:DF}}>{signatureDish.name}</div>
-            </div>
-          </div>
-        )}
-
-        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Choose from recipes you've cooked:</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {allRecipes.filter(r=>r.done).map(r=>(
-            <button key={r.id} onClick={()=>{onSelect(r);onClose();}} className="tap" style={{display:"flex",alignItems:"center",gap:12,background:signatureDish?.id===r.id?`${C.flame}12`:C.cream,border:`2px solid ${signatureDish?.id===r.id?C.flame:C.border}`,borderRadius:14,padding:"12px 14px",cursor:"pointer",textAlign:"left",transition:"all .18s"}}>
-              <span style={{fontSize:28}}>{r.emoji}</span>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{r.name}</div>
-                <div style={{fontSize:11,color:C.muted}}>{r.category} · {r.difficulty}</div>
-              </div>
-              {signatureDish?.id===r.id&&<span style={{color:C.flame,fontWeight:900}}>✓</span>}
-            </button>
-          ))}
-          {allRecipes.filter(r=>r.done).length===0&&(
-            <div style={{textAlign:"center",padding:"32px 20px",color:C.muted}}>
-              <div style={{fontSize:36,marginBottom:8}}>🍳</div>
-              <div style={{fontWeight:700}}>Cook a recipe first</div>
-              <div style={{fontSize:13,marginTop:4}}>Complete your first dish to set a signature</div>
-            </div>
-          )}
-        </div>
-      </div>
-    </Sheet>
-  );
-}
-
 /* ═══ ROOT APP ════════════════════════════════════════════════════════════ */
 function HeartsBar({hearts,maxHearts=5,hasFreeze,onUseFreeze}){
   return(
@@ -3164,6 +3117,127 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
 }
 
 
+function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,onShowSettings,onShowCalendar,onShowYearReview,signOut,weeklyXp,challengeProgress,goal,onEditGoal}){
+  const totalCooked = allRecipes.filter(r=>r.done).length;
+  const uniqueCuisines = [...new Set(cookLog.map(e=>e.category).filter(Boolean))].length;
+  const totalHeat = xp;
+
+  return(
+    <div style={{paddingBottom:30}}>
+      {/* Profile hero */}
+      <div style={{background:`linear-gradient(160deg,${C.bark},#5C3A20)`,padding:"28px 20px 32px",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-20,right:-20,fontSize:120,opacity:.06}}></div>
+
+        {/* Settings button */}
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
+          <button onClick={onShowSettings} className="tap" style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Settings</button>
+        </div>
+
+        {/* Avatar + name */}
+        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
+          <div style={{width:72,height:72,borderRadius:20,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,flexShrink:0,border:"3px solid rgba(255,255,255,.2)"}}>
+            <AvatarIcon username={profile?.username||user?.email||"?"} size={60} fontSize={26}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:900,fontSize:22,color:"#fff",fontFamily:DF}}>
+              {profile?.username||user?.email?.split("@")[0]||"Chef"}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+              <div style={{background:levelInfo.current.color,borderRadius:8,padding:"3px 10px",fontSize:12,fontWeight:800,color:"#fff"}}>
+                {levelInfo.current.title}
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        {/* Stats row */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+          {[["🍳",totalCooked,"Cooked"],["🔥",totalHeat,"Heat"],["🌍",uniqueCuisines,"Cuisines"],["🏅",earnedBadges.length,"Badges"]].map(([icon,val,label])=>(
+            <div key={label} style={{textAlign:"center",background:"rgba(255,255,255,.08)",borderRadius:12,padding:"10px 4px"}}>
+              <div style={{fontSize:18,marginBottom:2}}>{icon}</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#fff",fontFamily:DF}}>{val}</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Cooking Goal */}
+      <div style={{margin:"16px 16px 0",background:C.cream,borderRadius:18,padding:"16px",border:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontWeight:800,fontSize:14,color:C.bark}}>Cooking Goal</div>
+          <button onClick={onEditGoal} className="tap" style={{background:`${C.flame}14`,border:`1.5px solid ${C.flame}30`,borderRadius:10,padding:"5px 12px",fontSize:12,fontWeight:700,color:C.flame,cursor:"pointer"}}>Change</button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:44,height:44,borderRadius:12,background:`${goal.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{goal.icon}</div>
+          <div>
+            <div style={{fontWeight:800,fontSize:15,color:C.bark}}>{goal.label}</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{goal.sub}</div>
+          </div>
+          <div style={{marginLeft:"auto",fontWeight:900,fontSize:20,color:goal.color}}>{goal.target}×/wk</div>
+        </div>
+      </div>
+
+      {/* Rank progress */}
+      <div style={{margin:"12px 16px 0",background:C.cream,borderRadius:18,padding:"16px",border:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontWeight:800,fontSize:14,color:C.bark}}>Rank Progress</div>
+          {levelInfo.next&&<div style={{fontSize:12,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</div>}
+        </div>
+        <XPBar pct={levelInfo.pct} color={levelInfo.current.color}/>
+        {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>Next rank:  {levelInfo.next.title}</div>}
+      </div>
+
+      {/* Quick actions */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"12px 16px 0"}}>
+        {[
+          {icon:"📅",label:"Cooking History",action:onShowCalendar,color:C.sky},
+
+          {icon:"📊",label:"Year in Review",action:onShowYearReview,color:C.sage},
+          {icon:"🏅",label:"My Badges",action:()=>setTab("library"),color:C.gold},
+        ].map(({icon,label,action,color})=>(
+          <button key={label} onClick={action||undefined} className="tap" style={{background:C.cream,border:`2px solid ${color}22`,borderRadius:16,padding:"14px 12px",cursor:"pointer",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <span style={{fontSize:28}}>{icon}</span>
+            <span style={{fontSize:12,fontWeight:800,color:C.bark}}>{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Recent cooks */}
+      {cookLog.length>0&&(
+        <div style={{margin:"16px 16px 0"}}>
+          <div style={{fontWeight:900,fontSize:16,color:C.bark,marginBottom:10,fontFamily:DF}}>Recent Cooks</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {cookLog.slice(0,4).map((entry,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:12,background:C.cream,borderRadius:14,padding:"10px 14px",border:`1px solid ${C.border}`}}>
+                {entry.photo
+                  ?<img src={entry.photo} alt="" style={{width:44,height:44,borderRadius:10,objectFit:"cover",flexShrink:0}}/>
+                  :<div style={{width:44,height:44,borderRadius:10,background:`${C.ember}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{entry.emoji}</div>
+                }
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{entry.name}</div>
+                  <div style={{fontSize:11,color:C.muted,marginTop:2}}>{entry.date}</div>
+                </div>
+                <div style={{fontSize:11,fontWeight:700,color:C.sage,flexShrink:0}}>+{entry.xp} 🔥</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+
+      {/* Sign out */}
+      <div style={{margin:"12px 16px 0"}}>
+        <button onClick={signOut} className="tap" style={{width:"100%",padding:"13px",borderRadius:14,border:`2px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer"}}>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App(){
   const { user, profile, loading, saveXp, logCompletedRecipe, signOut } = useAuth();
   const userIdRef = useRef<string|null>(null);
@@ -3193,10 +3267,10 @@ export default function App(){
   const [showAddFriends,setShowAddFriends]=useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showRecap,    setShowRecap]    = useState(false);
-  const [showSignature,setShowSignature]= useState(false);
+  const [null,null]= useState(false);
   const [showInstaShare,setShowInstaShare]=useState(null); // post object
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
-  const [signatureDish,setSignatureDish]=useState(null);
+  const [null,setSignatureDish]=useState(null);
   const [seasonalEvent] = useState({
     name:"Basics Month",
     desc:"Master 3 foundational techniques this month",
@@ -3377,17 +3451,19 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} signatureDish={signatureDish}/>}
-          {tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
-          {tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
-          {tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/> }
-          {tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
-          {tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>setShowSignature(true)}/>}
-          {tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,cap,rating)=>{handleComplete(r,p,cap,rating);setDetailRecipe(null);}}/>;})()}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} null={null}/>}
+          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
+          {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
+          {!detailRecipe&&tab==="community"&&<CommunityTab allRecipes={allRecipes} onOpen={openRecipe} onSaveToLibrary={saveToLibrary}/> }
+          {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onShowSignature={()=>null(true)}/>}
+          {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
+          {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
         <div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 env(safe-area-inset-bottom,12px)",zIndex:50,width:"100%"}}>
-          {TABS.map(t=>(
+          {!detailRecipe&&TABS.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 0",transform:tab===t.id?"scale(1.08)":"scale(1)",transition:"transform .18s"}}>
               <div style={{fontSize:19}}>{t.emoji}</div>
               <div style={{fontSize:9,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:tab===t.id?C.flame:"#B0A09A",transition:"color .18s"}}>{t.label}</div>
@@ -3404,7 +3480,7 @@ export default function App(){
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
-      {showSignature&&<SignatureDishSheet allRecipes={allRecipes} signatureDish={signatureDish} onSelect={setSignatureDish} onClose={()=>setShowSignature(false)}/>}
+      {null&&<SignatureDishSheet allRecipes={allRecipes} null={null} onSelect={setSignatureDish} onClose={()=>null(false)}/>}
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showDrawer&&(
         <div style={{position:"fixed",inset:0,zIndex:200}} onClick={e=>e.target===e.currentTarget&&setShowDrawer(false)}>
