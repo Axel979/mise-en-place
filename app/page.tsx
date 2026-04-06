@@ -2231,15 +2231,7 @@ function URLImportSheet({onSave,onClose}){
             <textarea
               value={text}
               onChange={e=>setText(e.target.value)}
-              placeholder={"Paste the ingredients and instructions here...
-
-e.g.
-200g spaghetti
-100g beef mince
-2 cloves garlic
-
-1. Boil pasta for 10 minutes
-2. Fry beef with garlic..."}
+              placeholder="Paste ingredients and steps here..."
               style={{width:"100%",minHeight:200,padding:"12px 14px",borderRadius:14,border:`2px solid ${text?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box",marginBottom:8}}
             />
             <div style={{fontSize:11,color:C.muted,marginBottom:14}}>
