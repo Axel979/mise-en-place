@@ -1850,7 +1850,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
   const [sort,setSort]=useState("default");
 
   const filtered=useMemo(()=>{
-    let rs=allRecipes.filter(r=>{
+    let rs=allRecipes.filter(r=>!r.isPersonal).filter(r=>{
       const mc=cat==="All"||r.category===cat;
       const md=diet==="All"||(r.diets||[]).includes(diet);
       return mc&&md&&r.name.toLowerCase().includes(search.toLowerCase());
@@ -2083,125 +2083,191 @@ function URLImportSheet({onSave,onClose}){
   const [loading,setLoading]=useState(false);
   const [result,setResult]=useState(null);
   const [error,setError]=useState("");
+  const [stage,setStage]=useState(""); // "fetching" | "reading" | "done"
 
   const importRecipe=async()=>{
     if(!url.trim())return;
     setLoading(true);setError("");setResult(null);
     try{
-      // Use allorigins.win as CORS proxy to fetch the page
-      const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(15000)});
+      // Step 1: Fetch the page via CORS proxy
+      setStage("fetching");
+      const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(url.trim())}`;
+      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(20000)});
+      if(!res.ok) throw new Error("fetch_failed");
       const html=await res.text();
 
-      // Try to extract JSON-LD Recipe schema (published by most recipe sites)
-      const jsonLdMatches=html.matchAll(/<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
-      let recipe=null;
+      // Step 2: Strip HTML down to readable text to save tokens
+      const stripped=html
+        .replace(/<script[\s\S]*?<\/script>/gi,"")
+        .replace(/<style[\s\S]*?<\/style>/gi,"")
+        .replace(/<[^>]+>/g," ")
+        .replace(/\s+/g," ")
+        .slice(0,8000); // first 8000 chars is usually enough
 
-      for(const match of jsonLdMatches){
-        try{
-          const data=JSON.parse(match[1].trim());
-          const items=Array.isArray(data)?data:[data];
-          const found=items.find(d=>d?.["@type"]==="Recipe"||(Array.isArray(d?.["@type"])&&d["@type"].includes("Recipe")));
-          if(found){recipe=found;break;}
-        }catch{}
+      // Step 3: Send to Anthropic API to extract and rewrite the recipe
+      setStage("reading");
+      const apiRes=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","x-api-key":process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY||""},
+        body:JSON.stringify({
+          model:"claude-haiku-4-5-20251001",
+          max_tokens:1500,
+          messages:[{
+            role:"user",
+            content:`Extract the recipe from this webpage text and return ONLY a JSON object with no other text, no markdown, no backticks.
+
+If this is not a recipe page, return: {"error":"not_a_recipe"}
+
+If it is a recipe, return:
+{
+  "name": "recipe name",
+  "time": "total time as string e.g. 30 min or 1 hr",
+  "difficulty": "Easy or Medium or Hard",
+  "category": "one of: Italian, Asian, Japanese, Indian, Mexican, Mediterranean, Healthy, Baking, Breakfast, Comfort, Quick",
+  "ingredients": ["ingredient 1 with quantity", "ingredient 2 with quantity"],
+  "steps": [
+    {"title": "short step title", "body": "rewrite this step in your own clear words - do not copy the original text verbatim", "timer": 0}
+  ],
+  "tip": "one helpful cooking tip in your own words"
+}
+
+Webpage text:
+${stripped}`
+          }]
+        })
+      });
+
+      const apiData=await apiRes.json();
+      if(!apiData.content?.[0]?.text) throw new Error("api_failed");
+
+      // Parse the response
+      let parsed;
+      try{
+        const raw=apiData.content[0].text.replace(/\`\`\`json|\`\`\`/g,"").trim();
+        parsed=JSON.parse(raw);
+      }catch{
+        throw new Error("parse_failed");
       }
 
-      if(!recipe)throw new Error("no_recipe");
-
-      // Extract ingredients
-      const ingredients=(recipe.recipeIngredient||[]).map(i=>String(i).trim()).filter(Boolean);
-
-      // Extract steps
-      const rawSteps=recipe.recipeInstructions||[];
-      const steps=rawSteps.map((s,i)=>{
-        if(typeof s==="string")return{title:`Step ${i+1}`,body:s.trim()};
-        return{title:s.name||`Step ${i+1}`,body:(s.text||s.description||"").trim()};
-      }).filter(s=>s.body);
-
-      // Extract time
-      const totalTime=recipe.totalTime||recipe.cookTime||recipe.prepTime||"";
-      const timeStr=totalTime.replace(/PT/,"").replace(/H/,"h ").replace(/M/,"min").trim()||"";
-
-      // Get image URL if provided in the structured data (don't scrape from page)
-      const imageUrl=typeof recipe.image==="string"?recipe.image:recipe.image?.url||null;
-
-      if(ingredients.length===0&&steps.length===0)throw new Error("no_recipe");
+      if(parsed.error==="not_a_recipe") throw new Error("not_a_recipe");
+      if(!parsed.name||!parsed.ingredients?.length||!parsed.steps?.length) throw new Error("not_a_recipe");
 
       setResult({
-        name:recipe.name||"Imported Recipe",
-        emoji:"",
-        photo:imageUrl,
-        time:timeStr||"30 min",
-        ingredients,steps,
-        tip:null,
-        sourceUrl:url,
-        sourceName:new URL(url).hostname.replace("www.",""),
+        ...parsed,
+        sourceUrl:url.trim(),
+        sourceName:new URL(url.trim()).hostname.replace("www.",""),
       });
+      setStage("done");
+
     }catch(e){
-      if(e.message==="no_recipe"){
-        setError("No recipe found on that page. This works best with recipe blogs and cooking websites that use structured data.");
+      if(e.message==="not_a_recipe"){
+        setError("We couldn't find a recipe on that page — try a different URL.");
+      } else if(e.message==="fetch_failed"){
+        setError("Couldn't reach that page. Check the URL and try again.");
       } else {
-        setError("Couldn't reach that page. Check the URL is correct and the site is accessible.");
+        setError("Something went wrong. Please try again.");
       }
-    }finally{setLoading(false);}
+    }finally{
+      setLoading(false);
+    }
   };
 
   const handleSave=()=>{
     if(!result)return;
-    const xpMap={Easy:50,Medium:80,Hard:120};
     onSave({
       id:Date.now(),
-      name:result.name,emoji:result.emoji,photo:result.photo,
-      xp:60,difficulty:"Medium",time:result.time,
-      category:"Comfort",diets:["No restrictions"],macros:null,done:false,
-      ingredients:result.ingredients,steps:result.steps,tip:result.tip,
-      isImported:true,sourceUrl:result.sourceUrl,sourceName:result.sourceName,
+      name:result.name,
+      emoji:"",
+      photo:null,
+      xp:result.difficulty==="Easy"?50:result.difficulty==="Hard"?120:80,
+      difficulty:result.difficulty||"Medium",
+      time:result.time||"30 min",
+      category:result.category||"Comfort",
+      diets:["No restrictions"],
+      macros:null,
+      done:false,
+      ingredients:result.ingredients||[],
+      steps:(result.steps||[]).map(s=>({...s,timer:s.timer||0})),
+      tip:result.tip||null,
+      isImported:true,
+      isPersonal:true,
+      sourceUrl:result.sourceUrl,
+      sourceName:result.sourceName,
     });
     onClose();
+  };
+
+  const stageText={
+    fetching:"Fetching the page…",
+    reading:"Reading the recipe…",
   };
 
   return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}> Import from URL</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste a link from any recipe website</div></div>
+          <div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Import Recipe</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Paste a link from any recipe website</div>
+          </div>
           <CloseBtn onClose={onClose}/>
         </div>
 
         <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
-          <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.5}}>Works with BBC Good Food, AllRecipes, Taste.com.au, and most recipe blogs. The recipe is always linked back to the original source.</div>
+          <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.5}}>Works with any recipe website. Saved to your personal library only — always links back to the original source.</div>
         </div>
 
         <div style={{display:"flex",gap:10,marginBottom:16}}>
-          <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&importRecipe()} placeholder="https://www.bbcgoodfood.com/recipes/..." style={{flex:1,padding:"11px 14px",borderRadius:14,border:`2px solid ${url?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",transition:"border-color .18s"}}/>
-          <Btn onClick={importRecipe} disabled={!url.trim()||loading} style={{padding:"11px 16px",flexShrink:0}}>{loading?"…":"Import"}</Btn>
+          <input value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&importRecipe()}
+            placeholder="https://www.bbcgoodfood.com/recipes/..."
+            style={{flex:1,padding:"11px 14px",borderRadius:14,border:`2px solid ${url?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",transition:"border-color .18s"}}/>
+          <Btn onClick={importRecipe} disabled={!url.trim()||loading} style={{padding:"11px 16px",flexShrink:0}}>
+            {loading?"…":"Import"}
+          </Btn>
         </div>
 
         {loading&&(
           <div style={{textAlign:"center",padding:"32px 0"}}>
-            <div style={{fontSize:40,display:"inline-block",animation:"spin 1.2s linear infinite",marginBottom:12}}>🍳</div>
-            <div style={{fontSize:14,color:C.muted}}>Reading the recipe…</div>
+            <div style={{width:48,height:48,borderRadius:"50%",background:`${C.flame}18`,border:`3px solid ${C.flame}`,borderTopColor:"transparent",animation:"spin 1s linear infinite",margin:"0 auto 14px"}}/>
+            <div style={{fontSize:14,color:C.muted,fontWeight:600}}>{stageText[stage]||"Working…"}</div>
           </div>
         )}
 
-        {error&&<div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"12px 14px",fontSize:13,color:C.flame,lineHeight:1.5}}>{error}</div>}
+        {error&&(
+          <div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:14,padding:"13px 15px",fontSize:13,color:C.flame,lineHeight:1.6}}>
+            {error}
+          </div>
+        )}
 
         {result&&!loading&&(
           <div>
             <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
-              {result.photo&&<img src={result.photo} alt="" style={{width:"100%",height:160,objectFit:"cover",borderRadius:12,marginBottom:12}}/>}
-              <div style={{fontWeight:900,fontSize:18,fontFamily:DF}}>{result.name}</div>
-              <div style={{fontSize:11,opacity:.6,marginTop:4}}>from {result.sourceName} · ⏱ {result.time}</div>
-              <div style={{fontSize:11,marginTop:8,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
+              <div style={{fontWeight:900,fontSize:18,fontFamily:DF,marginBottom:4}}>{result.name}</div>
+              <div style={{fontSize:11,opacity:.6,marginBottom:8}}>{result.time} · {result.difficulty} · from {result.sourceName}</div>
+              <div style={{fontSize:11,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
             </div>
+
             <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:14,border:`1px solid ${C.border}`}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8}}>INGREDIENTS PREVIEW</div>
-              {result.ingredients.slice(0,5).map((ing,i)=><div key={i} style={{fontSize:13,color:C.bark,padding:"3px 0",borderBottom:i<4?`1px solid ${C.border}`:"none"}}>{ing}</div>)}
-              {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>+{result.ingredients.length-5} more</div>}
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients</div>
+              {result.ingredients.slice(0,5).map((ing,i)=>(
+                <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(4,result.ingredients.length-1)?`1px solid ${C.border}`:"none"}}>{ing}</div>
+              ))}
+              {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.ingredients.length-5} more</div>}
             </div>
+
+            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
+              <a href={result.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:C.sky,fontWeight:700,textDecoration:"none"}}>
+                View original recipe on {result.sourceName} →
+              </a>
+            </div>
+
+            <div style={{fontSize:11,color:C.muted,marginBottom:14,lineHeight:1.5}}>
+              This recipe is saved to your personal library only. Instructions have been rewritten for personal use.
+            </div>
+
             <div style={{display:"flex",gap:10}}>
-              <Btn onClick={()=>{setResult(null);setUrl("");}} outline color={C.muted} style={{flex:1}}>Try another</Btn>
-              <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Add to My Recipes ✓</Btn>
+              <Btn onClick={()=>{setResult(null);setUrl("");setError("");}} outline color={C.muted} style={{flex:1}}>Try another</Btn>
+              <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Save to My Library</Btn>
             </div>
           </div>
         )}
@@ -2209,6 +2275,7 @@ function URLImportSheet({onSave,onClose}){
     </Sheet>
   );
 }
+
 
 /* ═══ NOTIFICATIONS TAB ════════════════════════════════════════════════════ */
 function NotificationsTab({notifications,setNotifications,setTab}){
