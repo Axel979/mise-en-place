@@ -884,7 +884,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate}){
   const [rating,setRating]=useState(0);
   const [photoPreview,setPhotoPreview]=useState(null);
   const fileRef=useRef();
-  const nSteps=(recipe.steps||[]).length;
+  const steps_=(recipe.steps||[]);
+  const nSteps=steps_.length;
   const handleFile=(e)=>{const f=e.target.files[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));};
   const handleComplete=()=>{setDone(true);setPostOpen(true);};
   const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating);};
@@ -991,10 +992,10 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate}){
             </div>
             <div style={{background:C.cream,borderRadius:20,padding:24,border:`1px solid ${C.border}`,marginBottom:14}}>
               <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${C.flame},${C.ember})`,color:"#fff",fontWeight:900,fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14}}>{step+1}</div>
-              <div style={{fontWeight:900,fontSize:20,color:C.bark,marginBottom:10,fontFamily:DF}}>{recipe.steps[step].title}</div>
-              <div style={{fontSize:15,color:"#5A4C42",lineHeight:1.7}}>{recipe.steps[step].body}</div>
+              <div style={{fontWeight:900,fontSize:20,color:C.bark,marginBottom:10,fontFamily:DF}}>{(recipe.steps[step]||{}).title||`Step ${step+1}`}</div>
+              <div style={{fontSize:15,color:"#5A4C42",lineHeight:1.7}}>{(recipe.steps[step]||{}).body||""}</div>
             </div>
-            {recipe.steps[step].timer>0&&<div style={{marginBottom:14}}><StepTimer key={`${recipe.id}-${step}`} seconds={recipe.steps[step].timer}/></div>}
+            {(recipe.steps[step]?.timer||0)>0&&<div style={{marginBottom:14}}><StepTimer key={`${recipe.id}-${step}`} seconds={recipe.steps[step].timer}/></div>}
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setStep(s=>Math.max(0,s-1))} disabled={step===0} style={{flex:1,padding:13,borderRadius:14,border:`2px solid ${C.border}`,background:"transparent",color:step===0?"#CCC":C.bark,fontWeight:800,cursor:step===0?"default":"pointer",fontSize:15}}>← Prev</button>
               {step<nSteps-1
