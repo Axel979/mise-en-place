@@ -874,7 +874,8 @@ function Onboarding({onComplete}){
 
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
-function RecipeDetail({recipe,onBack,onComplete}){
+function RecipeDetail({recipe,onBack,onComplete,onUpdate}){
+  const [showEdit,setShowEdit]=useState(false);
   const [step,setStep]=useState(0);
   const [mode,setMode]=useState("overview");
   const [done,setDone]=useState(recipe.done);
