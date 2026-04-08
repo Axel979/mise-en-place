@@ -1987,6 +1987,63 @@ function GoalPicker({goal,onSelect,onClose}){
 
 
 /* ═══ CREATE RECIPE ═══════════════════════════════════════════════════════ */
+function parseRecipeText(text){
+  // Boilerplate lines to strip
+  const JUNK=/^(jump to|print|save|rate|advertisement|skip|share|pin it|tweet|email|facebook|instagram|subscribe|sign up|newsletter|related|you may|more recipes|recipe card|servings|yield|prep time|cook time|total time|nutrition|calories|author|published|updated|course|cuisine|keyword|equipment|\d+ comments?|leave a|reply|cancel reply|your email|required fields)/i;
+
+  // Imperative verbs that start instructions
+  const VERBS=/^(mix|stir|add|preheat|chop|bake|cook|combine|season|drain|bring|let|pour|place|heat|fry|roast|boil|simmer|whisk|fold|remove|transfer|serve|slice|dice|mince|grate|melt|cover|uncover|reduce|increase|turn|flip|spread|top|finish|rest|allow|set|prepare|wash|rinse|pat|cut|roll|knead|proof|cool|chill|freeze|thaw|soak|marinate|toss|coat|brush|grease|line|fill|layer|arrange|sprinkle|drizzle|squeeze|press|flatten|shape|form|divide|portion|scoop|spoon|ladle|strain|sieve|blend|puree|mash|crush|grind|zest|peel|core|seed|debone|trim|score|pierce|puncture|skewer|thread|wrap|seal|tie|dust|dredge|bread|batter|dip|dunk|soak|marinate|pickle|cure|smoke|grill|broil|steam|poach|braise|stew|saute|pan|deep|shallow)/i;
+
+  // Units/quantities that start ingredients  
+  const QTY=/^(\d[\d\/\.\s]*|½|⅓|¼|¾|⅛|a |an |some |handful|pinch|splash|bunch|bunch|sprig|head|clove|knob|dollop|dash|to taste|salt|pepper|fresh|dried|large|medium|small|big)/i;
+
+  const lines = text.split(/
+?
+/).map(l=>l.trim()).filter(l=>l.length>2);
+
+  let name='';
+  let ingredients=[];
+  let steps=[];
+  let mode='auto'; // auto | ingredients | steps
+
+  for(const line of lines){
+    // Skip junk
+    if(JUNK.test(line)) continue;
+    if(line.length<3) continue;
+
+    // Section headings
+    if(/ingredient/i.test(line) && line.length<40){mode='ingredients';continue;}
+    if(/(method|instruction|direction|step|how to|preparation)/i.test(line) && line.length<40){mode='steps';continue;}
+
+    // Numbered step pattern: "1." "1)" "Step 1"
+    const isNumberedStep=/^(step\s*\d+|#\d+|\d+[\.\)]\s)/i.test(line);
+    const isBulletStep=/^[-•*]\s/.test(line);
+    const isImperative=VERBS.test(line);
+    const isQty=QTY.test(line);
+    const isShort=line.length<=65;
+    const isLong=line.length>65;
+
+    if(mode==='ingredients'){
+      ingredients.push(line);
+    } else if(mode==='steps'){
+      const body=line.replace(/^(step\s*\d+[\.:]\s*|\d+[\.\)]\s*|[-•*]\s*)/i,'');
+      steps.push({title:`Step ${steps.length+1}`,body});
+    } else {
+      // Auto-detect mode
+      if(isNumberedStep||isBulletStep||(isImperative&&isLong)){
+        const body=line.replace(/^(step\s*\d+[\.:]\s*|\d+[\.\)]\s*|[-•*]\s*)/i,'');
+        steps.push({title:`Step ${steps.length+1}`,body});
+      } else if(isQty||(isShort&&ingredients.length>0&&!isImperative)){
+        ingredients.push(line);
+      } else if(!name && ingredients.length===0 && steps.length===0 && line.length<80){
+        name=line; // First unclassified line is likely the recipe name
+      }
+    }
+  }
+
+  return {name, ingredients, steps};
+}
+
 function CreateRecipeSheet({onSave,onClose}){
   const [name,setName]=useState("");
   const [category,setCategory]=useState("Comfort");
@@ -1996,14 +2053,35 @@ function CreateRecipeSheet({onSave,onClose}){
   const [steps,setSteps]=useState([{title:"",body:""}]);
   const [tip,setTip]=useState("");
   const [activeTab,setActiveTab]=useState("basics");
+  const [pasteText,setPasteText]=useState("");
+  const [showPaste,setShowPaste]=useState(false);
+  const [parseNote,setParseNote]=useState("");
   const CATS=["Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
 
   const addIngredient=()=>setIngredients(i=>[...i,""]);
   const setIng=(idx,val)=>setIngredients(i=>i.map((x,j)=>j===idx?val:x));
   const removeIng=(idx)=>setIngredients(i=>i.filter((_,j)=>j!==idx));
   const addStep=()=>setSteps(s=>[...s,{title:"",body:""}]);
-  const setStep=(idx,field,val)=>setSteps(s=>s.map((x,j)=>j===idx?{...x,[field]:val}:x));
+  const setStepField=(idx,field,val)=>setSteps(s=>s.map((x,j)=>j===idx?{...x,[field]:val}:x));
   const removeStep=(idx)=>setSteps(s=>s.filter((_,j)=>j!==idx));
+
+  const handlePaste=(e)=>{
+    const text=e.target.value;
+    setPasteText(text);
+    if(text.trim().length<20) return;
+    const result=parseRecipeText(text);
+    if(result.name) setName(result.name);
+    if(result.ingredients.length>0) setIngredients(result.ingredients.length>0?result.ingredients:[""]);
+    if(result.steps.length>0) setSteps(result.steps.length>0?result.steps:[{title:"",body:""}]);
+    if(result.ingredients.length<2){
+      setParseNote("Fewer than 2 ingredients detected — check the ingredients tab.");
+    } else {
+      setParseNote(`Found ${result.ingredients.length} ingredients and ${result.steps.length} steps.`);
+    }
+    if(result.ingredients.length>0||result.steps.length>0){
+      setTimeout(()=>setShowPaste(false),800);
+    }
+  };
 
   const handleSave=()=>{
     if(!name.trim()||ingredients.filter(i=>i.trim()).length===0)return;
@@ -2013,24 +2091,50 @@ function CreateRecipeSheet({onSave,onClose}){
       xp:xpMap[difficulty]||60,difficulty,time:time||"30 min",
       category,diets:["No restrictions"],macros:null,done:false,
       ingredients:ingredients.filter(i=>i.trim()),
-      steps:steps.filter(s=>s.body.trim()).map(s=>({title:s.title||"Step",body:s.body})),
-      tip:tip.trim()||null,isCustom:true,
+      steps:steps.filter(s=>s.body.trim()).map(s=>({title:s.title||"Step",body:s.body,timer:0})),
+      tip:tip.trim()||null,isCustom:true,isPersonal:true,
     });
     onClose();
   };
 
-  const tabSt=(id)=>({flex:1,border:"none",cursor:"pointer",borderRadius:10,padding:"8px 4px",fontWeight:800,fontSize:12,background:activeTab===id?"#fff":"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"});
+  const tabSt=(id)=>({flex:1,border:"none",cursor:"pointer",borderRadius:10,padding:"8px 4px",fontWeight:700,fontSize:12,background:activeTab===id?C.cream:"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 1px 6px rgba(0,0,0,.08)":"none",fontFamily:"inherit"});
+  const labelSt={fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"};
+  const inputSt={width:"100%",padding:"10px 13px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",fontFamily:"inherit"};
 
   return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>✍️ Create Recipe</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Add your own recipe to your library</div></div>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Create Recipe</div>
           <CloseBtn onClose={onClose}/>
         </div>
 
+        {/* Smart paste area */}
+        <div style={{marginBottom:14}}>
+          <button onClick={()=>setShowPaste(!showPaste)} style={{width:"100%",padding:"10px 14px",borderRadius:14,border:`1.5px dashed ${C.border}`,background:"transparent",cursor:"pointer",fontSize:13,fontWeight:600,color:C.muted,textAlign:"left",fontFamily:"inherit"}}>
+            {showPaste?"▲ Hide paste area":"▼ Paste recipe text to auto-fill"}
+          </button>
+          {showPaste&&(
+            <div style={{marginTop:8}}>
+              <textarea
+                value={pasteText}
+                onChange={handlePaste}
+                placeholder="Paste any recipe text here — ingredients and steps will be automatically detected and sorted into the form below."
+                style={{...inputSt,minHeight:140,resize:"vertical",lineHeight:1.6,marginBottom:6}}
+              />
+              {parseNote&&(
+                <div style={{fontSize:12,color:parseNote.includes("Fewer")?C.flame:C.sage,fontWeight:600,padding:"6px 2px"}}>
+                  {parseNote}
+                </div>
+              )}
+              {pasteText&&<button onClick={()=>{setPasteText("");setParseNote("");}} style={{fontSize:12,color:C.muted,background:"none",border:"none",cursor:"pointer",padding:"2px 0"}}>Clear</button>}
+            </div>
+          )}
+        </div>
+
+        {/* Tabs */}
         <div style={{display:"flex",background:C.pill,borderRadius:14,padding:4,gap:4,marginBottom:16}}>
-          {[["basics","📋 Basics"],["ingredients","🥕 Ingredients"],["steps","👨‍🍳 Steps"]].map(([id,lbl])=>(
+          {[["basics","Basics"],["ingredients","Ingredients"],["steps","Steps"]].map(([id,lbl])=>(
             <button key={id} onClick={()=>setActiveTab(id)} style={tabSt(id)}>{lbl}</button>
           ))}
         </div>
@@ -2038,30 +2142,38 @@ function CreateRecipeSheet({onSave,onClose}){
         {activeTab==="basics"&&(
           <div>
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Recipe Name</div>
-              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Mum's Pasta Bake" style={{width:"100%",padding:"11px 14px",borderRadius:14,border:`2px solid ${name?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+              <div style={labelSt}>Recipe name</div>
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Mum's Pasta Bake" style={inputSt}/>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
               <div>
-                <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Difficulty</div>
+                <div style={labelSt}>Difficulty</div>
                 <div style={{display:"flex",gap:6}}>
-                  {["Easy","Medium","Hard"].map(d=><button key={d} onClick={()=>setDifficulty(d)} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`2px solid ${difficulty===d?C.flame:C.border}`,background:difficulty===d?`${C.flame}12`:"transparent",color:difficulty===d?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:"pointer"}}>{d}</button>)}
+                  {["Easy","Medium","Hard"].map(d=>(
+                    <button key={d} onClick={()=>setDifficulty(d)} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`1.5px solid ${difficulty===d?C.flame:C.border}`,background:difficulty===d?`${C.flame}14`:"transparent",color:difficulty===d?C.flame:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                      {d}
+                    </button>
+                  ))}
                 </div>
               </div>
               <div>
-                <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Time</div>
-                <input value={time} onChange={e=>setTime(e.target.value)} placeholder="30 min" style={{width:"100%",padding:"9px 12px",borderRadius:12,border:`2px solid ${C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+                <div style={labelSt}>Time</div>
+                <input value={time} onChange={e=>setTime(e.target.value)} placeholder="30 min" style={inputSt}/>
               </div>
             </div>
             <div>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>Category</div>
+              <div style={labelSt}>Category</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                {CATS.map(cat=><button key={cat} onClick={()=>setCategory(cat)} style={{padding:"6px 12px",borderRadius:99,border:`2px solid ${category===cat?C.sage:C.border}`,background:category===cat?C.sage:"transparent",color:category===cat?"#fff":C.muted,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .15s"}}>{cat}</button>)}
+                {CATS.map(cat=>(
+                  <button key={cat} onClick={()=>setCategory(cat)} style={{padding:"6px 12px",borderRadius:99,border:`1.5px solid ${category===cat?C.flame:C.border}`,background:category===cat?`${C.flame}14`:"transparent",color:category===cat?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+                    {cat}
+                  </button>
+                ))}
               </div>
             </div>
             <div style={{marginTop:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".07em"}}>Chef's Tip (optional)</div>
-              <textarea value={tip} onChange={e=>setTip(e.target.value)} placeholder="Your best tip for this recipe..." style={{width:"100%",minHeight:60,padding:"10px 12px",borderRadius:12,border:`2px solid ${C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"none",lineHeight:1.5,boxSizing:"border-box"}}/>
+              <div style={labelSt}>Chef tip (optional)</div>
+              <textarea value={tip} onChange={e=>setTip(e.target.value)} placeholder="Your best tip for this dish..." style={{...inputSt,minHeight:72,resize:"vertical"}}/>
             </div>
           </div>
         )}
@@ -2071,8 +2183,8 @@ function CreateRecipeSheet({onSave,onClose}){
             <div style={{marginBottom:12}}>
               {ingredients.map((ing,i)=>(
                 <div key={i} style={{display:"flex",gap:8,marginBottom:8}}>
-                  <input value={ing} onChange={e=>setIng(i,e.target.value)} placeholder={`Ingredient ${i+1} with quantity...`} style={{flex:1,padding:"9px 12px",borderRadius:12,border:`2px solid ${ing?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",transition:"border-color .18s"}}/>
-                  {ingredients.length>1&&<button onClick={()=>removeIng(i)} style={{width:32,height:36,borderRadius:10,background:`${C.flame}14`,border:`1.5px solid ${C.flame}33`,color:C.flame,fontWeight:800,fontSize:16,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>}
+                  <input value={ing} onChange={e=>setIng(i,e.target.value)} placeholder={`Ingredient ${i+1}`} style={{...inputSt,flex:1}}/>
+                  {ingredients.length>1&&<button onClick={()=>removeIng(i)} style={{width:32,height:40,borderRadius:10,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",color:C.muted,fontWeight:700,fontSize:16,flexShrink:0}}>×</button>}
                 </div>
               ))}
             </div>
@@ -2085,11 +2197,11 @@ function CreateRecipeSheet({onSave,onClose}){
             {steps.map((s,i)=>(
               <div key={i} style={{background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,marginBottom:10}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                  <div style={{width:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.flame},${C.ember})`,color:"#fff",fontWeight:900,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
-                  <input value={s.title} onChange={e=>setStep(i,"title",e.target.value)} placeholder="Step name…" style={{flex:1,padding:"7px 10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none"}}/>
-                  {steps.length>1&&<button onClick={()=>removeStep(i)} style={{width:28,height:28,borderRadius:8,background:`${C.flame}14`,border:"none",color:C.flame,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>}
+                  <div style={{width:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${C.flame},${C.ember})`,color:"#fff",fontSize:12,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
+                  <input value={s.title} onChange={e=>setStepField(i,"title",e.target.value)} placeholder="Step title (optional)" style={{...inputSt,flex:1}}/>
+                  {steps.length>1&&<button onClick={()=>removeStep(i)} style={{width:28,height:28,borderRadius:8,border:`1.5px solid ${C.border}`,background:"transparent",cursor:"pointer",color:C.muted,fontWeight:700,fontSize:14,flexShrink:0}}>×</button>}
                 </div>
-                <textarea value={s.body} onChange={e=>setStep(i,"body",e.target.value)} placeholder="Describe what to do in this step…" style={{width:"100%",minHeight:64,padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none",resize:"none",lineHeight:1.5,boxSizing:"border-box"}}/>
+                <textarea value={s.body} onChange={e=>setStepField(i,"body",e.target.value)} placeholder="Describe this step..." style={{...inputSt,minHeight:72,resize:"vertical"}}/>
               </div>
             ))}
             <Btn onClick={addStep} outline color={C.sky} full sm>+ Add Step</Btn>
@@ -2098,14 +2210,13 @@ function CreateRecipeSheet({onSave,onClose}){
 
         <div style={{display:"flex",gap:10,marginTop:20}}>
           <Btn onClick={onClose} outline color={C.muted} style={{flex:1}}>Cancel</Btn>
-          <Btn onClick={handleSave} disabled={!name.trim()||ingredients.filter(i=>i.trim()).length===0} color={C.sage} style={{flex:2}}>Save Recipe ✓</Btn>
+          <Btn onClick={handleSave} disabled={!name.trim()||ingredients.filter(i=>i.trim()).length===0} style={{flex:2}}>Save Recipe</Btn>
         </div>
       </div>
     </Sheet>
   );
 }
 
-/* ═══ URL IMPORT ══════════════════════════════════════════════════════════ */
 function URLImportSheet({onSave,onClose}){
   const [text,setText]=useState("");
   const [name,setName]=useState("");
