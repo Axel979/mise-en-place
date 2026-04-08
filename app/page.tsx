@@ -1910,10 +1910,14 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
 function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
+  const SORTS=[["default","A–Z"],["easy","Easiest"],["hard","Hardest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most Heat 🔥"]];
   const [cat,setCat]=useState("All");
   const [diet,setDiet]=useState("All");
   const [search,setSearch]=useState("");
   const [sort,setSort]=useState("default");
+  const [showFilter,setShowFilter]=useState(false);
+
+  const activeFilters=(diet!=="All"?1:0)+(sort!=="default"?1:0);
 
   const filtered=useMemo(()=>{
     let rs=allRecipes.filter(r=>!r.isPersonal).filter(r=>{
@@ -1921,84 +1925,151 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
       const md=diet==="All"||(r.diets||[]).includes(diet);
       return mc&&md&&r.name.toLowerCase().includes(search.toLowerCase());
     });
-    // Default: alphabetical, personal/custom first
     rs=[...rs].sort((a,b)=>{
       const ap=a.isCustom?0:1, bp=b.isCustom?0:1;
       if(ap!==bp) return ap-bp;
       return a.name.localeCompare(b.name);
     });
-    if(sort==="cals")  rs=[...rs].sort((a,b)=>(a.macros?.calories||0)-(b.macros?.calories||0));
-    if(sort==="protein")rs=[...rs].sort((a,b)=>(b.macros?.protein||0)-(a.macros?.protein||0));
-    if(sort==="xp")    rs=[...rs].sort((a,b)=>b.xp-a.xp);
-    if(sort==="easy")  rs=[...rs].sort((a,b)=>({Easy:0,Medium:1,Hard:2}[a.difficulty]||0)-({Easy:0,Medium:1,Hard:2}[b.difficulty]||0));
+    if(sort==="easy") rs=[...rs].sort((a,b)=>({Easy:0,Medium:1,Hard:2}[a.difficulty]||0)-({Easy:0,Medium:1,Hard:2}[b.difficulty]||0));
+    if(sort==="hard") rs=[...rs].sort((a,b)=>({Easy:0,Medium:1,Hard:2}[b.difficulty]||0)-({Easy:0,Medium:1,Hard:2}[a.difficulty]||0));
+    if(sort==="cals") rs=[...rs].sort((a,b)=>(a.macros?.calories||0)-(b.macros?.calories||0));
+    if(sort==="protein") rs=[...rs].sort((a,b)=>(b.macros?.protein||0)-(a.macros?.protein||0));
+    if(sort==="xp") rs=[...rs].sort((a,b)=>b.xp-a.xp);
     return rs;
   },[allRecipes,cat,diet,search,sort]);
 
+  const resetFilters=()=>{setDiet("All");setSort("default");};
+
   return(
     <div style={{paddingBottom:24}}>
-      <div style={{padding:"4px 16px 10px"}}>
-        <div style={{position:"relative"}}>
-          <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search recipes…" style={{width:"100%",padding:"11px 14px 11px 40px",borderRadius:14,border:`2px solid ${search?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",transition:"border-color .18s"}}/>
+
+      {/* Search + Create row */}
+      <div style={{padding:"4px 16px 10px",display:"flex",gap:10,alignItems:"center"}}>
+        <div style={{position:"relative",flex:1}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search recipes…" style={{width:"100%",padding:"11px 14px 11px 38px",borderRadius:14,border:`1.5px solid ${search?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",transition:"border-color .18s"}}/>
+          {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:C.muted,lineHeight:1,padding:0}}>×</button>}
+        </div>
+        <button onClick={onShowCreate} className="tap" style={{background:C.flame,border:"none",borderRadius:14,padding:"11px 16px",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:6}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style={{fontSize:13,fontWeight:800,color:"#fff"}}>Create</span>
+        </button>
+      </div>
+
+      {/* Category pills */}
+      <div style={{display:"flex",gap:7,overflowX:"auto",padding:"0 16px 10px",scrollbarWidth:"none"}}>
+        {CATS.map(ct=>(
+          <button key={ct} onClick={()=>setCat(ct)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 16px",borderRadius:99,border:`1.5px solid ${cat===ct?C.flame:C.border}`,background:cat===ct?C.flame:"transparent",color:cat===ct?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>
+            {ct}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter row: count + filter button */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px"}}>
+        <span style={{fontSize:12,color:C.muted,fontWeight:600}}>{filtered.length} recipe{filtered.length!==1?"s":""}</span>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          {activeFilters>0&&(
+            <button onClick={resetFilters} style={{fontSize:11,color:C.flame,fontWeight:700,background:"none",border:"none",cursor:"pointer",padding:0}}>
+              Clear filters
+            </button>
+          )}
+          <button onClick={()=>setShowFilter(true)} className="tap" style={{display:"flex",alignItems:"center",gap:6,padding:"7px 13px",borderRadius:99,border:`1.5px solid ${activeFilters>0?C.flame:C.border}`,background:activeFilters>0?`${C.flame}10`:"transparent",cursor:"pointer",position:"relative"}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={activeFilters>0?C.flame:C.muted} strokeWidth="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+            <span style={{fontSize:12,fontWeight:700,color:activeFilters>0?C.flame:C.muted}}>Filter {activeFilters>0?`(${activeFilters})`:""}</span>
+          </button>
         </div>
       </div>
-      <div style={{display:"flex",gap:10,padding:"0 16px 12px"}}>
-        <button onClick={onShowCreate} className="tap" style={{flex:1,background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:14,padding:"12px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}>✍️</div>
-          <div style={{fontSize:12,fontWeight:800,color:C.sage}}>Create Recipe</div>
-        </button>
-        <button onClick={onShowImport} className="tap" style={{flex:1,background:`${C.sky}14`,border:`2px solid ${C.sky}33`,borderRadius:14,padding:"12px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}></div>
-          <div style={{fontSize:12,fontWeight:800,color:C.sky}}>Import URL</div>
-        </button>
-      </div>
-      <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{CATS.map(c=><button key={c} onClick={()=>setCat(c)} className="tap" style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:99,border:`2px solid ${cat===c?C.flame:C.border}`,background:cat===c?C.flame:C.cream,color:cat===c?"#fff":C.muted,fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{c}</button>)}</div>
-      <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 16px 8px"}}>{DIETS.map(d=><button key={d} onClick={()=>setDiet(d)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 12px",borderRadius:99,border:`2px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}18`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{d==="All"?"🍽️ All":d}</button>)}</div>
-      <div style={{display:"flex",gap:8,padding:"0 16px 12px",alignItems:"center",overflowX:"auto"}}>
-        <span style={{fontSize:11,color:C.muted,fontWeight:700,flexShrink:0}}>Sort:</span>
-        {[["default","Default"],["easy","Easiest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most Heat 🔥"]].map(([k,l])=><button key={k} onClick={()=>setSort(k)} className="tap" style={{whiteSpace:"nowrap",padding:"5px 10px",borderRadius:99,border:`1.5px solid ${sort===k?C.sky:C.border}`,background:sort===k?`${C.sky}18`:"transparent",color:sort===k?C.sky:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",flexShrink:0,transition:"all .15s"}}>{l}</button>)}
-      </div>
+
+      {/* Recipe list */}
       <div style={{padding:"0 16px"}}>
-        <div style={{fontSize:12,color:C.muted,fontWeight:600,marginBottom:10}}>{filtered.length} recipe{filtered.length!==1?"s":""}</div>
-        {filtered.length===0&&<div style={{textAlign:"center",padding:"48px 20px",color:C.muted}}><div style={{fontSize:44,marginBottom:12}}>🍽️</div><div style={{fontWeight:700,marginBottom:4}}>No recipes match</div><div style={{fontSize:13}}>Try adjusting the filters</div></div>}
+        {filtered.length===0&&(
+          <div style={{textAlign:"center",padding:"48px 20px"}}>
+            <div style={{width:56,height:56,borderRadius:16,background:`${C.flame}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            </div>
+            <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>No recipes match</div>
+            <div style={{fontSize:13,color:C.muted}}>Try adjusting your filters</div>
+          </div>
+        )}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtered.map((r,idx)=>(
-            <div key={r.id} className="ch" onClick={()=>onOpen(r)} style={{background:r.done?"#F5F0EB":C.cream,border:`2px solid ${r.done?"#E0D5CB":C.border}`,borderRadius:18,padding:"15px",display:"flex",gap:14,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.04)",animation:`fadeUp .3s ease ${idx*.04}s both`,transition:"transform .18s,box-shadow .18s"}}>
-              {r.photo&&!r.done
-  ?<img src={r.photo} alt={r.name} style={{width:58,height:58,borderRadius:16,objectFit:"cover",flexShrink:0}}/>
-  :<div style={{width:58,height:58,borderRadius:16,background:r.done?"#E8E0D8":`${C.ember}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
-}
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
-                  <div style={{fontWeight:800,fontSize:14,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>{r.name}</div>
-                  {r.isCustom&&<span style={{fontSize:9,background:`${C.sage}18`,color:C.sage,borderRadius:5,padding:"1px 5px",fontWeight:700,flexShrink:0}}>MINE</span>}
-                  {r.isImported&&<span style={{fontSize:9,background:`${C.sky}18`,color:C.sky,borderRadius:5,padding:"1px 5px",fontWeight:700,flexShrink:0}}>IMPORTED</span>}
-                </div>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:5}}>
-                  <DiffBadge level={r.difficulty}/>
-                  {(r.diets||[]).filter(d=>d!=="No restrictions").slice(0,2).map(d=><Chip key={d} label={d} color={C.sage}/>)}
-                </div>
-                {r.macros&&(
-                  <div style={{display:"flex",gap:5,marginBottom:5,flexWrap:"wrap"}}>
-                    {[["🔥",r.macros.calories,"kcal",C.flame],["💪",r.macros.protein,"g protein",C.sky]].map(([icon,val,unit,color])=>(
-                      <span key={unit} style={{fontSize:9,fontWeight:700,color,background:`${color}12`,borderRadius:5,padding:"2px 5px"}}>{icon} {val}{unit}</span>
-                    ))}
+            <div key={r.id} className="tap ch" onClick={()=>onOpen(r)} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden",display:"flex",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
+              {/* Photo */}
+              <div style={{width:86,flexShrink:0}}>
+                {r.photo
+                  ?<img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block",minHeight:86}}/>
+                  :<div style={{width:"100%",height:"100%",minHeight:86,background:`linear-gradient(135deg,${C.ember}18,${C.flame}10)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".4"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
                   </div>
-                )}
-                <div style={{display:"flex",justifyContent:"space-between"}}>
-                  <span style={{fontSize:11,color:C.muted}}>⏱ {r.time}</span>
-                  <span style={{fontSize:12,fontWeight:800,color:r.done?C.sage:C.flame}}>{r.done?"✓ Cooked":`+${r.xp} XP`}</span>
+                }
+              </div>
+              {/* Info */}
+              <div style={{flex:1,minWidth:0,padding:"11px 13px"}}>
+                <div style={{display:"flex",alignItems:"flex-start",gap:4,marginBottom:5}}>
+                  <div style={{fontWeight:800,fontSize:14,color:C.bark,lineHeight:1.3,flex:1,minWidth:0,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{r.name}</div>
+                  {r.isCustom&&<span style={{fontSize:9,background:`${C.sage}18`,color:C.sage,borderRadius:5,padding:"2px 5px",fontWeight:700,flexShrink:0,marginTop:1}}>MINE</span>}
+                </div>
+                <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:6}}>
+                  <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:6,
+                    color:r.difficulty==="Easy"?C.sage:r.difficulty==="Hard"?C.flame:C.sky,
+                    background:r.difficulty==="Easy"?`${C.sage}15`:r.difficulty==="Hard"?`${C.flame}15`:`${C.sky}15`
+                  }}>{r.difficulty}</span>
+                  {(r.diets||[]).filter(d=>d!=="No restrictions").slice(0,1).map(d=>(
+                    <span key={d} style={{fontSize:10,fontWeight:600,color:C.sage,background:`${C.sage}12`,padding:"2px 7px",borderRadius:6}}>{d}</span>
+                  ))}
+                </div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:11,color:C.muted}}>{r.time}</span>
+                    {r.macros&&<span style={{fontSize:11,color:C.muted}}>{r.macros.calories} kcal</span>}
+                  </div>
+                  <span style={{fontSize:12,fontWeight:700,color:r.done?C.sage:C.flame}}>{r.done?"✓ Cooked":`${r.xp} 🔥`}</span>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Filter sheet */}
+      {showFilter&&(
+        <Sheet onClose={()=>setShowFilter(false)}>
+          <div style={{padding:"24px 20px 44px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>Filter & Sort</div>
+              <CloseBtn onClose={()=>setShowFilter(false)}/>
+            </div>
+
+            <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Diet</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+              {DIETS.map(d=>(
+                <button key={d} onClick={()=>setDiet(d)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}15`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                  {d}
+                </button>
+              ))}
+            </div>
+
+            <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Sort by</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:24}}>
+              {SORTS.map(([k,l])=>(
+                <button key={k} onClick={()=>setSort(k)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${sort===k?C.sky:C.border}`,background:sort===k?`${C.sky}15`:"transparent",color:sort===k?C.sky:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            <div style={{display:"flex",gap:10}}>
+              <Btn onClick={resetFilters} outline color={C.muted} style={{flex:1}}>Reset</Btn>
+              <Btn onClick={()=>setShowFilter(false)} style={{flex:2}}>Show {filtered.length} recipes</Btn>
+            </div>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }
 
-/* ═══ GOAL PICKER ═════════════════════════════════════════════════════════ */
 function GoalPicker({goal,onSelect,onClose}){
   return(
     <Sheet onClose={onClose}>
