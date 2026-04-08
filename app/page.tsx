@@ -12,6 +12,9 @@ const C = {
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
 const CSS = `
+  html, body { width: 100%; overflow-x: hidden; }
+  #__next { width: 100%; }
+
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600;700&display=swap');
   *,*::before,*::after{box-sizing:border-box} body{margin:0;background:${C.paper};font-family:${BF}}
   ::-webkit-scrollbar{display:none}
@@ -3744,9 +3747,9 @@ export default function App(){
     <>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
+      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",width:"100%",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
         {/* Header */}
-        <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:0,right:0,maxWidth:420,margin:"0 auto",zIndex:50,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,zIndex:50,borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
           <div style={{display:"flex",gap:12,alignItems:"center"}}>
             <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:"none",border:"none",padding:4,cursor:"pointer",display:"flex",alignItems:"center"}}>
@@ -3770,7 +3773,7 @@ export default function App(){
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
-        {!detailRecipe&&<div style={{position:"fixed",bottom:0,left:0,right:0,maxWidth:420,margin:"0 auto",background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 12px",zIndex:50}}>
+        {!detailRecipe&&<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 12px",zIndex:50}}>
           {TABS.map(t=>{
             const active=tab===t.id;const col=active?C.flame:"#B0A09A";
             return(
