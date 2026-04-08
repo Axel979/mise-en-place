@@ -715,8 +715,8 @@ function StepTimer({seconds}){
       {/* Single slider — goes left to right as time counts down */}
       <div style={{marginTop:12}}>
         <input
-          type="range" min={0} max={total} value={rem}
-          onChange={handleSlider}
+          type="range" min={0} max={total} value={total-rem}
+          onChange={e=>{const val=parseInt(e.target.value);setRem(total-val);setRun(false);}}
           style={{width:"100%",accentColor:run?urgent:C.sky,cursor:"pointer",height:6}}
         />
         <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:C.muted,marginTop:3}}>
@@ -1917,7 +1917,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
   const [sort,setSort]=useState("default");
   const [showFilter,setShowFilter]=useState(false);
 
-  const activeFilters=(diet!=="All"?1:0)+(sort!=="default"?1:0);
+  const activeFilters=(cat!=="All"?1:0)+(diet!=="All"?1:0)+(sort!=="default"?1:0);
 
   const filtered=useMemo(()=>{
     let rs=allRecipes.filter(r=>!r.isPersonal).filter(r=>{
@@ -1938,7 +1938,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
     return rs;
   },[allRecipes,cat,diet,search,sort]);
 
-  const resetFilters=()=>{setDiet("All");setSort("default");};
+  const resetFilters=()=>{setCat("All");setDiet("All");setSort("default");};
 
   return(
     <div style={{paddingBottom:24}}>
@@ -1996,9 +1996,9 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
           {filtered.map((r,idx)=>(
             <div key={r.id} className="tap ch" onClick={()=>onOpen(r)} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden",display:"flex",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
               {/* Photo */}
-              <div style={{width:86,flexShrink:0}}>
+              <div style={{width:96,flexShrink:0,aspectRatio:"1/1"}}>
                 {r.photo
-                  ?<img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block",minHeight:86}}/>
+                  ?<img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                   :<div style={{width:"100%",height:"100%",minHeight:86,background:`linear-gradient(135deg,${C.ember}18,${C.flame}10)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".4"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
                   </div>
@@ -2041,7 +2041,17 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
               <CloseBtn onClose={()=>setShowFilter(false)}/>
             </div>
 
-            <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Diet</div>
+
+            <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Category</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+              {CATS.map(ct=>(
+                <button key={ct} onClick={()=>setCat(ct)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${cat===ct?C.flame:C.border}`,background:cat===ct?`${C.flame}15`:"transparent",color:cat===ct?C.flame:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                  {ct}
+                </button>
+              ))}
+            </div>
+
+                        <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Diet</div>
             <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
               {DIETS.map(d=>(
                 <button key={d} onClick={()=>setDiet(d)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${diet===d?C.sage:C.border}`,background:diet===d?`${C.sage}15`:"transparent",color:diet===d?C.sage:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
