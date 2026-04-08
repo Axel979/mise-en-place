@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
@@ -57,8 +57,7 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate}){
     if(val.length < 3 || val === profile?.username){setAvailable(val===profile?.username||null); return;}
     setChecking(true);
     if(!supabase){setChecking(false);return;}
-    const{data}=await supabase.from("profiles").select("id").eq("username",val.toLowerCase().trim()).single();
-    setAvailable(!data); setChecking(false);
+    try{const{data}=await supabase.from("profiles").select("id").eq("username",val.toLowerCase().trim()).single();setAvailable(!data);}catch{setAvailable(null);}finally{setChecking(false);}
   };
 
   const handleSave = async() => {
@@ -68,9 +67,7 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate}){
     if(username && username !== profile?.username && available===true){
       updates.username = username.toLowerCase().trim();
     }
-    await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});
-    onProfileUpdate({...profile,...updates});
-    setSaved(true); setSaving(false);
+    try{await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});onProfileUpdate({...profile,...updates});setSaved(true);}catch(e){console.error('profile save failed',e);}finally{setSaving(false);}
     setTimeout(()=>setSaved(false),2500);
   };
 
@@ -3406,7 +3403,7 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,marginTop:5}}>
-              <span style={{background:levelInfo.current.color,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo.current.title}</span>
+              <span style={{background:levelInfo?.current?.color||C.flame,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo?.current?.title||"Chef"}</span>
             </div>
             <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:4}}>{xp} 🔥 Heat earned</div>
           </div>
@@ -3665,6 +3662,29 @@ function EditRecipeSheet({recipe, onSave, onClose}){
 }
 
 
+/* ═══ ERROR BOUNDARY ══════════════════════════════════════════════════════ */
+class AppErrorBoundary extends React.Component {
+  constructor(props){ super(props); this.state={hasError:false,error:null}; }
+  static getDerivedStateFromError(error){ return {hasError:true,error}; }
+  componentDidCatch(error,info){ console.error("mise.en.place crash:",error,info?.componentStack); }
+  render(){
+    if(this.state.hasError){
+      return(
+        <div style={{minHeight:"100vh",background:"#FAF6F1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,fontFamily:"system-ui,sans-serif"}}>
+          <div style={{width:64,height:64,borderRadius:20,background:"#E05C7A15",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20}}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div style={{fontWeight:900,fontSize:20,color:"#3D2010",marginBottom:8,textAlign:"center"}}>Something went wrong</div>
+          <div style={{fontSize:14,color:"#8A7060",marginBottom:28,textAlign:"center",lineHeight:1.6,maxWidth:280}}>Don't worry — your cooking streak is safe. Tap below to reload.</div>
+          <button onClick={()=>window.location.reload()} style={{background:"#E05C7A",border:"none",borderRadius:14,padding:"13px 32px",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer"}}>Reload App</button>
+          <div style={{marginTop:16,fontSize:11,color:"#B0A090",fontFamily:"monospace",maxWidth:300,textAlign:"center",wordBreak:"break-word"}}>{this.state.error?.message}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App(){
   const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase } = useAuth();
   const userIdRef = useRef(null);
@@ -3754,7 +3774,7 @@ export default function App(){
   },[levelInfo]);
 
   const checkBadges=useCallback((stats)=>{
-    const newOnes=BADGES.filter(b=>!earnedBadges.includes(b.id)&&b.check(stats));
+    const newOnes=BADGES.filter(b=>{try{return !earnedBadges.includes(b.id)&&b.check(stats);}catch{return false;}});
     if(newOnes.length>0){
       setEarnedBadges(prev=>[...prev,...newOnes.map(b=>b.id)]);
       setToast(t=>t||{emoji:newOnes[0].emoji,title:newOnes[0].label,subtitle:"Badge unlocked!"});
@@ -3766,8 +3786,10 @@ export default function App(){
     const newXp=xp+recipe.xp;
     setXp(newXp);
     const uid = user?.id || userIdRef.current;
-    if(uid) saveXp(uid, newXp);
-    if(uid) logCompletedRecipe(uid, {...recipe, rating});
+    if(uid){
+      try{ saveXp(uid, newXp); }catch(e){ console.error('saveXp failed',e); }
+      try{ logCompletedRecipe(uid, {...recipe, rating}); }catch(e){ console.error('logCompletedRecipe failed',e); }
+    }
     setWeeklyXp(w=>w+recipe.xp);
     const di=new Date().getDay();const idx=di===0?6:di-1;
     setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});
@@ -3900,7 +3922,7 @@ export default function App(){
 
 
   return(
-    <>
+    <AppErrorBoundary>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
       <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",width:"100%",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
@@ -3975,6 +3997,6 @@ export default function App(){
       {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>setWantToCook(w=>w.filter(x=>x!==id))} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
-    </>
+    </AppErrorBoundary>
   );
 }
