@@ -877,7 +877,7 @@ function Onboarding({onComplete}){
 
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
-function RecipeDetail({recipe,onBack,onComplete,onUpdate}){
+function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
   const [showEdit,setShowEdit]=useState(false);
   const [step,setStep]=useState(0);
   const [mode,setMode]=useState("overview");
@@ -983,7 +983,10 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate}){
                 </div>
               </div>
             )}
-            {done?<div style={{textAlign:"center",padding:"12px",fontWeight:700,color:C.sage,fontSize:15}}>Cooked!</div>:null}
+            {done
+              ?<div style={{textAlign:"center",padding:"14px",fontWeight:800,color:C.sage,fontSize:15,background:`${C.sage}12`,borderRadius:14,border:`1px solid ${C.sage}33`}}>Cooked!</div>
+              :<Btn onClick={handleComplete} color={C.sage} full style={{marginTop:8}}>Mark as Cooked</Btn>
+            }
           </>
         ):(
           <div>
@@ -3365,8 +3368,8 @@ function DataSettings({onBack, signOut}){
 }
 
 function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab}){
-  const [section, setSection] = useState(null);
-  const weekDone = cookedDays.filter(Boolean).length;
+  const [section,setSection]=useState(null);
+  const weekDone=cookedDays.filter(Boolean).length;
 
   if(section==='account') return <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>;
   if(section==='privacy') return <PrivacySettings onBack={()=>setSection(null)}/>;
@@ -3374,61 +3377,92 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
   if(section==='cooking') return <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onEditGoal();onClose();}}/>;
   if(section==='data') return <DataSettings onBack={()=>setSection(null)} signOut={signOut}/>;
 
-  const MenuItem = ({label,sub,onClick})=>(
-    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",fontFamily:"inherit"}}>
-      <div style={{textAlign:"left"}}>
-        <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{label}</div>
+  const NavItem=({icon,label,sub,onClick,danger})=>(
+    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"13px 0",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>
+      <div style={{width:36,height:36,borderRadius:11,background:danger?`#E05C7A12`:`${C.flame}0E`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        {icon}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:700,fontSize:14,color:danger?"#E05C7A":C.bark}}>{label}</div>
         {sub&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{sub}</div>}
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
+  );
+
+  const IC=(path,col)=>(
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={col||C.flame} strokeWidth="2" strokeLinecap="round">{path}</svg>
   );
 
   return(
     <div>
-      {/* Profile card */}
-      <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"18px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:14}}>
-        <AvatarIcon username={profile?.username||user?.email||"?"} size={52} fontSize={22}/>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.username||user?.email?.split("@")[0]||"Chef"}</div>
-          <div style={{marginTop:4}}><span style={{background:levelInfo.current.color,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo.current.title}</span></div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:4}}>{xp} Heat earned</div>
+      {/* Profile hero */}
+      <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px",marginBottom:22,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",border:"24px solid rgba(255,255,255,.04)"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <AvatarIcon username={profile?.username||user?.email||"?"} size={54} fontSize={22}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {profile?.username||user?.email?.split("@")[0]||"Chef"}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:5}}>
+              <span style={{background:levelInfo.current.color,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo.current.title}</span>
+            </div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:4}}>{xp} 🔥 Heat earned</div>
+          </div>
+        </div>
+        {/* Mini goal bar */}
+        <div style={{marginTop:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <span style={{fontSize:10,color:"rgba(255,255,255,.45)",fontWeight:600,textTransform:"uppercase",letterSpacing:".08em"}}>{goal.label}</span>
+            <span style={{fontSize:10,color:"rgba(255,255,255,.6)",fontWeight:700}}>{weekDone}/{goal.target} this week</span>
+          </div>
+          <div style={{background:"rgba(255,255,255,.1)",borderRadius:99,height:4,overflow:"hidden"}}>
+            <div style={{width:`${Math.min(100,weekDone/goal.target*100)}%`,height:"100%",background:C.flame,borderRadius:99}}/>
+          </div>
         </div>
       </div>
 
       {/* Quick actions */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
-        {[["Streak Calendar",()=>{onShowCalendar();onClose();}],["Weekly Recap",()=>{onShowRecap();onClose();}],["Year in Review",()=>{onShowYearReview();onClose();}],["Challenges",()=>{setTab("challenges");onClose();}]].map(([label,action])=>(
-          <button key={label} onClick={action} style={{padding:"12px 10px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontSize:12,fontWeight:700,color:C.bark,textAlign:"center",fontFamily:"inherit"}}>{label}</button>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+        {[
+          {label:"Calendar",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,action:()=>{onShowCalendar();onClose();}},
+          {label:"Weekly Recap",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.sky} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,action:()=>{onShowRecap();onClose();}},
+          {label:"Year in Review",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,action:()=>{onShowYearReview();onClose();}},
+          {label:"Challenges",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.ember} strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>,action:()=>{setTab("challenges");onClose();}},
+        ].map(({label,icon,action})=>(
+          <button key={label} onClick={action} style={{padding:"11px 10px",borderRadius:13,border:`1px solid ${C.border}`,background:C.cream,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,fontFamily:"inherit",transition:"background .15s"}}>
+            {icon}
+            <span style={{fontSize:11,fontWeight:700,color:C.bark}}>{label}</span>
+          </button>
         ))}
       </div>
 
-      <div style={{height:1,background:C.border,marginBottom:4}}/>
+      {/* Settings */}
+      <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>Settings</div>
+      <NavItem icon={IC(<><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>)} label="Account" sub="Email, password, username" onClick={()=>setSection('account')}/>
+      <NavItem icon={IC(<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>)} label="Privacy" sub="Who can see your activity" onClick={()=>setSection('privacy')}/>
+      <NavItem icon={IC(<><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></>)} label="Notifications" sub="Reminders and alerts" onClick={()=>setSection('notifications')}/>
+      <NavItem icon={IC(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>)} label="Cooking Preferences" sub="Diet, skill level, goal" onClick={()=>setSection('cooking')}/>
+      <NavItem icon={IC(<><polyline points="21 15 15 15 15 21"/><path d="M3 9l9-9 9 9"/></>,C.muted)} label="Your Data" sub="Export or delete" onClick={()=>setSection('data')}/>
 
-      <MenuItem label="Cooking Goal" sub={`${goal.label} — ${weekDone}/${goal.target} this week`} onClick={()=>{onEditGoal();}}/>
+      <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",margin:"18px 0 6px"}}>About</div>
+      <NavItem icon={IC(<><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>)} label="Help & support" sub="hello@misenplace.app" onClick={()=>{}}/>
+      <NavItem icon={IC(<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></>)} label="Privacy Policy" onClick={()=>{}}/>
 
-      <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",margin:"14px 0 4px"}}>Settings</div>
-      <MenuItem label="Account" sub="Email, password, username" onClick={()=>setSection('account')}/>
-      <MenuItem label="Privacy" sub="Who can see your activity" onClick={()=>setSection('privacy')}/>
-      <MenuItem label="Notifications" sub="Reminders and alerts" onClick={()=>setSection('notifications')}/>
-      <MenuItem label="Cooking preferences" sub="Diet, skill level, goal" onClick={()=>setSection('cooking')}/>
-      <MenuItem label="Your data" sub="Export or delete your data" onClick={()=>setSection('data')}/>
-
-      <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",margin:"14px 0 4px"}}>About</div>
-      <MenuItem label="Help & support" sub="hello@misenplace.app" onClick={()=>{}}/>
-      <MenuItem label="Privacy policy" sub="How we use your data" onClick={()=>{}}/>
-      <MenuItem label="Terms of service" onClick={()=>{}}/>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0"}}>
-        <span style={{fontSize:12,color:C.muted}}>mise.en.place</span>
-        <span style={{fontSize:12,color:C.muted}}>v9.0</span>
+      <div style={{padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between"}}>
+          <span style={{fontSize:12,color:C.muted}}>mise.en.place</span>
+          <span style={{fontSize:12,color:C.muted}}>v10.0</span>
+        </div>
       </div>
-      <div style={{marginTop:8}}>
-        <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>Sign Out</button>
-      </div>
+
+      <button onClick={signOut} style={{width:"100%",marginTop:16,padding:"13px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",color:"#E05C7A",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
+        Sign Out
+      </button>
     </div>
   );
 }
-
 
 function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,onShowSettings,onShowCalendar,onShowYearReview,signOut,weeklyXp,challengeProgress,goal,onEditGoal}){
   const totalCooked = allRecipes.filter(r=>r.done).length;
@@ -3885,7 +3919,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);}}/>;})()}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);}} setToast={setToast}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)} seasonalEvent={seasonalEvent}/>}
@@ -3943,23 +3977,4 @@ export default function App(){
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
     </>
   );
-
-      {/* Seasonal Event */}
-      {seasonalEvent&&(
-        <div style={{margin:"0 0 18px",background:`${seasonalEvent.color}0F`,border:`2px solid ${seasonalEvent.color}33`,borderRadius:18,padding:"14px 16px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-            <div>
-              <div style={{fontSize:10,fontWeight:700,color:seasonalEvent.color,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>Seasonal Event</div>
-              <div style={{fontWeight:900,fontSize:16,color:C.bark,fontFamily:DF}}>{seasonalEvent.name}</div>
-              <div style={{fontSize:12,color:C.muted,marginTop:2}}>{seasonalEvent.desc}</div>
-            </div>
-            <div style={{fontSize:9,color:C.muted,fontWeight:600,background:C.pill,padding:"3px 8px",borderRadius:6,whiteSpace:"nowrap",flexShrink:0,marginLeft:8}}>Ends {seasonalEvent.ends}</div>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-            <span style={{fontSize:12,fontWeight:600,color:C.bark}}>{seasonalEvent.progress}/{seasonalEvent.goal} completed</span>
-            <span style={{fontSize:12,color:seasonalEvent.color,fontWeight:700}}>Badge: {seasonalEvent.badge.emoji} {seasonalEvent.badge.label}</span>
-          </div>
-          <XPBar pct={Math.round(seasonalEvent.progress/seasonalEvent.goal*100)} color={seasonalEvent.color} h={6}/>
-        </div>
-      )}
 }
