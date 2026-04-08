@@ -885,12 +885,13 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
   const [caption,setCaption]=useState("");
   const [rating,setRating]=useState(0);
   const [photoPreview,setPhotoPreview]=useState(null);
+  const [visibility,setVisibility]=useState("friends"); // private | friends | community
   const fileRef=useRef();
   const steps_=(recipe.steps||[]);
   const nSteps=steps_.length;
   const handleFile=(e)=>{const f=e.target.files[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));};
   const handleComplete=()=>{setDone(true);setPostOpen(true);};
-  const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating);};
+  const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating,visibility);};
   const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0);};
 
   return(
@@ -1050,6 +1051,16 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
             }
             <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{display:"none"}}/>
             <textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder="What happened? What worked? What would you change?" style={{width:"100%",minHeight:80,borderRadius:16,border:`2px solid ${caption?C.ember:C.border}`,background:C.cream,padding:"12px 16px",fontSize:14,color:C.bark,resize:"none",outline:"none",lineHeight:1.55,boxSizing:"border-box",marginBottom:14,transition:"border-color .18s"}}/>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".07em",marginBottom:8}}>Who can see this?</div>
+              <div style={{display:"flex",gap:7}}>
+                {[["private","Only me"],["friends","Friends"],["community","Everyone"]].map(([v,lbl])=>(
+                  <button key={v} onClick={()=>setVisibility(v)} style={{flex:1,padding:"8px 4px",borderRadius:10,border:`1.5px solid ${visibility===v?C.flame:C.border}`,background:visibility===v?`${C.flame}10`:"transparent",color:visibility===v?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div style={{display:"flex",gap:10}}>
               <Btn onClick={handleSkip} outline color={C.muted} style={{flex:1}}>Skip</Btn>
               <Btn onClick={handlePost} color={C.sage} style={{flex:2}}>Save & Share</Btn>
@@ -1581,175 +1592,364 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
 }
 
 
-function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta}){
-  const [activeTab,setActiveTab]=useState("league");
+function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast}){
+  const [feedView,setFeedView]=useState("friends"); // friends | community
+  const [activeTab,setActiveTab]=useState("feed");  // feed | league
   const [showComments,setShowComments]=useState(null);
   const [newComment,setNewComment]=useState("");
+  const [hidden,setHidden]=useState(new Set());
+  const [saved,setSaved]=useState(new Set());
+  const [savedRecipes,setSavedRecipes]=useState(new Set());
+  const [showReport,setShowReport]=useState(null);
+  const [reportReason,setReportReason]=useState("");
+  const [mwahAnim,setMwahAnim]=useState(null);
   const league=getLeague(5);
 
-  const giveMwah=(pid)=>setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah}));
+  const myName=currentUser?.username||currentUser?.email?.split("@")[0]||"You";
+
+  // Filter by view and hidden
+  const visiblePosts=posts.filter(p=>{
+    if(hidden.has(p.id)) return false;
+    if(feedView==="community") return p.visibility==="community"||!p.visibility;
+    return true; // friends shows all
+  });
+
+  const giveMwah=(pid)=>{
+    setMwahAnim(pid);
+    setTimeout(()=>setMwahAnim(null),600);
+    setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah}));
+  };
+
   const addComment=(pid)=>{
-    if(!newComment.trim())return;
-    setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,comments:[...(p.comments||[]),{user:"You",text:newComment.trim()}]}));
+    if(!newComment.trim()) return;
+    setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,comments:[...(p.comments||[]),{user:myName,text:newComment.trim(),time:"just now"}]}));
     setNewComment("");
+  };
+
+  const hidePost=(pid)=>{
+    setHidden(s=>new Set([...s,pid]));
+    if(setToast) setToast({emoji:"",title:"Post hidden",subtitle:"You won't see this again"});
+  };
+
+  const deletePost=(pid)=>{
+    setPosts(ps=>ps.filter(p=>p.id!==pid));
+    if(setToast) setToast({emoji:"",title:"Post deleted",subtitle:""});
+  };
+
+  const handleSavePost=(pid)=>{
+    setSaved(s=>{
+      const n=new Set(s);
+      n.has(pid)?n.delete(pid):n.add(pid);
+      return n;
+    });
+    if(!saved.has(pid)&&setToast) setToast({emoji:"",title:"Post saved",subtitle:"Find it in your Library"});
+  };
+
+  const handleSaveRecipe=async(post)=>{
+    if(savedRecipes.has(post.id)) return;
+    setSavedRecipes(s=>new Set([...s,post.id]));
+    // Find matching recipe in allRecipes
+    const match=allRecipes?.find(r=>r.name===post.recipe);
+    if(match&&saveUserRecipe){
+      const r={...match,isPersonal:true,isCustom:false,isImported:false,done:false};
+      await saveUserRecipe(r).catch(()=>{});
+    }
+    if(setToast) setToast({emoji:"",title:"Recipe saved",subtitle:`${post.recipe} added to your library`});
+  };
+
+  const submitReport=(pid)=>{
+    if(!reportReason.trim()) return;
+    // In production: insert to reports table
+    console.log("Report submitted:",{postId:pid,reason:reportReason});
+    setShowReport(null);
+    setReportReason("");
+    hidePost(pid);
+    if(setToast) setToast({emoji:"",title:"Reported",subtitle:"Thanks — we'll review this post"});
+  };
+
+  const REPORT_REASONS=["Inappropriate content","Spam or misleading","Harassment","Copyright issue","Other"];
+
+  // ── Post card ──────────────────────────────────────────────────────────
+  const PostCard=({post})=>{
+    const isMe=post.user?.name===myName||post.isOwn;
+    const [showActions,setShowActions]=useState(false);
+
+    return(
+      <div style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 12px rgba(0,0,0,.05)"}}>
+
+        {/* Header */}
+        <div style={{padding:"13px 15px 11px",display:"flex",alignItems:"center",gap:11}}>
+          <AvatarIcon username={post.user?.name||"?"} size={40} fontSize={16}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{post.user?.name||"Chef"}</div>
+            <div style={{fontSize:11,color:C.muted,marginTop:1,display:"flex",alignItems:"center",gap:5}}>
+              <span>{post.user?.level}</span>
+              {post.user?.level&&<span style={{opacity:.4}}>·</span>}
+              <span>{post.time}</span>
+              {isMe&&post.visibility&&(
+                <span style={{background:`${C.sage}15`,color:C.sage,borderRadius:4,padding:"1px 6px",fontSize:10,fontWeight:700,marginLeft:2,textTransform:"capitalize"}}>{post.visibility||"friends"}</span>
+              )}
+            </div>
+          </div>
+          {/* Action menu trigger */}
+          <button onClick={()=>setShowActions(!showActions)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 8px",borderRadius:8,color:C.muted}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={C.muted}><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </button>
+        </div>
+
+        {/* Action menu */}
+        {showActions&&(
+          <div style={{margin:"0 15px 12px",background:C.cream,borderRadius:14,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+            {isMe?(
+              <>
+                <button onClick={()=>{setShowActions(false);deletePost(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:"#E05C7A",fontFamily:"inherit"}}>
+                  Delete post
+                </button>
+                <button onClick={()=>setShowActions(false)} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.muted,fontFamily:"inherit"}}>
+                  Cancel
+                </button>
+              </>
+            ):(
+              <>
+                <button onClick={()=>{setShowActions(false);handleSaveRecipe(post);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+                  Save recipe to library
+                </button>
+                <button onClick={()=>{setShowActions(false);handleSavePost(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill={saved.has(post.id)?"#E05C7A":"none"} stroke="#E05C7A" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                  {saved.has(post.id)?"Unsave post":"Save post"}
+                </button>
+                <button onClick={()=>{setShowActions(false);hidePost(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  Hide post
+                </button>
+                <button onClick={()=>{setShowActions(false);setShowReport(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:"#E05C7A",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Report post
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Photo or placeholder */}
+        <div style={{position:"relative",cursor:"pointer"}} onDoubleClick={()=>!post.myMwah&&giveMwah(post.id)}>
+          {post.photo
+            ?<img src={post.photo} alt="" style={{width:"100%",maxHeight:380,objectFit:"cover",display:"block"}}/>
+            :<div style={{background:`linear-gradient(135deg,${C.bark}15,${C.ember}10)`,height:180,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8}}>
+              <div style={{fontWeight:900,fontSize:15,color:C.bark,opacity:.25}}>{post.recipe}</div>
+            </div>
+          }
+          {/* Mwah animation */}
+          {mwahAnim===post.id&&(
+            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+              <div style={{fontSize:80,animation:"mwahPop .6s ease forwards"}}>🤌</div>
+            </div>
+          )}
+        </div>
+
+        {/* Recipe tag */}
+        <div style={{padding:"10px 15px 0",display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:11,fontWeight:700,color:C.flame,background:`${C.flame}10`,borderRadius:7,padding:"3px 9px"}}>{post.recipe}</span>
+          {post.xp>0&&<span style={{fontSize:11,color:C.muted,fontWeight:600}}>+{post.xp} 🔥</span>}
+        </div>
+
+        {/* Caption */}
+        {post.caption&&(
+          <div style={{padding:"8px 15px 0",fontSize:14,color:C.bark,lineHeight:1.55}}>
+            <span style={{fontWeight:800}}>{post.user?.name?.split(" ")[0]}</span>{" "}{post.caption}
+          </div>
+        )}
+
+        {/* Action bar */}
+        <div style={{padding:"10px 15px",display:"flex",alignItems:"center",gap:4}}>
+          {/* Mwah */}
+          <button onClick={()=>giveMwah(post.id)} style={{display:"flex",alignItems:"center",gap:5,background:post.myMwah?`${C.flame}12`:"transparent",border:`1.5px solid ${post.myMwah?C.flame:C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer",transition:"all .18s"}}>
+            <span style={{fontSize:16,lineHeight:1}}>🤌</span>
+            <span style={{fontSize:12,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah}</span>
+          </button>
+
+          {/* Comment */}
+          <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} style={{display:"flex",alignItems:"center",gap:5,background:showComments===post.id?`${C.sky}12`:"transparent",border:`1.5px solid ${showComments===post.id?C.sky:C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer",transition:"all .18s"}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showComments===post.id?C.sky:C.muted} strokeWidth="2.5" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <span style={{fontSize:12,fontWeight:700,color:showComments===post.id?C.sky:C.muted}}>{(post.comments||[]).length}</span>
+          </button>
+
+          {/* Save */}
+          {!isMe&&(
+            <button onClick={()=>handleSavePost(post.id)} style={{display:"flex",alignItems:"center",gap:5,background:saved.has(post.id)?`#E05C7A12`:"transparent",border:`1.5px solid ${saved.has(post.id)?"#E05C7A":C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer",transition:"all .18s"}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={saved.has(post.id)?"#E05C7A":"none"} stroke="#E05C7A" strokeWidth="2.5" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </button>
+          )}
+
+          {/* Share — right aligned */}
+          <button onClick={()=>onShareInsta&&onShareInsta(post)} style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5,background:"transparent",border:`1.5px solid ${C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer"}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+
+        {/* Comments section */}
+        {showComments===post.id&&(
+          <div style={{borderTop:`1px solid ${C.border}`,padding:"12px 15px 14px"}}>
+            {(post.comments||[]).length===0&&(
+              <div style={{fontSize:12,color:C.muted,marginBottom:10,textAlign:"center"}}>No comments yet. Be the first!</div>
+            )}
+            {(post.comments||[]).map((cm,i)=>(
+              <div key={i} style={{marginBottom:8,display:"flex",gap:8,alignItems:"flex-start"}}>
+                <AvatarIcon username={cm.user||"?"} size={26} fontSize={11}/>
+                <div style={{background:C.cream,borderRadius:12,padding:"7px 11px",flex:1,minWidth:0}}>
+                  <span style={{fontWeight:700,fontSize:12,color:C.bark}}>{cm.user} </span>
+                  <span style={{fontSize:13,color:"#6A5C52"}}>{cm.text}</span>
+                  {cm.time&&<div style={{fontSize:10,color:C.muted,marginTop:2}}>{cm.time}</div>}
+                </div>
+              </div>
+            ))}
+            <div style={{display:"flex",gap:8,marginTop:10}}>
+              <AvatarIcon username={myName} size={32} fontSize={13}/>
+              <div style={{flex:1,display:"flex",gap:6}}>
+                <input value={newComment} onChange={e=>setNewComment(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&addComment(post.id)}
+                  placeholder="Add a comment…"
+                  style={{flex:1,padding:"9px 13px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none"}}/>
+                <button onClick={()=>addComment(post.id)} disabled={!newComment.trim()}
+                  style={{padding:"9px 14px",borderRadius:12,border:"none",background:newComment.trim()?C.flame:"#D8D0C8",color:"#fff",fontWeight:800,fontSize:13,cursor:newComment.trim()?"pointer":"default",flexShrink:0}}>
+                  Post
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return(
     <div style={{paddingBottom:24}}>
-      {/* League card */}
-      <div style={{margin:"4px 16px 20px",background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden"}}>
-        <div style={{background:`linear-gradient(135deg,${league.color}18,${league.color}06)`,padding:"16px 18px 0"}}>
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
-            <div style={{fontSize:42}}>{league.icon}</div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>{league.name}</div>
-              <div style={{fontSize:12,color:C.muted,marginTop:2}}>Top 5 promote to {LEAGUES[LEAGUES.indexOf(league)+1]?.name||"Diamond"} next week</div>
-            </div>
-          </div>
-          {/* Tab toggle */}
-          <div style={{display:"flex",background:C.pill,borderRadius:12,padding:3,gap:3,marginBottom:0}}>
-            {[["league","🏆 This Week"],["following","👥 Following"],["mwah","❤️ Activity"]].map(([id,lbl])=>(
-              <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:10,padding:"8px 4px",fontWeight:800,fontSize:11,background:activeTab===id?"#fff":"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 6px rgba(0,0,0,.07)":"none",transition:"all .18s"}}>{lbl}</button>
-            ))}
-          </div>
-        </div>
 
-        <div style={{padding:"14px 18px 18px"}}>
-          {activeTab==="league"&&(
-            <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <span style={{fontSize:12,color:C.muted}}>Weekly leaderboard resets Sunday</span>
-                <span style={{fontSize:13,fontWeight:800,color:league.color}}>{weeklyXp} 🔥 Heat</span>
-              </div>
-              {LEADERBOARD.map((u,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}12`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"4px 10px",marginBottom:4,border:u.isMe?`1.5px solid ${league.color}30`:"none",transition:"all .2s"}}>
-                  <div style={{width:24,height:24,borderRadius:"50%",background:i<3?["#F5C842","#A8A9AD","#CD7F32"][i]:C.pill,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:i<3?"#fff":C.muted,flexShrink:0}}>{u.rank}</div>
-                  <span style={{fontSize:20}}>{u.avatar}</span>
-                  <span style={{flex:1,fontWeight:u.isMe?900:600,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
-                  <span style={{fontSize:11,color:C.muted}}>🔥{u.streak}</span>
-                  <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp} 🔥</span>
-                </div>
-              ))}
-              <div style={{fontSize:11,color:C.muted,marginTop:10,padding:"8px 10px",background:`${C.sage}0D`,borderRadius:10}}>💡 Cook more this week to climb the leaderboard. 🔥 Heat resets every Sunday.</div>
-            </div>
-          )}
-
-          {activeTab==="following"&&(
-            <div>
-              <div style={{fontSize:12,color:C.muted,marginBottom:12}}>People you follow — their activity this week.</div>
-              {[{name:"Sofia R.",avatar:"👩‍🍳",cooked:4,xp:620,streak:12},{name:"Jake M.",avatar:"🧑‍🍳",cooked:2,xp:110,streak:7},{name:"Priya K.",avatar:"👩‍🦱",cooked:3,xp:195,streak:5},{name:"Marcus T.",avatar:"",cooked:1,xp:80,streak:3}].map((f,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<3?`1px solid ${C.border}`:"none"}}>
-                  <span style={{fontSize:22}}>{f.avatar}</span>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{f.name}</div>
-                    <div style={{fontSize:11,color:C.muted}}>{f.cooked} dishes · 🔥{f.streak} streak</div>
-                  </div>
-                  <span style={{fontSize:13,fontWeight:800,color:C.sage}}>{f.xp} 🔥 Heat</span>
-                </div>
-              ))}
-              <button className="tap" style={{width:"100%",marginTop:14,padding:"10px",borderRadius:14,border:`2px dashed ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:13,cursor:"pointer"}}>+ Find friends to follow</button>
-            </div>
-          )}
-
-          {activeTab==="mwah"&&(
-            <div>
-              <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Recent activity on your posts.</div>
-              {[{user:"Sofia R.",avatar:"👩‍🍳",action:"gave 🤌 Mwah to your",dish:"Shakshuka",time:"2h ago"},{user:"Jake M.",avatar:"🧑‍🍳",action:"commented on your",dish:"Avocado Toast",time:"5h ago"},{user:"Priya K.",avatar:"👩‍🦱",action:"gave 🤌 Mwah to your",dish:"Overnight Oats",time:"1d ago"}].map((a,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<2?`1px solid ${C.border}`:"none"}}>
-                  <span style={{fontSize:22}}>{a.avatar}</span>
-                  <div style={{flex:1}}>
-                    <span style={{fontSize:13,fontWeight:700,color:C.bark}}>{a.user} </span>
-                    <span style={{fontSize:13,color:C.muted}}>{a.action} </span>
-                    <span style={{fontSize:13,fontWeight:700,color:C.flame}}>{a.dish}</span>
-                  </div>
-                  <span style={{fontSize:11,color:C.muted,flexShrink:0}}>{a.time}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Level progress */}
-      <div style={{margin:"0 16px 20px",background:C.cream,borderRadius:16,padding:"14px 16px",border:`1px solid ${C.border}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
-          <div style={{width:44,height:44,borderRadius:"50%",background:`${levelInfo.current.color}18`,border:`2px solid ${levelInfo.current.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{levelInfo.current.icon}</div>
-          <div style={{flex:1}}>
-            <div style={{display:"flex",justifyContent:"space-between"}}>
-              <span style={{fontWeight:800,fontSize:14,color:C.bark}}>Lv.{levelInfo.current.level} · {levelInfo.current.title}</span>
-              {levelInfo.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 Heat</span>}
-            </div>
-            <div style={{marginTop:6}}><XPBar pct={levelInfo.pct} color={levelInfo.current.color} h={7}/></div>
-            {levelInfo.next&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>Next: {levelInfo.next.title} {levelInfo.next.icon}</div>}
-          </div>
-        </div>
-      </div>
-
-      {/* Feed */}
-      <div style={{padding:"0 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Following</div>
-          <button onClick={onAddFriends} className="tap" style={{background:`${C.sage}14`,border:`2px solid ${C.sage}33`,borderRadius:12,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:12,color:C.sage}}>👥 Add Friends</button>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:20}}>
-          {posts.map((post,idx)=>(
-            <div key={post.id} style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,animation:`fadeUp .35s ease ${idx*.06}s both`,boxShadow:"0 2px 14px rgba(0,0,0,.06)"}}>
-              <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:42,height:42,borderRadius:13,background:`${C.ember}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{post.user.avatar}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{post.user.name}</div>
-                  <div style={{fontSize:11,color:C.muted}}>{post.user.level} · {post.time}</div>
-                </div>
-                <div style={{fontSize:11,fontWeight:700,color:C.flame,background:`${C.flame}12`,borderRadius:8,padding:"3px 8px"}}>🍳 {post.recipe}</div>
-              </div>
-              {post.photo
-                ?<img src={post.photo} alt="" style={{width:"100%",maxHeight:360,objectFit:"cover"}}/>
-                :<div style={{background:"linear-gradient(135deg,#F0E8E0,#E8DDD4)",height:200,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8}}>
-                  <span style={{fontSize:72}}>{post.emoji}</span>
-                  <span style={{fontSize:14,fontWeight:700,color:C.bark,opacity:.3}}>{post.recipe}</span>
-                </div>
-              }
-              <div style={{padding:"12px 16px 0"}}>
-                {post.caption&&<div style={{fontSize:14,color:C.bark,lineHeight:1.55,marginBottom:12}}><span style={{fontWeight:700}}>{post.user.name.split(" ")[0]}</span> {post.caption}</div>}
-                <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:10}}>
-                  <button onClick={()=>giveMwah(post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
-                    <span style={{fontSize:22,transition:"transform .2s",transform:post.myMwah?"scale(1.15)":"scale(1)"}}>{post.myMwah?"👏":"🤍"}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah} 🤌 mwah{post.mwah!==1?"s":""}</span>
-                  </button>
-                  <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0"}}>
-                    <span style={{fontSize:20}}>💬</span>
-                    <span style={{fontSize:13,fontWeight:700,color:C.muted}}>{(post.comments||[]).length}</span>
-                  </button>
-                  <button onClick={()=>onShareInsta(post)} className="tap" style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"6px 0",marginLeft:"auto"}}>
-                    <span style={{fontSize:18}}></span>
-                    <span style={{fontSize:12,fontWeight:700,color:C.muted}}>Share</span>
-                  </button>
-                </div>
-                {showComments===post.id&&(
-                  <div style={{borderTop:`1px solid ${C.border}`,paddingTop:12,paddingBottom:14}}>
-                    {(post.comments||[]).map((c,i)=>(
-                      <div key={i} style={{marginBottom:8}}>
-                        <span style={{fontWeight:700,fontSize:13,color:C.bark}}>{c.user} </span>
-                        <span style={{fontSize:13,color:"#6A5C52"}}>{c.text}</span>
-                      </div>
-                    ))}
-                    <div style={{display:"flex",gap:8,marginTop:10}}>
-                      <input value={newComment} onChange={e=>setNewComment(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addComment(post.id)} placeholder="Add a comment…" style={{flex:1,padding:"9px 12px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none"}}/>
-                      <button onClick={()=>addComment(post.id)} disabled={!newComment.trim()} style={{padding:"9px 14px",borderRadius:12,border:"none",background:newComment.trim()?C.flame:"#D8D0C8",color:"#fff",fontWeight:800,fontSize:13,cursor:newComment.trim()?"pointer":"default"}}>Post</button>
-                    </div>
-                  </div>
-                )}
-                {showComments!==post.id&&<div style={{height:14}}/>}
-              </div>
-            </div>
+      {/* Feed / League toggle */}
+      <div style={{padding:"8px 16px 0"}}>
+        <div style={{display:"flex",background:C.pill,borderRadius:14,padding:3,gap:3,marginBottom:16}}>
+          {[["feed","Feed"],["league","League"]].map(([id,lbl])=>(
+            <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 4px",fontWeight:800,fontSize:13,background:activeTab===id?C.cream:"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 8px rgba(0,0,0,.07)":"none",transition:"all .18s",fontFamily:"inherit"}}>
+              {lbl}
+            </button>
           ))}
         </div>
       </div>
+
+      {/* ── FEED TAB ───────────────────────────────────────────────── */}
+      {activeTab==="feed"&&(
+        <div>
+          {/* Friends / Community toggle */}
+          <div style={{padding:"0 16px 14px",display:"flex",gap:8,alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",background:C.pill,borderRadius:99,padding:3,gap:2}}>
+              {[["friends","Friends"],["community","Community"]].map(([id,lbl])=>(
+                <button key={id} onClick={()=>setFeedView(id)} style={{border:"none",cursor:"pointer",borderRadius:99,padding:"6px 16px",fontWeight:700,fontSize:12,background:feedView===id?C.cream:"transparent",color:feedView===id?C.bark:C.muted,boxShadow:feedView===id?"0 1px 4px rgba(0,0,0,.08)":"none",transition:"all .15s",fontFamily:"inherit"}}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+            <button onClick={onAddFriends} style={{display:"flex",alignItems:"center",gap:6,background:`${C.sage}12`,border:`1.5px solid ${C.sage}30`,borderRadius:99,padding:"6px 13px",cursor:"pointer",fontFamily:"inherit"}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2.5"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              <span style={{fontSize:12,fontWeight:700,color:C.sage}}>Add</span>
+            </button>
+          </div>
+
+          {/* Posts */}
+          <div style={{padding:"0 16px",display:"flex",flexDirection:"column",gap:16}}>
+            {visiblePosts.length===0&&(
+              <div style={{textAlign:"center",padding:"48px 20px"}}>
+                <div style={{width:56,height:56,borderRadius:18,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                </div>
+                <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>
+                  {feedView==="community"?"No community posts yet":"No posts from friends yet"}
+                </div>
+                <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>
+                  {feedView==="friends"?"Add friends to see their cooking activity":"Be the first to share a community post!"}
+                </div>
+                {feedView==="friends"&&(
+                  <button onClick={onAddFriends} style={{marginTop:16,padding:"10px 24px",borderRadius:12,border:"none",background:C.flame,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+                    Find Friends
+                  </button>
+                )}
+              </div>
+            )}
+            {visiblePosts.map(post=><PostCard key={post.id} post={post}/>)}
+          </div>
+        </div>
+      )}
+
+      {/* ── LEAGUE TAB ─────────────────────────────────────────────── */}
+      {activeTab==="league"&&(
+        <div style={{padding:"0 16px"}}>
+          <div style={{background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden",marginBottom:16}}>
+            <div style={{background:`linear-gradient(135deg,${league.color}18,${league.color}06)`,padding:"16px 18px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:4}}>
+                <div style={{fontSize:36}}>{league.icon}</div>
+                <div>
+                  <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>{league.name}</div>
+                  <div style={{fontSize:11,color:C.muted}}>Top 5 promote next week · {weeklyXp} 🔥 this week</div>
+                </div>
+              </div>
+            </div>
+            <div style={{padding:"14px 18px 18px"}}>
+              {LEADERBOARD.map((u,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}12`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"5px 10px",marginBottom:4,border:u.isMe?`1.5px solid ${league.color}30`:"none"}}>
+                  <div style={{width:24,height:24,borderRadius:"50%",background:i<3?["#F5C842","#A8A9AD","#CD7F32"][i]:C.pill,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:i<3?"#fff":C.muted,flexShrink:0}}>{u.rank}</div>
+                  <AvatarIcon username={u.name} size={30} fontSize={12}/>
+                  <span style={{flex:1,fontWeight:u.isMe?900:600,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
+                  <span style={{fontSize:11,color:C.muted}}>🔥 {u.streak}</span>
+                  <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp} 🔥</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Level progress */}
+          <div style={{background:C.cream,borderRadius:16,padding:"14px 16px",border:`1px solid ${C.border}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+              <div style={{width:42,height:42,borderRadius:"50%",background:`${levelInfo?.current?.color||C.flame}18`,border:`2px solid ${levelInfo?.current?.color||C.flame}44`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={{fontSize:16,fontWeight:900,color:levelInfo?.current?.color||C.flame}}>{levelInfo?.current?.level||1}</span>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{fontWeight:800,fontSize:14,color:C.bark}}>{levelInfo?.current?.title||"Prep Hand"}</span>
+                  {levelInfo?.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</span>}
+                </div>
+                <XPBar pct={levelInfo?.pct||0} color={levelInfo?.current?.color||C.flame} h={6}/>
+                {levelInfo?.next&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>Next: {levelInfo.next.title}</div>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report sheet */}
+      {showReport&&(
+        <Sheet onClose={()=>setShowReport(null)}>
+          <div style={{padding:"24px 20px 44px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>Report Post</div>
+              <CloseBtn onClose={()=>setShowReport(null)}/>
+            </div>
+            <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.6}}>Why are you reporting this post? We'll review it within 24 hours.</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+              {REPORT_REASONS.map(r=>(
+                <button key={r} onClick={()=>setReportReason(r)}
+                  style={{padding:"13px 16px",borderRadius:14,border:`1.5px solid ${reportReason===r?C.flame:C.border}`,background:reportReason===r?`${C.flame}08`:"transparent",color:reportReason===r?C.flame:C.bark,fontWeight:reportReason===r?700:500,fontSize:14,cursor:"pointer",textAlign:"left",fontFamily:"inherit",transition:"all .15s"}}>
+                  {r}
+                </button>
+              ))}
+            </div>
+            <Btn onClick={()=>submitReport(showReport)} disabled={!reportReason} full color={C.flame}>Submit Report</Btn>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }
 
-/* ═══ HOME TAB ════════════════════════════════════════════════════════════ */
 function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
@@ -2864,78 +3064,136 @@ function CookTogetherSheet({recipe, onClose}){
 }
 
 /* ═══ ADD FRIENDS SHEET ════════════════════════════════════════════════════ */
-function AddFriendsSheet({onClose}){
-  const [query, setQuery] = useState("");
-  const [sent, setSent] = useState([]);
-  const SUGGESTED = [
-    {name:"Sofia R.",  avatar:"👩‍🍳", level:"Head Chef",     mutual:3},
-    {name:"Jake M.",   avatar:"🧑‍🍳", level:"Sous Chef",     mutual:1},
-    {name:"Priya K.",  avatar:"👩‍🦱", level:"Demi Chef",     mutual:2},
-    {name:"Marcus T.", avatar:"",   level:"Line Cook",     mutual:0},
-    {name:"Yuki A.",   avatar:"👩",   level:"Home Cook",     mutual:1},
-    {name:"Liam B.",   avatar:"👨",   level:"Prep Hand",     mutual:0},
-  ];
-  const filtered = SUGGESTED.filter(f=>
-    !query || f.name.toLowerCase().includes(query.toLowerCase())
+function AddFriendsSheet({onClose, searchUsers, sendFriendRequest, loadFriends}){
+  const [query,setQuery]=useState("");
+  const [results,setResults]=useState([]);
+  const [sent,setSent]=useState(new Set());
+  const [loading,setLoading]=useState(false);
+  const [friends,setFriends]=useState({friends:[],pending:[],requests:[]});
+  const debounceRef=useRef(null);
+
+  useEffect(()=>{
+    if(loadFriends) loadFriends().then(setFriends).catch(()=>{});
+  },[]);
+
+  const handleSearch=(val)=>{
+    setQuery(val);
+    clearTimeout(debounceRef.current);
+    if(val.trim().length<2){setResults([]);return;}
+    setLoading(true);
+    debounceRef.current=setTimeout(async()=>{
+      const r=await searchUsers(val.trim());
+      setResults(r||[]);
+      setLoading(false);
+    },400);
+  };
+
+  const handleSend=async(userId,username)=>{
+    setSent(s=>new Set([...s,userId]));
+    const res=await sendFriendRequest(userId);
+    if(res?.error){
+      setSent(s=>{const n=new Set(s);n.delete(userId);return n;});
+    }
+  };
+
+  const handleAccept=async(friendshipId)=>{
+    if(!loadFriends) return;
+    // acceptFriendRequest not passed as prop but can reload
+    setFriends(f=>({...f,requests:f.requests.filter(r=>r.friendshipId!==friendshipId)}));
+  };
+
+  const S=({icon,children})=>(
+    <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",margin:"16px 0 8px",display:"flex",alignItems:"center",gap:6}}>
+      {icon}{children}
+    </div>
   );
-  const sendRequest = (name) => setSent(s=>[...s, name]);
 
   return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>👥 Add Friends</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Find people to cook with and compete against</div>
-          </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Find Friends</div>
           <CloseBtn onClose={onClose}/>
         </div>
 
+        {/* Search */}
         <div style={{position:"relative",marginBottom:16}}>
-          <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search by name or username…" style={{width:"100%",padding:"11px 14px 11px 42px",borderRadius:14,border:`2px solid ${query?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",transition:"border-color .18s"}}/>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={query} onChange={e=>handleSearch(e.target.value)} placeholder="Search by username…"
+            style={{width:"100%",padding:"11px 14px 11px 38px",borderRadius:14,border:`1.5px solid ${query?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
         </div>
 
-        <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".08em"}}>
-          {query?"Search results":"Suggested friends"}
-        </div>
+        {/* Search results */}
+        {loading&&<div style={{textAlign:"center",padding:"20px",fontSize:13,color:C.muted}}>Searching…</div>}
 
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {filtered.map((f,i)=>{
-            const isSent = sent.includes(f.name);
-            return(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:12,background:C.cream,borderRadius:16,padding:"12px 14px",border:`1px solid ${C.border}`}}>
-                <div style={{width:44,height:44,borderRadius:14,background:`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{f.avatar}</div>
+        {results.length>0&&(
+          <>
+            <S>Results</S>
+            {results.map(u=>(
+              <div key={u.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
+                <AvatarIcon username={u.username||"?"} size={40} fontSize={16}/>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{f.name}</div>
-                  <div style={{fontSize:11,color:C.muted,marginTop:1}}>{f.level}{f.mutual>0?` · ${f.mutual} mutual friend${f.mutual>1?"s":""}`:""}</div>
+                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{u.username}</div>
+                  <div style={{fontSize:11,color:C.muted}}>{u.xp||0} 🔥 Heat</div>
                 </div>
-                <button onClick={()=>!isSent&&sendRequest(f.name)} className="tap" style={{padding:"8px 14px",borderRadius:10,border:`2px solid ${isSent?C.sage:C.flame}`,background:isSent?`${C.sage}14`:`${C.flame}14`,color:isSent?C.sage:C.flame,fontWeight:800,fontSize:12,cursor:isSent?"default":"pointer",transition:"all .2s",flexShrink:0}}>
-                  {isSent?"✓ Sent":"+ Add"}
+                <button onClick={()=>handleSend(u.id,u.username)} disabled={sent.has(u.id)}
+                  style={{padding:"7px 14px",borderRadius:10,border:"none",background:sent.has(u.id)?`${C.sage}20`:C.flame,color:sent.has(u.id)?C.sage:"#fff",fontWeight:700,fontSize:12,cursor:sent.has(u.id)?"default":"pointer",fontFamily:"inherit"}}>
+                  {sent.has(u.id)?"Sent":"Add"}
                 </button>
               </div>
-            );
-          })}
-        </div>
-
-        {filtered.length===0&&(
-          <div style={{textAlign:"center",padding:"32px 20px",color:C.muted}}>
-            <div style={{fontSize:36,marginBottom:8}}>🔍</div>
-            <div style={{fontWeight:700}}>No one found</div>
-            <div style={{fontSize:13,marginTop:4}}>Try a different name</div>
-          </div>
+            ))}
+          </>
         )}
 
-        <div style={{marginTop:20,background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"12px 14px"}}>
-          <div style={{fontSize:12,color:C.sky,fontWeight:700}}>💡 Invite friends via link</div>
-          <div style={{fontSize:11,color:C.muted,marginTop:4}}>Share your app link so friends can sign up and find you automatically.</div>
-        </div>
+        {/* Incoming requests */}
+        {friends.requests.length>0&&(
+          <>
+            <S icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}>Friend Requests</S>
+            {friends.requests.map(r=>(
+              <div key={r.friendshipId} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
+                <AvatarIcon username={r.username||"?"} size={40} fontSize={16}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{r.username}</div>
+                  <div style={{fontSize:11,color:C.muted}}>wants to be friends</div>
+                </div>
+                <button onClick={()=>handleAccept(r.friendshipId)}
+                  style={{padding:"7px 14px",borderRadius:10,border:"none",background:C.sage,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                  Accept
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* Friends list */}
+        {friends.friends.length>0&&(
+          <>
+            <S icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>}>{friends.friends.length} Friends</S>
+            {friends.friends.map(f=>(
+              <div key={f.friendshipId} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
+                <AvatarIcon username={f.username||"?"} size={40} fontSize={16}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{f.username}</div>
+                  <div style={{fontSize:11,color:C.muted}}>{f.xp||0} 🔥 Heat</div>
+                </div>
+                <span style={{fontSize:11,color:C.sage,fontWeight:600}}>Friends</span>
+              </div>
+            ))}
+          </>
+        )}
+
+        {!loading&&results.length===0&&query.length<2&&friends.friends.length===0&&friends.requests.length===0&&(
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:40,marginBottom:12,opacity:.3}}>👥</div>
+            <div style={{fontWeight:700,fontSize:15,color:C.bark,marginBottom:6}}>Find your cooking crew</div>
+            <div style={{fontSize:13,color:C.muted}}>Search by username to connect with friends</div>
+          </div>
+        )}
       </div>
     </Sheet>
   );
 }
 
-/* ═══ STREAK CALENDAR ══════════════════════════════════════════════════════ */
 function StreakCalendar({cookedDays, onClose}){
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -3774,7 +4032,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase } = useAuth();
+  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -3843,11 +4101,35 @@ export default function App(){
   useEffect(()=>{
     if(profile){
       if(profile.xp>0) setXp(profile.xp);
-      // If user has a profile, they've been onboarded
       if(!onboarded){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
       }
+      // Load user's personal recipes from Supabase
+      loadUserRecipes().then(userRecipes=>{
+        if(userRecipes.length>0){
+          setAllRecipes(current=>{
+            const ids=new Set(current.map(r=>r._supabaseId||r.id));
+            const fresh=userRecipes.filter(r=>!ids.has(r._supabaseId));
+            return [...fresh,...current.filter(r=>!r.isPersonal)];
+          });
+        }
+      }).catch(e=>console.error('loadUserRecipes failed',e));
+      // Load real feed
+      loadFeed().then(feedItems=>{
+        if(feedItems.length>0){
+          setPosts(feedItems.map(f=>({
+            id:f.id,
+            user:{name:f.profiles?.username||'Chef',avatar:f.profiles?.username||'?',level:''},
+            recipe:f.recipe_name||'',
+            photo:f.photo_url||null,
+            caption:f.caption||'',
+            time:new Date(f.created_at).toLocaleDateString(),
+            mwah:0,myMwah:false,comments:[],
+            xp:f.xp_earned||0,
+          })));
+        }
+      }).catch(e=>console.error('loadFeed failed',e));
     }
   },[profile]);
 
@@ -3869,7 +4151,7 @@ export default function App(){
     }
   },[earnedBadges]);
 
-  const handleComplete=useCallback((recipe,photo,caption,rating)=>{
+  const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends")=>{
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
@@ -3917,16 +4199,28 @@ export default function App(){
       date:dateStr,
     },...log]);
 
-    // Post to feed
-    if(photo||caption){
-      setPosts(ps=>[{
-        id:`p-${Date.now()}`,
-        user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo.current.title},
-        recipe:recipe.name,emoji:recipe.emoji,photo,
-        caption:caption||`Just cooked ${recipe.name}! `,
-        time:"just now",mwah:0,myMwah:false,comments:[],
-      },...ps]);
-    }
+    // Post to feed (local + Supabase)
+    const postCaption=caption||`Just cooked ${recipe.name}!`;
+    setPosts(ps=>[{
+      id:`p-${Date.now()}`,
+      user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo?.current?.title||""},
+      recipe:recipe.name,emoji:recipe.emoji,photo,
+      caption:postCaption,
+      time:"just now",mwah:0,myMwah:false,comments:[],
+      visibility:visibility||'friends',isOwn:true,
+    },...ps]);
+    // Always post activity (even without photo)
+    try{
+      postActivity({
+        type:"cooked",
+        recipe_name:recipe.name,
+        recipe_id:String(recipe.id),
+        caption:postCaption,
+        photo_url:photo||undefined,
+        xp_earned:recipe.xp||0,
+        rating:rating||undefined,
+      });
+    }catch(e){console.error("postActivity failed",e);}
 
     // Check badges
     const totalCooked=allRecipes.filter(r=>r.done).length+1;
@@ -4029,11 +4323,11 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);}} setToast={setToast}/>;})()}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)} seasonalEvent={seasonalEvent}/>}
-          {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
+          {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe}/>}
           {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
@@ -4060,10 +4354,27 @@ export default function App(){
       </div>
 
       {showGoal&&<GoalPicker goal={goal} onSelect={g=>{setGoal(g);setShowGoal(false);}} onClose={()=>setShowGoal(false)}/>}
-      {showCreate&&<CreateRecipeSheet onSave={r=>{setAllRecipes(rs=>[r,...rs]);}} onClose={()=>setShowCreate(false)}/>}
-      {showImport&&<URLImportSheet onSave={r=>{setAllRecipes(rs=>[r,...rs]);}} onClose={()=>setShowImport(false)}/>}
+      {showCreate&&<CreateRecipeSheet onSave={async r=>{
+        // Optimistic update
+        setAllRecipes(rs=>[r,...rs]);
+        setShowCreate(false);
+        // Persist to Supabase
+        const saved=await saveUserRecipe(r);
+        if(saved){
+          // Update local recipe with Supabase ID
+          setAllRecipes(rs=>rs.map(x=>x.id===r.id?{...x,_supabaseId:saved.id}:x));
+        } else {
+          setToast({emoji:"",title:"Saved locally only",subtitle:"Couldn't sync to your account"});
+        }
+      }} onClose={()=>setShowCreate(false)}/>}
+      {showImport&&<URLImportSheet onSave={async r=>{
+        setAllRecipes(rs=>[r,...rs]);
+        setShowImport(false);
+        const saved=await saveUserRecipe(r);
+        if(saved) setAllRecipes(rs=>rs.map(x=>x.id===r.id?{...x,_supabaseId:saved.id}:x));
+      }} onClose={()=>setShowImport(false)}/>}
       {showQuickLog&&<QuickLogSheet onLog={handleQuickLog} onClose={()=>setShowQuickLog(false)} goal={goal} cookedDays={cookedDays}/>}
-      {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)}/>}
+      {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)} searchUsers={searchUsers} sendFriendRequest={sendFriendRequest} loadFriends={loadFriends}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
 
