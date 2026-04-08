@@ -1274,7 +1274,7 @@ function ChallengesTab({challengeProgress,onInvite,seasonalEvent}){
 }
 
 /* ═══ COOK LIBRARY ════════════════════════════════════════════════════════ */
-function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen}){
+function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts}){
   const [filter,setFilter]=useState("all");
   const [sort,setSort]=useState("recent");
   const [libTab,setLibTab]=useState("log"); // log | recipes | badges
@@ -1309,7 +1309,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen}){
 
       {/* Sub tabs */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:4}}>
-        {[["log","My Cooks"],["recipes","My Recipes"],["badges","Badges"]].map(([id,lbl])=>(
+        {[["log","My Cooks"],["recipes","My Recipes"],["saved","Saved"],["badges","Badges"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setLibTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
         ))}
       </div>
@@ -1340,6 +1340,36 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen}){
                   <div style={{fontWeight:800,fontSize:15,color:C.bark,marginBottom:4}}>{r.name}</div>
                   <div style={{fontSize:12,color:C.muted}}>{r.time} · {r.difficulty} · {r.ingredients?.length||0} ingredients</div>
                   {r.sourceName&&<div style={{fontSize:11,color:C.sky,marginTop:4}}>Imported</div>}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+      {libTab==="saved"&&(
+        <div style={{padding:"0 16px"}}>
+          {(savedPosts?.size||0)===0?(
+            <div style={{textAlign:"center",padding:"48px 20px"}}>
+              <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:40}}>Saved Posts</div>
+              <div style={{width:52,height:52,borderRadius:16,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              </div>
+              <div style={{fontWeight:800,fontSize:15,color:C.bark,marginBottom:6}}>No saved posts yet</div>
+              <div style={{fontSize:13,color:C.muted}}>Tap the bookmark on any feed post to save it here</div>
+            </div>
+          ):(
+            (posts||[]).filter(p=>savedPosts?.has(p.id)).map(p=>(
+              <div key={p.id} style={{background:C.cream,borderRadius:16,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:10,display:"flex",gap:0}}>
+                {p.photo
+                  ?<img src={p.photo} alt="" style={{width:80,height:80,objectFit:"cover",flexShrink:0}}/>
+                  :<div style={{width:80,height:80,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".4"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
+                  </div>
+                }
+                <div style={{padding:"10px 12px",flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:2}}>{p.recipe}</div>
+                  <div style={{fontSize:11,color:C.muted}}>{p.user?.name} · {p.time}</div>
+                  {p.caption&&<div style={{fontSize:12,color:C.bark,marginTop:4,opacity:.7,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.caption}</div>}
                 </div>
               </div>
             ))
@@ -1592,233 +1622,208 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
 }
 
 
-function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast}){
-  const [feedView,setFeedView]=useState("friends"); // friends | community
-  const [activeTab,setActiveTab]=useState("feed");  // feed | league
+function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts}){
+  const [feedView,setFeedView]=useState("friends");
+  const [activeTab,setActiveTab]=useState("feed");
   const [showComments,setShowComments]=useState(null);
   const [newComment,setNewComment]=useState("");
   const [hidden,setHidden]=useState(new Set());
-  const [saved,setSaved]=useState(new Set());
   const [savedRecipes,setSavedRecipes]=useState(new Set());
   const [showReport,setShowReport]=useState(null);
   const [reportReason,setReportReason]=useState("");
   const [mwahAnim,setMwahAnim]=useState(null);
   const league=getLeague(5);
-
   const myName=currentUser?.username||currentUser?.email?.split("@")[0]||"You";
 
-  // Filter by view and hidden
   const visiblePosts=posts.filter(p=>{
     if(hidden.has(p.id)) return false;
     if(feedView==="community") return p.visibility==="community"||!p.visibility;
-    return true; // friends shows all
+    return true;
   });
 
   const giveMwah=(pid)=>{
     setMwahAnim(pid);
-    setTimeout(()=>setMwahAnim(null),600);
+    setTimeout(()=>setMwahAnim(null),700);
     setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah}));
   };
 
   const addComment=(pid)=>{
     if(!newComment.trim()) return;
-    setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,comments:[...(p.comments||[]),{user:myName,text:newComment.trim(),time:"just now"}]}));
+    setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,comments:[...(p.comments||[]),{user:myName,text:newComment.trim()}]}));
     setNewComment("");
   };
 
   const hidePost=(pid)=>{
     setHidden(s=>new Set([...s,pid]));
-    if(setToast) setToast({emoji:"",title:"Post hidden",subtitle:"You won't see this again"});
+    if(setToast) setToast({emoji:"",title:"Post hidden",subtitle:""});
   };
 
   const deletePost=(pid)=>{
     setPosts(ps=>ps.filter(p=>p.id!==pid));
-    if(setToast) setToast({emoji:"",title:"Post deleted",subtitle:""});
+    if(setToast) setToast({emoji:"",title:"Deleted",subtitle:""});
   };
 
   const handleSavePost=(pid)=>{
-    setSaved(s=>{
-      const n=new Set(s);
-      n.has(pid)?n.delete(pid):n.add(pid);
-      return n;
-    });
-    if(!saved.has(pid)&&setToast) setToast({emoji:"",title:"Post saved",subtitle:"Find it in your Library"});
+    const isNowSaved=!(savedPosts||new Set()).has(pid);
+    if(setSavedPosts) setSavedPosts(s=>{const n=new Set(s);isNowSaved?n.add(pid):n.delete(pid);return n;});
+    if(isNowSaved&&setToast) setToast({emoji:"",title:"Saved",subtitle:"Find it in Library → Saved"});
   };
 
   const handleSaveRecipe=async(post)=>{
     if(savedRecipes.has(post.id)) return;
     setSavedRecipes(s=>new Set([...s,post.id]));
-    // Find matching recipe in allRecipes
     const match=allRecipes?.find(r=>r.name===post.recipe);
     if(match&&saveUserRecipe){
-      const r={...match,isPersonal:true,isCustom:false,isImported:false,done:false};
-      await saveUserRecipe(r).catch(()=>{});
+      try{ await saveUserRecipe({...match,isPersonal:true,isCustom:false,done:false}); }catch{}
     }
     if(setToast) setToast({emoji:"",title:"Recipe saved",subtitle:`${post.recipe} added to your library`});
   };
 
   const submitReport=(pid)=>{
     if(!reportReason.trim()) return;
-    // In production: insert to reports table
-    console.log("Report submitted:",{postId:pid,reason:reportReason});
+    console.log("Report:",{postId:pid,reason:reportReason});
     setShowReport(null);
     setReportReason("");
     hidePost(pid);
-    if(setToast) setToast({emoji:"",title:"Reported",subtitle:"Thanks — we'll review this post"});
+    if(setToast) setToast({emoji:"",title:"Reported",subtitle:"We'll review this"});
   };
 
-  const REPORT_REASONS=["Inappropriate content","Spam or misleading","Harassment","Copyright issue","Other"];
+  const REPORT_REASONS=["Inappropriate content","Spam","Harassment","Copyright issue","Other"];
 
-  // ── Post card ──────────────────────────────────────────────────────────
+  // ── Instagram-style post card ─────────────────────────────────────────
   const PostCard=({post})=>{
     const isMe=post.user?.name===myName||post.isOwn;
-    const [showActions,setShowActions]=useState(false);
+    const [menuOpen,setMenuOpen]=useState(false);
+    const isSaved=(savedPosts||new Set()).has(post.id);
 
     return(
-      <div style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 12px rgba(0,0,0,.05)"}}>
+      <div style={{borderBottom:`1px solid ${C.border}`,paddingBottom:0}}>
 
         {/* Header */}
-        <div style={{padding:"13px 15px 11px",display:"flex",alignItems:"center",gap:11}}>
-          <AvatarIcon username={post.user?.name||"?"} size={40} fontSize={16}/>
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px"}}>
+          <AvatarIcon username={post.user?.name||"?"} size={36} fontSize={14}/>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{post.user?.name||"Chef"}</div>
-            <div style={{fontSize:11,color:C.muted,marginTop:1,display:"flex",alignItems:"center",gap:5}}>
-              <span>{post.user?.level}</span>
-              {post.user?.level&&<span style={{opacity:.4}}>·</span>}
-              <span>{post.time}</span>
-              {isMe&&post.visibility&&(
-                <span style={{background:`${C.sage}15`,color:C.sage,borderRadius:4,padding:"1px 6px",fontSize:10,fontWeight:700,marginLeft:2,textTransform:"capitalize"}}>{post.visibility||"friends"}</span>
-              )}
-            </div>
+            <div style={{fontWeight:800,fontSize:13,color:C.bark,lineHeight:1.2}}>{post.user?.name}</div>
+            <div style={{fontSize:11,color:C.muted}}>{post.time}</div>
           </div>
-          {/* Action menu trigger */}
-          <button onClick={()=>setShowActions(!showActions)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 8px",borderRadius:8,color:C.muted}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={C.muted}><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          {isMe&&post.visibility&&(
+            <span style={{fontSize:10,color:C.muted,background:C.pill,borderRadius:5,padding:"2px 7px",fontWeight:600,textTransform:"capitalize",marginRight:4}}>{post.visibility}</span>
+          )}
+          <button onClick={()=>setMenuOpen(!menuOpen)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 2px",color:C.muted,lineHeight:1}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={C.muted}><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
           </button>
         </div>
 
-        {/* Action menu */}
-        {showActions&&(
-          <div style={{margin:"0 15px 12px",background:C.cream,borderRadius:14,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+        {/* Dropdown menu */}
+        {menuOpen&&(
+          <div style={{margin:"0 16px 10px",background:C.cream,borderRadius:14,border:`1px solid ${C.border}`,overflow:"hidden"}}>
             {isMe?(
-              <>
-                <button onClick={()=>{setShowActions(false);deletePost(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:"#E05C7A",fontFamily:"inherit"}}>
-                  Delete post
-                </button>
-                <button onClick={()=>setShowActions(false)} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.muted,fontFamily:"inherit"}}>
-                  Cancel
-                </button>
-              </>
+              <button onClick={()=>{setMenuOpen(false);deletePost(post.id);}} style={{width:"100%",padding:"13px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:"#E05C7A",fontFamily:"inherit"}}>Delete post</button>
             ):(
               <>
-                <button onClick={()=>{setShowActions(false);handleSaveRecipe(post);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-                  Save recipe to library
-                </button>
-                <button onClick={()=>{setShowActions(false);handleSavePost(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill={saved.has(post.id)?"#E05C7A":"none"} stroke="#E05C7A" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                  {saved.has(post.id)?"Unsave post":"Save post"}
-                </button>
-                <button onClick={()=>{setShowActions(false);hidePost(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                {post.recipe&&<button onClick={()=>{setMenuOpen(false);handleSaveRecipe(post);}} style={{width:"100%",padding:"13px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+                  Save recipe to library {savedRecipes.has(post.id)?"✓":""}
+                </button>}
+                <button onClick={()=>{setMenuOpen(false);hidePost(post.id);}} style={{width:"100%",padding:"13px 16px",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:C.bark,fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/></svg>
                   Hide post
                 </button>
-                <button onClick={()=>{setShowActions(false);setShowReport(post.id);}} style={{width:"100%",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:"#E05C7A",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  Report post
+                <button onClick={()=>{setMenuOpen(false);setShowReport(post.id);}} style={{width:"100%",padding:"13px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontSize:13,fontWeight:600,color:"#E05C7A",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Report
                 </button>
               </>
             )}
           </div>
         )}
 
-        {/* Photo or placeholder */}
+        {/* Photo — full width, double tap to mwah */}
         <div style={{position:"relative",cursor:"pointer"}} onDoubleClick={()=>!post.myMwah&&giveMwah(post.id)}>
           {post.photo
-            ?<img src={post.photo} alt="" style={{width:"100%",maxHeight:380,objectFit:"cover",display:"block"}}/>
-            :<div style={{background:`linear-gradient(135deg,${C.bark}15,${C.ember}10)`,height:180,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8}}>
-              <div style={{fontWeight:900,fontSize:15,color:C.bark,opacity:.25}}>{post.recipe}</div>
+            ?<img src={post.photo} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",display:"block"}}/>
+            :<div style={{width:"100%",aspectRatio:"1/1",background:`linear-gradient(145deg,${C.bark}18,${C.ember}12)`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8}}>
+              <div style={{width:64,height:64,borderRadius:20,background:`${C.flame}15`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              </div>
+              <div style={{fontWeight:700,fontSize:14,color:C.bark,opacity:.4}}>{post.recipe}</div>
             </div>
           }
-          {/* Mwah animation */}
           {mwahAnim===post.id&&(
             <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-              <div style={{fontSize:80,animation:"mwahPop .6s ease forwards"}}>🤌</div>
+              <div style={{fontSize:90,animation:"mwahPop .6s ease forwards"}}>🤌</div>
             </div>
           )}
         </div>
-
-        {/* Recipe tag */}
-        <div style={{padding:"10px 15px 0",display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:11,fontWeight:700,color:C.flame,background:`${C.flame}10`,borderRadius:7,padding:"3px 9px"}}>{post.recipe}</span>
-          {post.xp>0&&<span style={{fontSize:11,color:C.muted,fontWeight:600}}>+{post.xp} 🔥</span>}
-        </div>
-
-        {/* Caption */}
-        {post.caption&&(
-          <div style={{padding:"8px 15px 0",fontSize:14,color:C.bark,lineHeight:1.55}}>
-            <span style={{fontWeight:800}}>{post.user?.name?.split(" ")[0]}</span>{" "}{post.caption}
-          </div>
-        )}
 
         {/* Action bar */}
-        <div style={{padding:"10px 15px",display:"flex",alignItems:"center",gap:4}}>
+        <div style={{display:"flex",alignItems:"center",padding:"10px 16px 6px",gap:16}}>
           {/* Mwah */}
-          <button onClick={()=>giveMwah(post.id)} style={{display:"flex",alignItems:"center",gap:5,background:post.myMwah?`${C.flame}12`:"transparent",border:`1.5px solid ${post.myMwah?C.flame:C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer",transition:"all .18s"}}>
-            <span style={{fontSize:16,lineHeight:1}}>🤌</span>
-            <span style={{fontSize:12,fontWeight:700,color:post.myMwah?C.flame:C.muted}}>{post.mwah}</span>
+          <button onClick={()=>giveMwah(post.id)} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:5}}>
+            <span style={{fontSize:24,lineHeight:1,filter:post.myMwah?"none":"grayscale(1)",opacity:post.myMwah?1:0.5,transition:"all .2s",transform:post.myMwah?"scale(1.15)":"scale(1)",display:"inline-block"}}>🤌</span>
           </button>
-
           {/* Comment */}
-          <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} style={{display:"flex",alignItems:"center",gap:5,background:showComments===post.id?`${C.sky}12`:"transparent",border:`1.5px solid ${showComments===post.id?C.sky:C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer",transition:"all .18s"}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showComments===post.id?C.sky:C.muted} strokeWidth="2.5" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-            <span style={{fontSize:12,fontWeight:700,color:showComments===post.id?C.sky:C.muted}}>{(post.comments||[]).length}</span>
+          <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           </button>
-
-          {/* Save */}
-          {!isMe&&(
-            <button onClick={()=>handleSavePost(post.id)} style={{display:"flex",alignItems:"center",gap:5,background:saved.has(post.id)?`#E05C7A12`:"transparent",border:`1.5px solid ${saved.has(post.id)?"#E05C7A":C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer",transition:"all .18s"}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={saved.has(post.id)?"#E05C7A":"none"} stroke="#E05C7A" strokeWidth="2.5" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-            </button>
-          )}
-
-          {/* Share — right aligned */}
-          <button onClick={()=>onShareInsta&&onShareInsta(post)} style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5,background:"transparent",border:`1.5px solid ${C.border}`,borderRadius:99,padding:"6px 12px",cursor:"pointer"}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          {/* Share */}
+          <button onClick={()=>onShareInsta&&onShareInsta(post)} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
+          {/* Save — right side like Instagram */}
+          {!isMe&&<button onClick={()=>handleSavePost(post.id)} style={{marginLeft:"auto",background:"none",border:"none",cursor:"pointer",padding:0}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill={isSaved?C.bark:"none"} stroke={C.bark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>}
         </div>
 
-        {/* Comments section */}
-        {showComments===post.id&&(
-          <div style={{borderTop:`1px solid ${C.border}`,padding:"12px 15px 14px"}}>
-            {(post.comments||[]).length===0&&(
-              <div style={{fontSize:12,color:C.muted,marginBottom:10,textAlign:"center"}}>No comments yet. Be the first!</div>
-            )}
-            {(post.comments||[]).map((cm,i)=>(
-              <div key={i} style={{marginBottom:8,display:"flex",gap:8,alignItems:"flex-start"}}>
-                <AvatarIcon username={cm.user||"?"} size={26} fontSize={11}/>
-                <div style={{background:C.cream,borderRadius:12,padding:"7px 11px",flex:1,minWidth:0}}>
-                  <span style={{fontWeight:700,fontSize:12,color:C.bark}}>{cm.user} </span>
-                  <span style={{fontSize:13,color:"#6A5C52"}}>{cm.text}</span>
-                  {cm.time&&<div style={{fontSize:10,color:C.muted,marginTop:2}}>{cm.time}</div>}
-                </div>
+        {/* Mwah count */}
+        {post.mwah>0&&<div style={{padding:"0 16px 4px",fontSize:13,fontWeight:700,color:C.bark}}>{post.mwah} 🤌 mwah{post.mwah!==1?"s":""}</div>}
+
+        {/* Caption */}
+        <div style={{padding:"2px 16px 8px"}}>
+          {post.recipe&&<span style={{fontSize:12,fontWeight:700,color:C.flame,marginRight:6}}>{post.recipe}</span>}
+          {post.caption&&<><span style={{fontSize:13,fontWeight:700,color:C.bark}}>{post.user?.name?.split(" ")[0]} </span><span style={{fontSize:13,color:C.bark,lineHeight:1.5}}>{post.caption}</span></>}
+        </div>
+
+        {/* Comments preview */}
+        {(post.comments||[]).length>0&&(
+          <div style={{padding:"0 16px 6px"}}>
+            {showComments!==post.id&&(post.comments||[]).slice(0,2).map((cm,i)=>(
+              <div key={i} style={{fontSize:13,color:C.bark,marginBottom:3,lineHeight:1.4}}>
+                <span style={{fontWeight:700}}>{cm.user} </span>{cm.text}
               </div>
             ))}
-            <div style={{display:"flex",gap:8,marginTop:10}}>
-              <AvatarIcon username={myName} size={32} fontSize={13}/>
-              <div style={{flex:1,display:"flex",gap:6}}>
-                <input value={newComment} onChange={e=>setNewComment(e.target.value)}
-                  onKeyDown={e=>e.key==="Enter"&&addComment(post.id)}
-                  placeholder="Add a comment…"
-                  style={{flex:1,padding:"9px 13px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:13,color:C.bark,outline:"none"}}/>
-                <button onClick={()=>addComment(post.id)} disabled={!newComment.trim()}
-                  style={{padding:"9px 14px",borderRadius:12,border:"none",background:newComment.trim()?C.flame:"#D8D0C8",color:"#fff",fontWeight:800,fontSize:13,cursor:newComment.trim()?"pointer":"default",flexShrink:0}}>
-                  Post
-                </button>
-              </div>
-            </div>
+            {(post.comments||[]).length>2&&showComments!==post.id&&(
+              <button onClick={()=>setShowComments(post.id)} style={{background:"none",border:"none",padding:0,fontSize:12,color:C.muted,cursor:"pointer",fontFamily:"inherit"}}>
+                View all {(post.comments||[]).length} comments
+              </button>
+            )}
           </div>
         )}
+
+        {/* All comments expanded */}
+        {showComments===post.id&&(
+          <div style={{padding:"0 16px 8px"}}>
+            {(post.comments||[]).map((cm,i)=>(
+              <div key={i} style={{fontSize:13,color:C.bark,marginBottom:4,lineHeight:1.4,display:"flex",gap:8,alignItems:"flex-start"}}>
+                <AvatarIcon username={cm.user||"?"} size={24} fontSize={10}/>
+                <div><span style={{fontWeight:700}}>{cm.user} </span>{cm.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Comment input */}
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"6px 16px 14px",borderTop:`1px solid ${C.border}`}}>
+          <AvatarIcon username={myName} size={26} fontSize={11}/>
+          <input value={newComment} onChange={e=>setNewComment(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"&&newComment.trim()){addComment(post.id);}}}
+            placeholder="Add a comment…"
+            style={{flex:1,background:"none",border:"none",outline:"none",fontSize:13,color:C.bark,fontFamily:"inherit"}}/>
+          {newComment.trim()&&(
+            <button onClick={()=>addComment(post.id)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,color:C.flame,fontFamily:"inherit",padding:0}}>Post</button>
+          )}
+        </div>
       </div>
     );
   };
@@ -1828,7 +1833,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 
       {/* Feed / League toggle */}
       <div style={{padding:"8px 16px 0"}}>
-        <div style={{display:"flex",background:C.pill,borderRadius:14,padding:3,gap:3,marginBottom:16}}>
+        <div style={{display:"flex",background:C.pill,borderRadius:14,padding:3,gap:3,marginBottom:12}}>
           {[["feed","Feed"],["league","League"]].map(([id,lbl])=>(
             <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 4px",fontWeight:800,fontSize:13,background:activeTab===id?C.cream:"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 8px rgba(0,0,0,.07)":"none",transition:"all .18s",fontFamily:"inherit"}}>
               {lbl}
@@ -1837,11 +1842,11 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
         </div>
       </div>
 
-      {/* ── FEED TAB ───────────────────────────────────────────────── */}
+      {/* ── FEED ──────────────────────────────────────────────── */}
       {activeTab==="feed"&&(
         <div>
-          {/* Friends / Community toggle */}
-          <div style={{padding:"0 16px 14px",display:"flex",gap:8,alignItems:"center",justifyContent:"space-between"}}>
+          {/* Friends / Community + Add friends */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px 12px"}}>
             <div style={{display:"flex",background:C.pill,borderRadius:99,padding:3,gap:2}}>
               {[["friends","Friends"],["community","Community"]].map(([id,lbl])=>(
                 <button key={id} onClick={()=>setFeedView(id)} style={{border:"none",cursor:"pointer",borderRadius:99,padding:"6px 16px",fontWeight:700,fontSize:12,background:feedView===id?C.cream:"transparent",color:feedView===id?C.bark:C.muted,boxShadow:feedView===id?"0 1px 4px rgba(0,0,0,.08)":"none",transition:"all .15s",fontFamily:"inherit"}}>
@@ -1849,78 +1854,58 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
                 </button>
               ))}
             </div>
-            <button onClick={onAddFriends} style={{display:"flex",alignItems:"center",gap:6,background:`${C.sage}12`,border:`1.5px solid ${C.sage}30`,borderRadius:99,padding:"6px 13px",cursor:"pointer",fontFamily:"inherit"}}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2.5"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-              <span style={{fontSize:12,fontWeight:700,color:C.sage}}>Add</span>
+            <button onClick={onAddFriends} style={{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",padding:0}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
             </button>
           </div>
 
           {/* Posts */}
-          <div style={{padding:"0 16px",display:"flex",flexDirection:"column",gap:16}}>
-            {visiblePosts.length===0&&(
-              <div style={{textAlign:"center",padding:"48px 20px"}}>
-                <div style={{width:56,height:56,borderRadius:18,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                </div>
-                <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>
-                  {feedView==="community"?"No community posts yet":"No posts from friends yet"}
-                </div>
-                <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>
-                  {feedView==="friends"?"Add friends to see their cooking activity":"Be the first to share a community post!"}
-                </div>
-                {feedView==="friends"&&(
-                  <button onClick={onAddFriends} style={{marginTop:16,padding:"10px 24px",borderRadius:12,border:"none",background:C.flame,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
-                    Find Friends
-                  </button>
-                )}
+          {visiblePosts.length===0
+            ?<div style={{textAlign:"center",padding:"60px 20px"}}>
+              <div style={{width:52,height:52,borderRadius:16,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
               </div>
-            )}
-            {visiblePosts.map(post=><PostCard key={post.id} post={post}/>)}
-          </div>
+              <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>{feedView==="community"?"No community posts yet":"No posts yet"}</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:240,margin:"0 auto"}}>{feedView==="friends"?"Add friends to see their cooking":"Complete a recipe and share it!"}</div>
+              {feedView==="friends"&&<button onClick={onAddFriends} style={{marginTop:16,padding:"10px 24px",borderRadius:12,border:"none",background:C.flame,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Find Friends</button>}
+            </div>
+            :<div>{visiblePosts.map(post=><PostCard key={post.id} post={post}/>)}</div>
+          }
         </div>
       )}
 
-      {/* ── LEAGUE TAB ─────────────────────────────────────────────── */}
+      {/* ── LEAGUE ────────────────────────────────────────────── */}
       {activeTab==="league"&&(
         <div style={{padding:"0 16px"}}>
-          <div style={{background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden",marginBottom:16}}>
-            <div style={{background:`linear-gradient(135deg,${league.color}18,${league.color}06)`,padding:"16px 18px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:4}}>
-                <div style={{fontSize:36}}>{league.icon}</div>
+          <div style={{background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden",marginBottom:14}}>
+            <div style={{background:`linear-gradient(135deg,${league.color}20,${league.color}08)`,padding:"16px 18px 14px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{fontSize:34}}>{league.icon}</div>
                 <div>
-                  <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>{league.name}</div>
-                  <div style={{fontSize:11,color:C.muted}}>Top 5 promote next week · {weeklyXp} 🔥 this week</div>
+                  <div style={{fontWeight:900,fontSize:17,color:C.bark,fontFamily:DF}}>{league.name}</div>
+                  <div style={{fontSize:11,color:C.muted,marginTop:2}}>Top 5 promote next week · <span style={{color:league.color,fontWeight:700}}>{weeklyXp} 🔥</span></div>
                 </div>
               </div>
             </div>
-            <div style={{padding:"14px 18px 18px"}}>
+            <div style={{padding:"10px 18px 16px"}}>
               {LEADERBOARD.map((u,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}12`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"5px 10px",marginBottom:4,border:u.isMe?`1.5px solid ${league.color}30`:"none"}}>
-                  <div style={{width:24,height:24,borderRadius:"50%",background:i<3?["#F5C842","#A8A9AD","#CD7F32"][i]:C.pill,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:i<3?"#fff":C.muted,flexShrink:0}}>{u.rank}</div>
-                  <AvatarIcon username={u.name} size={30} fontSize={12}/>
-                  <span style={{flex:1,fontWeight:u.isMe?900:600,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
-                  <span style={{fontSize:11,color:C.muted}}>🔥 {u.streak}</span>
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}10`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"5px 10px",marginBottom:3,border:u.isMe?`1.5px solid ${league.color}25`:"none"}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",background:i<3?["#F5C842","#A8A9AD","#CD7F32"][i]:C.pill,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,color:i<3?"#fff":C.muted,flexShrink:0}}>{u.rank}</div>
+                  <AvatarIcon username={u.name} size={28} fontSize={11}/>
+                  <span style={{flex:1,fontWeight:u.isMe?800:500,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
+                  <span style={{fontSize:11,color:C.muted}}>🔥{u.streak}</span>
                   <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp} 🔥</span>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Level progress */}
           <div style={{background:C.cream,borderRadius:16,padding:"14px 16px",border:`1px solid ${C.border}`}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
-              <div style={{width:42,height:42,borderRadius:"50%",background:`${levelInfo?.current?.color||C.flame}18`,border:`2px solid ${levelInfo?.current?.color||C.flame}44`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <span style={{fontSize:16,fontWeight:900,color:levelInfo?.current?.color||C.flame}}>{levelInfo?.current?.level||1}</span>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                  <span style={{fontWeight:800,fontSize:14,color:C.bark}}>{levelInfo?.current?.title||"Prep Hand"}</span>
-                  {levelInfo?.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</span>}
-                </div>
-                <XPBar pct={levelInfo?.pct||0} color={levelInfo?.current?.color||C.flame} h={6}/>
-                {levelInfo?.next&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>Next: {levelInfo.next.title}</div>}
-              </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+              <span style={{fontWeight:700,fontSize:13,color:C.bark}}>{levelInfo?.current?.title||"Prep Hand"}</span>
+              {levelInfo?.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</span>}
             </div>
+            <XPBar pct={levelInfo?.pct||0} color={levelInfo?.current?.color||C.flame} h={5}/>
+            {levelInfo?.next&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>Next: {levelInfo.next.title}</div>}
           </div>
         </div>
       )}
@@ -1929,20 +1914,19 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
       {showReport&&(
         <Sheet onClose={()=>setShowReport(null)}>
           <div style={{padding:"24px 20px 44px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
               <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>Report Post</div>
               <CloseBtn onClose={()=>setShowReport(null)}/>
             </div>
-            <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.6}}>Why are you reporting this post? We'll review it within 24 hours.</div>
+            <div style={{fontSize:13,color:C.muted,marginBottom:16,lineHeight:1.6}}>Why are you reporting this? We'll review it within 24 hours.</div>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
               {REPORT_REASONS.map(r=>(
-                <button key={r} onClick={()=>setReportReason(r)}
-                  style={{padding:"13px 16px",borderRadius:14,border:`1.5px solid ${reportReason===r?C.flame:C.border}`,background:reportReason===r?`${C.flame}08`:"transparent",color:reportReason===r?C.flame:C.bark,fontWeight:reportReason===r?700:500,fontSize:14,cursor:"pointer",textAlign:"left",fontFamily:"inherit",transition:"all .15s"}}>
+                <button key={r} onClick={()=>setReportReason(r)} style={{padding:"13px 16px",borderRadius:14,border:`1.5px solid ${reportReason===r?C.flame:C.border}`,background:reportReason===r?`${C.flame}08`:"transparent",color:reportReason===r?C.flame:C.bark,fontWeight:reportReason===r?700:500,fontSize:14,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
                   {r}
                 </button>
               ))}
             </div>
-            <Btn onClick={()=>submitReport(showReport)} disabled={!reportReason} full color={C.flame}>Submit Report</Btn>
+            <Btn onClick={()=>submitReport(showReport)} disabled={!reportReason} full>Submit Report</Btn>
           </div>
         </Sheet>
       )}
@@ -4065,6 +4049,7 @@ export default function App(){
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
   const [showSettings,    setShowSettings]    = useState(false);
   const [showDrawer,      setShowDrawer]      = useState(false);
+  const [savedPosts,     setSavedPosts]       = useState(() => new Set());
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [showCommunity,   setShowCommunity]   = useState(false);
@@ -4327,8 +4312,8 @@ export default function App(){
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)} seasonalEvent={seasonalEvent}/>}
-          {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe}/>}
+          {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts}/>}
           {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
