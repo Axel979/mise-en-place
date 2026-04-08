@@ -143,6 +143,8 @@ function StarRating({value, onChange, size=28}){
 }
 
 
+const AVATAR_COLORS=['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#2EC4B6','#E71D36','#3D405B','#F4A261','#264653','#A8DADC'];
+
 function AvatarIcon({username, size=36, fontSize=14}){
   const name = username || '?';
   const initial = name[0].toUpperCase();
