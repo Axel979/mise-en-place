@@ -3366,99 +3366,79 @@ function DataSettings({onBack, signOut}){
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab}){
-  const [section,setSection]=useState(null);
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings}){
   const weekDone=cookedDays.filter(Boolean).length;
+  const pct=Math.min(100,weekDone/(goal?.target||3)*100);
 
-  if(section==='account') return <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>;
-  if(section==='privacy') return <PrivacySettings onBack={()=>setSection(null)}/>;
-  if(section==='notifications') return <NotificationSettings onBack={()=>setSection(null)}/>;
-  if(section==='cooking') return <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onEditGoal();onClose();}}/>;
-  if(section==='data') return <DataSettings onBack={()=>setSection(null)} signOut={signOut}/>;
-
-  const NavItem=({icon,label,sub,onClick,danger})=>(
-    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"13px 0",background:"none",border:"none",borderBottom:`1px solid ${C.border}`,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>
-      <div style={{width:36,height:36,borderRadius:11,background:danger?`#E05C7A12`:`${C.flame}0E`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-        {icon}
-      </div>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:700,fontSize:14,color:danger?"#E05C7A":C.bark}}>{label}</div>
-        {sub&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{sub}</div>}
-      </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+  const QuickBtn=({label,icon,onClick})=>(
+    <button onClick={onClick} style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${C.border}`,background:C.cream,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:7,fontFamily:"inherit",transition:"background .15s"}}>
+      {icon}
+      <span style={{fontSize:11,fontWeight:700,color:C.bark,textAlign:"center",lineHeight:1.2}}>{label}</span>
     </button>
-  );
-
-  const IC=(path,col)=>(
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={col||C.flame} strokeWidth="2" strokeLinecap="round">{path}</svg>
   );
 
   return(
     <div>
-      {/* Profile hero */}
-      <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px",marginBottom:22,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",border:"24px solid rgba(255,255,255,.04)"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
+      {/* Profile card */}
+      <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px",marginBottom:20,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",border:"24px solid rgba(255,255,255,.04)",pointerEvents:"none"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
           <AvatarIcon username={profile?.username||user?.email||"?"} size={54} fontSize={22}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:5}}>
-              <span style={{background:levelInfo?.current?.color||C.flame,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo?.current?.title||"Chef"}</span>
+            <div style={{marginTop:5}}>
+              <span style={{background:levelInfo?.current?.color||C.flame,borderRadius:6,padding:"2px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{levelInfo?.current?.title||"Prep Hand"}</span>
             </div>
             <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:4}}>{xp} 🔥 Heat earned</div>
           </div>
         </div>
-        {/* Mini goal bar */}
-        <div style={{marginTop:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-            <span style={{fontSize:10,color:"rgba(255,255,255,.45)",fontWeight:600,textTransform:"uppercase",letterSpacing:".08em"}}>{goal.label}</span>
-            <span style={{fontSize:10,color:"rgba(255,255,255,.6)",fontWeight:700}}>{weekDone}/{goal.target} this week</span>
-          </div>
-          <div style={{background:"rgba(255,255,255,.1)",borderRadius:99,height:4,overflow:"hidden"}}>
-            <div style={{width:`${Math.min(100,weekDone/goal.target*100)}%`,height:"100%",background:C.flame,borderRadius:99}}/>
-          </div>
+        {/* Goal bar */}
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+          <span style={{fontSize:10,color:"rgba(255,255,255,.4)",fontWeight:600,textTransform:"uppercase",letterSpacing:".08em"}}>{goal?.label||"3× a week"}</span>
+          <span style={{fontSize:10,color:"rgba(255,255,255,.6)",fontWeight:700}}>{weekDone}/{goal?.target||3} this week</span>
+        </div>
+        <div style={{background:"rgba(255,255,255,.1)",borderRadius:99,height:4,overflow:"hidden"}}>
+          <div style={{width:`${pct}%`,height:"100%",background:C.flame,borderRadius:99,transition:"width .5s"}}/>
         </div>
       </div>
 
       {/* Quick actions */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
-        {[
-          {label:"Calendar",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,action:()=>{onShowCalendar();onClose();}},
-          {label:"Weekly Recap",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.sky} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,action:()=>{onShowRecap();onClose();}},
-          {label:"Year in Review",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,action:()=>{onShowYearReview();onClose();}},
-          {label:"Challenges",icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.ember} strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>,action:()=>{setTab("challenges");onClose();}},
-        ].map(({label,icon,action})=>(
-          <button key={label} onClick={action} style={{padding:"11px 10px",borderRadius:13,border:`1px solid ${C.border}`,background:C.cream,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,fontFamily:"inherit",transition:"background .15s"}}>
-            {icon}
-            <span style={{fontSize:11,fontWeight:700,color:C.bark}}>{label}</span>
-          </button>
-        ))}
+      <div style={{display:"flex",gap:8,marginBottom:20}}>
+        <QuickBtn label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        }/>
+        <QuickBtn label="Recap" onClick={()=>{onShowRecap();onClose();}} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sky} strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        }/>
+        <QuickBtn label="Challenges" onClick={()=>{setTab("challenges");onClose();}} icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        }/>
       </div>
 
-      {/* Settings */}
-      <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>Settings</div>
-      <NavItem icon={IC(<><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>)} label="Account" sub="Email, password, username" onClick={()=>setSection('account')}/>
-      <NavItem icon={IC(<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>)} label="Privacy" sub="Who can see your activity" onClick={()=>setSection('privacy')}/>
-      <NavItem icon={IC(<><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></>)} label="Notifications" sub="Reminders and alerts" onClick={()=>setSection('notifications')}/>
-      <NavItem icon={IC(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>)} label="Cooking Preferences" sub="Diet, skill level, goal" onClick={()=>setSection('cooking')}/>
-      <NavItem icon={IC(<><polyline points="21 15 15 15 15 21"/><path d="M3 9l9-9 9 9"/></>,C.muted)} label="Your Data" sub="Export or delete" onClick={()=>setSection('data')}/>
-
-      <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",margin:"18px 0 6px"}}>About</div>
-      <NavItem icon={IC(<><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>)} label="Help & support" sub="hello@misenplace.app" onClick={()=>{}}/>
-      <NavItem icon={IC(<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></>)} label="Privacy Policy" onClick={()=>{}}/>
-
-      <div style={{padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
-        <div style={{display:"flex",justifyContent:"space-between"}}>
-          <span style={{fontSize:12,color:C.muted}}>mise.en.place</span>
-          <span style={{fontSize:12,color:C.muted}}>v10.0</span>
+      {/* Settings button */}
+      <button onClick={onShowSettings} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontFamily:"inherit",marginBottom:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:34,height:34,borderRadius:10,background:`${C.flame}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </div>
+          <div style={{textAlign:"left"}}>
+            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>Settings</div>
+            <div style={{fontSize:11,color:C.muted}}>Account, privacy, preferences</div>
+          </div>
         </div>
-      </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
 
-      <button onClick={signOut} style={{width:"100%",marginTop:16,padding:"13px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",color:"#E05C7A",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
+      {/* Sign out */}
+      <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",color:"#E05C7A",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
         Sign Out
       </button>
+
+      <div style={{textAlign:"center",marginTop:16}}>
+        <span style={{fontSize:11,color:C.muted}}>mise.en.place v10.0</span>
+      </div>
     </div>
   );
 }
@@ -3685,6 +3665,112 @@ class AppErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+/* ═══ SETTINGS SHEET ══════════════════════════════════════════════════════ */
+function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose}){
+  const [section, setSection] = useState(null);
+
+  // Section components rendered inline
+  if(section==="account") return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>
+      </div>
+    </Sheet>
+  );
+  if(section==="privacy") return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <PrivacySettings onBack={()=>setSection(null)}/>
+      </div>
+    </Sheet>
+  );
+  if(section==="notifications") return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <NotificationSettings onBack={()=>setSection(null)}/>
+      </div>
+    </Sheet>
+  );
+  if(section==="cooking") return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}}/>
+      </div>
+    </Sheet>
+  );
+  if(section==="data") return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <DataSettings onBack={()=>setSection(null)} signOut={()=>{}}/>
+      </div>
+    </Sheet>
+  );
+
+  const Row=({icon,label,sub,onClick,danger,last})=>(
+    <button onClick={onClick} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"14px 0",background:"none",border:"none",borderBottom:last?"none":`1px solid ${C.border}`,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>
+      <div style={{width:38,height:38,borderRadius:11,background:danger?"#E05C7A10":`${C.flame}0E`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        {icon}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:700,fontSize:14,color:danger?"#E05C7A":C.bark}}>{label}</div>
+        {sub&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{sub}</div>}
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  );
+
+  const ic=(path,col)=><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={col||C.flame} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{path}</svg>;
+
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+          <div style={{fontWeight:900,fontSize:22,color:C.bark,fontFamily:DF}}>Settings</div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+
+        {/* Account info card */}
+        <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:16,padding:"14px 16px",marginBottom:22,display:"flex",alignItems:"center",gap:12}}>
+          <AvatarIcon username={profile?.username||user?.email||"?"} size={42} fontSize={17}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:800,fontSize:15,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.username||user?.email?.split("@")[0]||"Chef"}</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginTop:2}}>{user?.email||""}</div>
+          </div>
+          <button onClick={()=>setSection("account")} style={{background:"rgba(255,255,255,.12)",border:"none",borderRadius:8,padding:"6px 12px",color:"rgba(255,255,255,.8)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
+        </div>
+
+        {/* Settings sections */}
+        <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Account</div>
+        <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"0 14px",marginBottom:18}}>
+          <Row icon={ic(<><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>)} label="Account" sub="Email, password, username" onClick={()=>setSection("account")}/>
+          <Row icon={ic(<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>,C.sky)} label="Privacy" sub="Who can see your activity" onClick={()=>setSection("privacy")} last/>
+        </div>
+
+        <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Preferences</div>
+        <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"0 14px",marginBottom:18}}>
+          <Row icon={ic(<><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></>,C.ember)} label="Notifications" sub="Reminders and alerts" onClick={()=>setSection("notifications")}/>
+          <Row icon={ic(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></>,C.sage)} label="Cooking Preferences" sub="Diet, skill level, goal" onClick={()=>setSection("cooking")} last/>
+        </div>
+
+        <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Data & Legal</div>
+        <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"0 14px",marginBottom:18}}>
+          <Row icon={ic(<><polyline points="21 15 15 15 15 21"/><path d="M3 9l9-9 9 9"/></>,C.muted)} label="Your Data" sub="Export or delete your data" onClick={()=>setSection("data")}/>
+          <Row icon={ic(<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></>,C.muted)} label="Privacy Policy" sub="How we use your data" onClick={()=>window.open("https://misenplace.app/privacy","_blank")} last/>
+        </div>
+
+        <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Support</div>
+        <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"0 14px",marginBottom:22}}>
+          <Row icon={ic(<><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>,C.sky)} label="Help & Support" sub="hello@misenplace.app" onClick={()=>window.open("mailto:hello@misenplace.app")} last/>
+        </div>
+
+        <div style={{textAlign:"center"}}>
+          <span style={{fontSize:11,color:C.muted}}>mise.en.place v10.0</span>
+        </div>
+      </div>
+    </Sheet>
+  );
 }
 
 export default function App(){
@@ -3992,7 +4078,7 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}}/>
           </div>
         </div>
       )}
