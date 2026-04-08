@@ -1226,30 +1226,52 @@ function ChallengesTab({challengeProgress,onInvite,onStartCooking,earnedBadges,c
     const prog=Math.min(progress,ch.target);
     const pct=Math.round(prog/ch.target*100);
     const done=prog>=ch.target;
+    const steps=Math.min(ch.target,10); // cap at 10 segments
+    const stepSize=ch.target/steps;
     return(
-      <button onClick={()=>setSelected(ch.id)} className="tap" style={{background:C.cream,border:`1.5px solid ${done?ch.color+"66":C.border}`,borderRadius:20,padding:"16px",cursor:"pointer",textAlign:"left",fontFamily:"inherit",position:"relative",overflow:"hidden",width:"100%",display:"block",boxShadow:done?`0 0 0 2px ${ch.color}33`:"none"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:done?ch.color:pct>0?ch.color+"77":C.border}}/>
-        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
-          <div style={{flex:1,minWidth:0,paddingRight:12}}>
-            <div style={{fontWeight:900,fontSize:16,color:C.bark,fontFamily:DF,marginBottom:3,lineHeight:1.2}}>{ch.name}</div>
-            <div style={{fontSize:12,color:C.muted,lineHeight:1.4}}>{ch.tagline}</div>
+      <button onClick={()=>setSelected(ch.id)} className="tap" style={{
+        background:done?`${ch.color}0E`:C.cream,
+        border:`1.5px solid ${done?ch.color+"55":pct>0?ch.color+"33":C.border}`,
+        borderRadius:20,padding:"0",cursor:"pointer",textAlign:"left",
+        fontFamily:"inherit",position:"relative",overflow:"hidden",
+        width:"100%",display:"block",
+      }}>
+        {/* Coloured left strip */}
+        <div style={{position:"absolute",left:0,top:0,bottom:0,width:5,background:ch.color,borderRadius:"20px 0 0 20px"}}/>
+        <div style={{padding:"15px 15px 14px 18px"}}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{flex:1,minWidth:0,paddingRight:10}}>
+              <div style={{fontWeight:900,fontSize:16,color:C.bark,fontFamily:DF,marginBottom:3,lineHeight:1.2}}>{ch.name}</div>
+              <div style={{fontSize:12,color:C.muted,lineHeight:1.4}}>{ch.tagline}</div>
+            </div>
+            <div style={{flexShrink:0,textAlign:"right"}}>
+              <div style={{fontSize:13,fontWeight:800,color:ch.color}}>{ch.xp} 🔥</div>
+              <div style={{fontSize:10,color:C.muted,marginTop:2}}>{ch.difficulty}</div>
+            </div>
           </div>
-          <div style={{flexShrink:0,textAlign:"right"}}>
-            <div style={{fontSize:13,fontWeight:800,color:done?ch.color:C.flame}}>{ch.xp} 🔥</div>
-            <div style={{fontSize:10,color:C.muted,marginTop:2}}>{ch.difficulty}</div>
+          {/* Segmented progress bar */}
+          <div style={{display:"flex",gap:3,marginBottom:8}}>
+            {Array.from({length:steps}).map((_,i)=>{
+              const filled=(i+1)*stepSize<=prog;
+              const partial=!filled&&i*stepSize<prog;
+              return(
+                <div key={i} style={{
+                  flex:1,height:6,borderRadius:99,
+                  background:filled?ch.color:partial?`${ch.color}55`:C.border,
+                  transition:"background .3s"
+                }}/>
+              );
+            })}
           </div>
-        </div>
-        <div style={{background:C.border,borderRadius:99,height:5,overflow:"hidden",marginBottom:6}}>
-          <div style={{width:`${pct}%`,height:"100%",background:ch.color,borderRadius:99,transition:"width .5s"}}/>
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontSize:11,color:done?ch.color:C.muted,fontWeight:done?700:400}}>
-            {done?"Complete":pct>0?`${prog} of ${ch.target}`:`0 of ${ch.target}`}
-          </span>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            {ch.isMonthly&&<span style={{fontSize:10,background:`${ch.color}18`,color:ch.color,borderRadius:5,padding:"2px 7px",fontWeight:700}}>This month</span>}
-            {!ch.isMonthly&&<span style={{fontSize:11,color:C.muted}}>{ch.duration}</span>}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:11,color:done?ch.color:pct>0?ch.color:C.muted,fontWeight:done||pct>0?600:400}}>
+              {done?"Complete":pct>0?`${prog} of ${ch.target}`:`0 of ${ch.target}`}
+            </span>
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              {ch.isMonthly&&<span style={{fontSize:10,background:`${ch.color}18`,color:ch.color,borderRadius:5,padding:"2px 7px",fontWeight:700}}>This month</span>}
+              {!ch.isMonthly&&<span style={{fontSize:11,color:C.muted}}>{ch.duration}</span>}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
           </div>
         </div>
       </button>
@@ -3713,33 +3735,53 @@ function NotificationSettings({onBack}){
   );
 }
 
-function CookingPrefsSettings({onBack, goal, onEditGoal}){
+function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
   const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
   const skills = ["Beginner","Intermediate","Advanced","Chef"];
-  const [selectedDiet, setSelectedDiet] = useState("None");
-  const [selectedSkill, setSelectedSkill] = useState("Beginner");
+  const [selectedDiet, setSelectedDiet] = useState(()=>{
+    try{ return localStorage.getItem("mep_diet")||"None"; }catch{ return "None"; }
+  });
+  const [selectedSkill, setSelectedSkill] = useState(()=>{
+    try{ return localStorage.getItem("mep_skill")||"Beginner"; }catch{ return "Beginner"; }
+  });
+
+  const handleDiet=(d)=>{
+    setSelectedDiet(d);
+    try{ localStorage.setItem("mep_diet",d); }catch{}
+    if(onDietChange) onDietChange(d);
+  };
+
   return(
     <div>
       <DrawerSectionHeader title="Cooking Preferences" onBack={onBack}/>
       <div style={{marginBottom:20}}>
-        <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          {diets.map(d=><button key={d} onClick={()=>setSelectedDiet(d)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.sage:C.border}`,background:selectedDiet===d?`${C.sage}14`:"transparent",color:selectedDiet===d?C.sage:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>{d}</button>)}
+        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {diets.map(d=>(
+            <button key={d} onClick={()=>handleDiet(d)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.flame:C.border}`,background:selectedDiet===d?`${C.flame}12`:"transparent",color:selectedDiet===d?C.flame:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              {d}
+            </button>
+          ))}
         </div>
+        {selectedDiet!=="None"&&<div style={{fontSize:11,color:C.muted,marginTop:8}}>Recipe suggestions will respect your preference.</div>}
       </div>
       <div style={{marginBottom:20}}>
-        <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          {skills.map(s=><button key={s} onClick={()=>setSelectedSkill(s)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.flame:C.border}`,background:selectedSkill===s?`${C.flame}14`:"transparent",color:selectedSkill===s?C.flame:C.muted,fontWeight:600,fontSize:12,cursor:"pointer"}}>{s}</button>)}
+        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {skills.map(s=>(
+            <button key={s} onClick={()=>{setSelectedSkill(s);try{localStorage.setItem("mep_skill",s);}catch{}}} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.sky:C.border}`,background:selectedSkill===s?`${C.sky}12`:"transparent",color:selectedSkill===s?C.sky:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              {s}
+            </button>
+          ))}
         </div>
       </div>
-      <div style={{marginBottom:20}}>
-        <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>Weekly cooking goal</div>
-        <button onClick={onEditGoal} style={{width:"100%",padding:"12px 14px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontWeight:600,fontSize:14,color:C.bark,fontFamily:"inherit"}}>
-          Current: {goal.label} ({goal.target}x / week) →
-        </button>
-      </div>
-      <Btn onClick={onBack} full>Save Preferences</Btn>
+      {goal&&(
+        <div style={{borderTop:`1px solid ${C.border}`,paddingTop:16}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:4}}>Weekly cooking goal</div>
+          <div style={{fontSize:12,color:C.muted,marginBottom:10}}>{goal.label}</div>
+          <button onClick={onEditGoal} style={{padding:"8px 16px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Change goal</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -4095,7 +4137,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="cooking") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}}/>
+        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}} onDietChange={(d)=>{ try{localStorage.setItem("mep_diet",d);}catch{} }}/>
       </div>
     </Sheet>
   );
@@ -4208,6 +4250,7 @@ export default function App(){
   const [showDrawer,      setShowDrawer]      = useState(false);
   const [savedPosts,     setSavedPosts]       = useState(() => new Set());
   const [recipeFilter,   setRecipeFilter]     = useState(null);
+  const [userDiet,       setUserDiet]         = useState(()=>{ try{ return localStorage.getItem("mep_diet")||"None"; }catch{ return "None"; } });
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [showCommunity,   setShowCommunity]   = useState(false);
@@ -4468,8 +4511,8 @@ export default function App(){
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
-          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||"All"} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
-          {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}!`)} seasonalEvent={seasonalEvent} onStartCooking={(filter)=>{setRecipeFilter(filter);setTab("recipes");}} earnedBadges={earnedBadges} cookedDays={cookedDays} cookLog={cookLog}/>}
+          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
+          {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}!`)} seasonalEvent={seasonalEvent} onStartCooking={(filter)=>{setRecipeFilter({...filter,diet:userDiet!=="None"?userDiet:filter.diet});setTab("recipes");}} earnedBadges={earnedBadges} cookedDays={cookedDays} cookLog={cookLog}/>}
           {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts}/>}
           {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
