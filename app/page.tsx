@@ -1755,119 +1755,153 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
   const activeCh=CHALLENGES.find(ch=>(challengeProgress[ch.id]||0)>0&&(challengeProgress[ch.id]||0)<ch.target);
   const today=new Date().getDay();
   const todayIdx=today===0?6:today-1;
+  const undone=recipes.filter(r=>!r.done&&!r.isPersonal);
+  const [showAll,setShowAll]=useState(false);
+  const shown=showAll?undone:undone.slice(0,8);
 
   return(
-    <div style={{paddingBottom:24}}>
+    <div style={{paddingBottom:32}}>
 
-      {/* ── Stats box ─────────────────────────────────────────────── */}
-      <div style={{margin:"0 16px 14px",position:"relative",background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"14px 16px",overflow:"hidden",color:"#fff"}}>
+      {/* ── Stats hero ───────────────────────────────────────────── */}
+      <div style={{margin:"0 16px 16px",position:"relative",background:`linear-gradient(145deg,${C.bark} 0%,#3D2010 100%)`,borderRadius:24,padding:"18px 18px 14px",overflow:"hidden",color:"#fff",boxShadow:"0 4px 24px rgba(0,0,0,.18)"}}>
+        {/* Decorative ring */}
+        <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",border:"30px solid rgba(255,255,255,.04)",pointerEvents:"none"}}/>
 
-        {/* Goal row */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-            <span style={{fontSize:28,fontWeight:900,lineHeight:1,fontFamily:DF}}>{weekDone}/{goal.target}</span>
-            <span style={{fontSize:12,opacity:.65,fontWeight:600}}>this week</span>
+        {/* Top row: goal + edit */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:10,fontWeight:700,opacity:.45,textTransform:"uppercase",letterSpacing:".12em",marginBottom:3}}>{goal.label}</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+              <span style={{fontSize:38,fontWeight:900,lineHeight:1,fontFamily:DF}}>{weekDone}</span>
+              <span style={{fontSize:18,fontWeight:700,opacity:.4}}>/{goal.target}</span>
+            </div>
           </div>
-          <button onClick={onEditGoal} className="tap" style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,color:"rgba(255,255,255,.8)",padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-            Edit Goal
+          <button onClick={onEditGoal} className="tap" style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,color:"rgba(255,255,255,.7)",padding:"5px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginTop:4}}>
+            Edit goal
           </button>
         </div>
 
         {/* Progress bar */}
-        <div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:4,overflow:"hidden",marginBottom:10}}>
-          <div style={{width:`${pct}%`,height:"100%",background:goalDone?C.gold:goal.color,borderRadius:99,transition:"width .5s"}}/>
+        <div style={{background:"rgba(255,255,255,.1)",borderRadius:99,height:4,overflow:"hidden",marginBottom:12}}>
+          <div style={{width:`${pct}%`,height:"100%",background:goalDone?"#F5C842":C.flame,borderRadius:99,transition:"width .6s cubic-bezier(.4,0,.2,1)"}}>
+            <div style={{width:"100%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.25))",borderRadius:99}}/>
+          </div>
         </div>
 
         {/* Streak dots */}
-        <div style={{display:"flex",gap:4,marginBottom:12,alignItems:"center"}}>
+        <div style={{display:"flex",gap:0,marginBottom:14}}>
           {WEEK_LABELS.map((d,i)=>{
             const done=cookedDays[i];
             const isToday=i===todayIdx;
             return(
-              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <div style={{
-                  width:isToday?12:8,
-                  height:isToday?12:8,
+                  width:isToday?14:8,
+                  height:isToday?14:8,
                   borderRadius:"50%",
-                  background:done?goal.color:"rgba(255,255,255,.2)",
-                  border:isToday?`2px solid rgba(255,255,255,.7)`:"none",
-                  transition:"all .2s",
+                  background:done?(isToday?"#fff":C.flame):"rgba(255,255,255,.15)",
+                  border:isToday&&!done?"2px solid rgba(255,255,255,.5)":isToday&&done?"2px solid rgba(255,255,255,.4)":"none",
+                  boxShadow:done&&isToday?"0 0 8px rgba(255,255,255,.4)":done?"0 0 6px rgba(224,92,122,.5)":"none",
+                  transition:"all .25s",
                   flexShrink:0,
                 }}/>
-                <div style={{fontSize:8,opacity:.45,letterSpacing:".02em"}}>{d}</div>
+                <div style={{fontSize:8,opacity:isToday?.7:.3,fontWeight:isToday?700:400,letterSpacing:".02em"}}>{d}</div>
               </div>
             );
           })}
         </div>
 
         {/* Stats row */}
-        <div style={{display:"flex",borderTop:"1px solid rgba(255,255,255,.1)",paddingTop:10,gap:4}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1px 1fr 1px 1fr",borderTop:"1px solid rgba(255,255,255,.08)",paddingTop:12,gap:0}}>
           {[
             {label:"Heat",value:`${xp} 🔥`},
-            {label:"Level",value:levelInfo.current.title,big:true},
-            {label:"Cooked",value:cookedDays.filter(Boolean).length},
-          ].map(({label,value,big})=>(
-            <div key={label} style={{flex:1,textAlign:"center"}}>
-              <div style={{fontSize:9,opacity:.5,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>{label}</div>
-              <div style={{fontSize:big?13:14,fontWeight:big?900:700,lineHeight:1,opacity:.95}}>{value}</div>
+            null,
+            {label:"Level",value:levelInfo.current.title,accent:true},
+            null,
+            {label:"Cooked",value:`${cookedDays.filter(Boolean).length}`},
+          ].map((item,i)=>item===null
+            ?<div key={i} style={{background:"rgba(255,255,255,.08)",width:1}}/>
+            :<div key={i} style={{textAlign:"center",padding:"0 4px"}}>
+              <div style={{fontSize:9,opacity:.4,textTransform:"uppercase",letterSpacing:".09em",marginBottom:3,fontWeight:600}}>{item.label}</div>
+              <div style={{fontSize:item.accent?12:13,fontWeight:item.accent?900:700,lineHeight:1,opacity:.95,letterSpacing:item.accent?"-.01em":"0"}}>{item.value}</div>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* ── Level bar ─────────────────────────────────────────────── */}
+      {/* ── Level progress ───────────────────────────────────────── */}
       {levelInfo.next&&(
-        <div style={{margin:"0 16px 14px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-            <span style={{fontSize:11,color:C.muted,fontWeight:600}}>{levelInfo.current.title}</span>
-            <span style={{fontSize:11,color:levelInfo.current.color,fontWeight:700}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForNext} Heat</span>
+        <div style={{margin:"0 16px 14px",background:C.cream,borderRadius:16,padding:"12px 14px",border:`1px solid ${C.border}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <span style={{fontSize:12,color:C.bark,fontWeight:700}}>{levelInfo.current.title}</span>
+            <span style={{fontSize:11,color:levelInfo.current.color,fontWeight:600}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForNext} 🔥 to {levelInfo.next.title}</span>
           </div>
-          <XPBar pct={levelInfo.pct} color={levelInfo.current.color}/>
+          <div style={{background:C.border,borderRadius:99,height:6,overflow:"hidden"}}>
+            <div style={{width:`${levelInfo.pct}%`,height:"100%",background:`linear-gradient(90deg,${levelInfo.current.color},${levelInfo.current.color}CC)`,borderRadius:99,transition:"width .5s"}}/>
+          </div>
         </div>
       )}
 
-      {/* ── Active challenge ──────────────────────────────────────── */}
+      {/* ── Active challenge ─────────────────────────────────────── */}
       {activeCh&&(
-        <div style={{margin:"0 16px 14px",background:`${activeCh.color}0F`,border:`2px solid ${activeCh.color}33`,borderRadius:16,padding:"12px 14px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:800,fontSize:13,color:C.bark}}>{activeCh.name}</div>
-              <div style={{fontSize:11,color:activeCh.color,fontWeight:600,marginTop:2,marginBottom:6}}>{challengeProgress[activeCh.id]||0}/{activeCh.target} complete</div>
-              <XPBar pct={Math.round((challengeProgress[activeCh.id]||0)/activeCh.target*100)} color={activeCh.color} h={4}/>
+        <div style={{margin:"0 16px 14px",background:`${activeCh.color}0C`,border:`1.5px solid ${activeCh.color}30`,borderRadius:16,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:40,height:40,borderRadius:12,background:`${activeCh.color}20`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={activeCh.color} strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:2}}>{activeCh.name}</div>
+            <div style={{background:C.border,borderRadius:99,height:4,overflow:"hidden",marginBottom:3}}>
+              <div style={{width:`${Math.round((challengeProgress[activeCh.id]||0)/activeCh.target*100)}%`,height:"100%",background:activeCh.color,borderRadius:99,transition:"width .5s"}}/>
             </div>
+            <div style={{fontSize:10,color:activeCh.color,fontWeight:600}}>{challengeProgress[activeCh.id]||0}/{activeCh.target} complete</div>
           </div>
         </div>
       )}
 
-      {/* ── Cook Today ────────────────────────────────────────────── */}
+      {/* ── Recipe cards ─────────────────────────────────────────── */}
       <div style={{padding:"0 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <h2 style={{fontSize:18,fontWeight:900,color:C.bark,margin:0,fontFamily:DF}}>Cook Today</h2>
-          <span style={{fontSize:12,color:C.flame,fontWeight:700}}>{recipes.filter(r=>!r.done).length} remaining</span>
+          <span style={{fontSize:12,color:C.flame,fontWeight:700,opacity:.8}}>{undone.length} recipes</span>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {recipes.slice(0,6).map(r=>(
-            <div key={r.id} onClick={()=>onOpen(r)} className="ch" style={{background:r.done?"#F5F0EB":C.cream,borderRadius:16,padding:"10px 12px",display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.border}`,cursor:"pointer",opacity:r.done?.6:1,position:"relative"}}>
-              {r.photo&&!r.done
-                ?<img src={r.photo} alt={r.name} style={{width:48,height:48,borderRadius:12,objectFit:"cover",flexShrink:0}}/>
-                :<div style={{width:48,height:48,borderRadius:12,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>{r.done?"✓":""}</div>
-              }
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:800,fontSize:14,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
-                <div style={{display:"flex",gap:6,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
-                  <span style={{fontSize:11,color:C.muted}}>{r.time}</span>
-                  <span style={{fontSize:11,color:C.muted,opacity:.4}}>·</span>
-                  <span style={{fontSize:11,color:C.muted}}>{r.difficulty}</span>
-                  {r.xp>0&&<>
-                    <span style={{fontSize:11,color:C.muted,opacity:.4}}>·</span>
-                    <span style={{fontSize:11,fontWeight:600,color:C.muted}}>{r.xp} 🔥</span>
-                  </>}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {shown.map(r=>(
+            <div key={r.id} onClick={()=>onOpen(r)} className="tap ch" style={{background:C.cream,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",display:"flex",gap:0,boxShadow:"0 1px 4px rgba(0,0,0,.04)",transition:"box-shadow .15s"}}>
+              {/* Photo */}
+              <div style={{width:88,flexShrink:0,position:"relative"}}>
+                {r.photo
+                  ?<img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block",minHeight:80}}/>
+                  :<div style={{width:"100%",height:"100%",minHeight:80,background:`linear-gradient(135deg,${C.ember}22,${C.flame}18)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+                  </div>
+                }
+              </div>
+              {/* Info */}
+              <div style={{flex:1,minWidth:0,padding:"12px 14px 12px 12px"}}>
+                <div style={{fontWeight:800,fontSize:14,color:C.bark,marginBottom:4,lineHeight:1.3,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{r.name}</div>
+                <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                  <span style={{fontSize:11,color:C.muted,fontWeight:500}}>{r.time}</span>
+                  <span style={{fontSize:10,color:C.muted,opacity:.3}}>•</span>
+                  <span style={{
+                    fontSize:10,fontWeight:700,
+                    color:r.difficulty==="Easy"?C.sage:r.difficulty==="Hard"?C.flame:C.sky,
+                    background:r.difficulty==="Easy"?`${C.sage}15`:r.difficulty==="Hard"?`${C.flame}15`:`${C.sky}15`,
+                    padding:"2px 7px",borderRadius:6
+                  }}>{r.difficulty}</span>
+                  {r.xp>0&&<span style={{fontSize:11,fontWeight:600,color:C.muted,marginLeft:"auto"}}>{r.xp} 🔥</span>}
                 </div>
-                {r.macros&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>{r.macros.calories} kcal · {r.macros.protein}g protein</div>}
+                {r.category&&<div style={{marginTop:5}}><span style={{fontSize:10,color:C.muted,background:C.pill,padding:"2px 8px",borderRadius:6,fontWeight:500}}>{r.category}</span></div>}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Show more / less */}
+        {undone.length>8&&(
+          <button onClick={()=>setShowAll(!showAll)} style={{width:"100%",marginTop:12,padding:"12px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+            {showAll?`Show less`:`Show all ${undone.length} recipes`}
+          </button>
+        )}
       </div>
     </div>
   );
