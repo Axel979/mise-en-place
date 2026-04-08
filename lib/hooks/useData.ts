@@ -26,7 +26,12 @@ export function useProfile() {
   const updateProfile = useCallback(async (updates: any) => {
     if (!userId) return;
     setProfile((p: any) => p ? { ...p, ...updates } : p);
-    await supabase.from('profiles').update(updates).eq('id', userId);
+    try {
+      const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+      if (error) console.error('updateProfile failed', error);
+    } catch (e) {
+      console.error('updateProfile threw', e);
+    }
   }, [userId]);
 
   return { profile, updateProfile, loading, userId };

@@ -1079,7 +1079,6 @@ function ChallengeDetail({ch,progress,onBack,onInvite}){
   const done=prog>=ch.target;
   const [showInvite,setShowInvite]=useState(false);
   const nextM=ch.milestones.find(m=>m>prog);
-  const friendData=[{name:"Sofia R.",avatar:"👩‍🍳",prog:Math.min(ch.target,prog+2)},{name:"Jake M.",avatar:"🧑‍🍳",prog:Math.min(ch.target,Math.floor(prog*0.6))}];
   return(
     <div style={{background:C.paper}}>
       <div style={{background:`linear-gradient(160deg,${ch.color},${ch.dark})`,padding:"20px 20px 28px",position:"relative",overflow:"hidden"}}>
@@ -1154,15 +1153,6 @@ function ChallengeDetail({ch,progress,onBack,onInvite}){
         <div style={{background:C.cream,borderRadius:20,padding:18,marginBottom:20,border:`1px solid ${C.border}`}}>
           <div style={{fontWeight:900,fontSize:15,color:C.bark,marginBottom:4,fontFamily:DF}}>⚔️ Do it with a friend</div>
           <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Invite someone to do this challenge alongside you. You'll see each other's progress here.</div>
-          {friendData.map((f,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:`${ch.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{f.avatar}</div>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:13,fontWeight:700,color:C.bark}}>{f.name}</span><span style={{fontSize:12,color:ch.color,fontWeight:700}}>{f.prog}/{ch.target}</span></div>
-                <XPBar pct={Math.round(f.prog/ch.target*100)} color={ch.color} h={5}/>
-              </div>
-            </div>
-          ))}
           <Btn onClick={()=>setShowInvite(true)} outline color={ch.color} full sm>+ Invite a friend</Btn>
         </div>
 
@@ -1681,7 +1671,6 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 
   const submitReport=(pid)=>{
     if(!reportReason.trim()) return;
-    console.log("Report:",{postId:pid,reason:reportReason});
     setShowReport(null);
     setReportReason("");
     hidePost(pid);
@@ -2093,7 +2082,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
   );
 }
 
-function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
+function RecipesTab({allRecipes,onOpen,onShowCreate}){
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
   const SORTS=[["default","A–Z"],["easy","Easiest"],["hard","Hardest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most Heat 🔥"]];
@@ -2528,185 +2517,6 @@ function CreateRecipeSheet({onSave,onClose}){
   );
 }
 
-function URLImportSheet({onSave,onClose}){
-  const [text,setText]=useState("");
-  const [name,setName]=useState("");
-  const [result,setResult]=useState(null);
-  const [error,setError]=useState("");
-
-  const parseRecipe=()=>{
-    if(!text.trim()||text.trim().length<30){
-      setError("Paste at least the ingredients and steps.");
-      return;
-    }
-    if(!name.trim()){
-      setError("Please enter a recipe name.");
-      return;
-    }
-    setError("");
-
-    const lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>2);
-
-    // Detect ingredients - lines that look like measurements
-    const ingPattern=/^(\d+|\d+\/\d+|\d+\.\d+|a |an |some |handful|pinch|splash|bunch|to taste|salt|pepper)/i;
-    const stepPattern=/^(step|\d+\.|\d+\)|method|instructions|directions)/i;
-
-    let ingredients=[];
-    let steps=[];
-    let inIngredients=false;
-    let inSteps=false;
-    let stepNum=0;
-
-    for(const line of lines){
-      // Detect section headers
-      if(/^ingredient/i.test(line)){inIngredients=true;inSteps=false;continue;}
-      if(/^(method|instruction|direction|step|how to|preparation)/i.test(line)){inIngredients=false;inSteps=true;continue;}
-
-      if(inIngredients||ingPattern.test(line)){
-        if(!inSteps) ingredients.push(line);
-      } else if(inSteps||stepPattern.test(line)){
-        const body=line.replace(/^(step\s*\d+[:.]?|\d+[.)]\s*)/i,"").trim();
-        if(body.length>10){
-          stepNum++;
-          steps.push({title:`Step ${stepNum}`,body,timer:0});
-        }
-      }
-    }
-
-    // Fallback: if detection failed, split smartly
-    if(ingredients.length===0&&steps.length===0){
-      // Just split everything into steps
-      const chunks=lines.filter(l=>l.length>15);
-      chunks.forEach((body,i)=>steps.push({title:`Step ${i+1}`,body,timer:0}));
-    } else if(ingredients.length===0){
-      // First quarter of lines are probably ingredients
-      const quarter=Math.ceil(lines.length/4);
-      ingredients=lines.slice(0,quarter);
-      if(steps.length===0){
-        lines.slice(quarter).forEach((body,i)=>{
-          if(body.length>15) steps.push({title:`Step ${i+1}`,body,timer:0});
-        });
-      }
-    }
-
-    if(steps.length===0&&ingredients.length===0){
-      setError("Couldn't find a recipe in that text. Try copying just the ingredients and steps.");
-      return;
-    }
-
-    setResult({
-      name:name.trim(),
-      ingredients:ingredients.slice(0,30),
-      steps:steps.slice(0,15),
-    });
-  };
-
-  const handleSave=()=>{
-    if(!result)return;
-    onSave({
-      id:Date.now(),
-      name:result.name,
-      emoji:"",
-      photo:null,
-      xp:60,
-      difficulty:"Medium",
-      time:"30 min",
-      category:"Comfort",
-      diets:["No restrictions"],
-      macros:null,
-      done:false,
-      ingredients:result.ingredients,
-      steps:result.steps,
-      tip:null,
-      isImported:true,
-      isPersonal:true,
-      sourceUrl:null,
-      sourceName:null,
-    });
-    onClose();
-  };
-
-  return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Import Recipe</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Copy from any recipe website</div>
-          </div>
-          <CloseBtn onClose={onClose}/>
-        </div>
-
-        {!result&&(
-          <>
-            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
-              <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.7}}>
-                <div>1. Find a recipe on any website</div>
-                <div>2. Select the ingredients and steps text</div>
-                <div>3. Copy and paste it below</div>
-              </div>
-            </div>
-
-            <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Recipe name</div>
-            <input
-              value={name}
-              onChange={e=>setName(e.target.value)}
-              placeholder="e.g. Spaghetti Bolognese"
-              style={{width:"100%",padding:"11px 14px",borderRadius:14,border:`2px solid ${name?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:14,fontFamily:"inherit"}}
-            />
-
-            <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients + steps</div>
-            <textarea
-              value={text}
-              onChange={e=>setText(e.target.value)}
-              placeholder="Paste ingredients and steps here..."
-              style={{width:"100%",minHeight:200,padding:"12px 14px",borderRadius:14,border:`2px solid ${text?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box",marginBottom:8}}
-            />
-            <div style={{fontSize:11,color:C.muted,marginBottom:14}}>
-              {text.length>0?`${text.length} characters pasted`:"Tip: you can paste just the ingredients and steps — no need for the whole page"}
-            </div>
-
-            {error&&<div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:12,padding:"11px 14px",fontSize:13,color:C.flame,marginBottom:12,lineHeight:1.5}}>{error}</div>}
-
-            <Btn onClick={parseRecipe} disabled={!text.trim()||!name.trim()} full>
-              Extract Recipe
-            </Btn>
-          </>
-        )}
-
-        {result&&(
-          <div>
-            <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
-              <div style={{fontWeight:900,fontSize:18,fontFamily:DF,marginBottom:4}}>{result.name}</div>
-              <div style={{fontSize:11,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
-            </div>
-
-            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:12,border:`1px solid ${C.border}`}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients</div>
-              {result.ingredients.slice(0,5).map((ing,i)=>(
-                <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(4,result.ingredients.length-1)?`1px solid ${C.border}`:"none"}}>{ing}</div>
-              ))}
-              {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.ingredients.length-5} more</div>}
-            </div>
-
-            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:14,border:`1px solid ${C.border}`}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Steps</div>
-              {result.steps.slice(0,3).map((s,i)=>(
-                <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(2,result.steps.length-1)?`1px solid ${C.border}`:"none"}}>{s.body.slice(0,80)}{s.body.length>80?"…":""}</div>
-              ))}
-              {result.steps.length>3&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.steps.length-3} more steps</div>}
-            </div>
-
-            <div style={{display:"flex",gap:10}}>
-              <Btn onClick={()=>{setResult(null);setError("");}} outline color={C.muted} style={{flex:1}}>Edit</Btn>
-              <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Save to My Library</Btn>
-            </div>
-          </div>
-        )}
-      </div>
-    </Sheet>
-  );
-}
 
 
 /* ═══ NOTIFICATIONS TAB ════════════════════════════════════════════════════ */
@@ -3199,14 +3009,6 @@ function StreakCalendar({cookedDays, onClose}){
         dates.add(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`);
       }
     });
-    // Add some mock past dates for demo
-    for(let i=1;i<45;i++){
-      if(Math.random()>0.4){
-        const d = new Date();
-        d.setDate(d.getDate()-i);
-        dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
-      }
-    }
     return dates;
   };
   const cookedSet = getCookedDates();
@@ -4016,11 +3818,10 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
+  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, loadFriends } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
-    console.log("Auth user:", user?.email || "NOT LOGGED IN");
   },[user]);
   const [onboarded,  setOnboarded]  = useState(()=>{ try{ return localStorage.getItem("mep_onboarded")==="true"; }catch{ return false; } });
   const [tab,        setTab]        = useState("home");
@@ -4039,7 +3840,6 @@ export default function App(){
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
   const [cookLog,      setCookLog]      = useState([]); // Goodreads-style library
   const [showCreate,   setShowCreate]   = useState(false);
-  const [showImport,   setShowImport]   = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
   const [showAddFriends,setShowAddFriends]=useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -4310,7 +4110,7 @@ export default function App(){
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
-          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
+          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}/>}
           {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)} seasonalEvent={seasonalEvent}/>}
           {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts}/>}
@@ -4352,12 +4152,6 @@ export default function App(){
           setToast({emoji:"",title:"Saved locally only",subtitle:"Couldn't sync to your account"});
         }
       }} onClose={()=>setShowCreate(false)}/>}
-      {showImport&&<URLImportSheet onSave={async r=>{
-        setAllRecipes(rs=>[r,...rs]);
-        setShowImport(false);
-        const saved=await saveUserRecipe(r);
-        if(saved) setAllRecipes(rs=>rs.map(x=>x.id===r.id?{...x,_supabaseId:saved.id}:x));
-      }} onClose={()=>setShowImport(false)}/>}
       {showQuickLog&&<QuickLogSheet onLog={handleQuickLog} onClose={()=>setShowQuickLog(false)} goal={goal} cookedDays={cookedDays}/>}
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)} searchUsers={searchUsers} sendFriendRequest={sendFriendRequest} loadFriends={loadFriends}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} onClose={()=>setShowCalendar(false)}/>}
