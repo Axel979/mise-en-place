@@ -1997,9 +1997,9 @@ function parseRecipeText(text){
   // Units/quantities that start ingredients  
   const QTY=/^(\d[\d\/\.\s]*|½|⅓|¼|¾|⅛|a |an |some |handful|pinch|splash|bunch|bunch|sprig|head|clove|knob|dollop|dash|to taste|salt|pepper|fresh|dried|large|medium|small|big)/i;
 
-  const lines = text.split(/
-?
-/).map(l=>l.trim()).filter(l=>l.length>2);
+  const lines = text.split("\n").map(l=>l.replace(/\r/g,"").trim()).filter(l=>l.length>2);
+
+
 
   let name='';
   let ingredients=[];
