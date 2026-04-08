@@ -3740,9 +3740,6 @@ export default function App(){
 
   const weekDone=cookedDays.filter(Boolean).length;
 
-  // Wait for Supabase session to resolve before showing onboarding
-  if(loading) return(<><style>{CSS}</style><div style={{minHeight:"100vh",background:"#FAF6F1",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:40,height:40,borderRadius:"50%",border:"3px solid #E05C7A",borderTopColor:"transparent",animation:"spin 0.8s linear infinite"}}/></div></>);
-
   if(!onboarded)return(
     <>
       <style>{CSS}</style>
