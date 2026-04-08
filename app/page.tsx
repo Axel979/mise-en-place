@@ -1177,7 +1177,7 @@ function ChallengeDetail({ch,progress,onBack,onInvite}){
   );
 }
 
-function ChallengesTab({challengeProgress,onInvite}){
+function ChallengesTab({challengeProgress,onInvite,seasonalEvent}){
   const [selected,setSelected]=useState(null);
   if(selected){const ch=CHALLENGES.find(c=>c.id===selected);return<ChallengeDetail ch={ch} progress={challengeProgress[selected]||0} onBack={()=>setSelected(null)} onInvite={onInvite}/>;}
 
@@ -1231,6 +1231,24 @@ function ChallengesTab({challengeProgress,onInvite}){
           ))}
         </div>
       </div>
+      {/* Seasonal Event */}
+      {seasonalEvent&&(
+        <div style={{margin:"0 16px 14px",background:`${seasonalEvent.color}0F`,border:`2px solid ${seasonalEvent.color}33`,borderRadius:18,padding:"14px 16px"}}>
+          <div style={{fontSize:10,fontWeight:700,color:seasonalEvent.color,textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>Seasonal Event</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div>
+              <div style={{fontWeight:900,fontSize:16,color:C.bark,fontFamily:DF}}>{seasonalEvent.name}</div>
+              <div style={{fontSize:12,color:C.muted,marginTop:2}}>{seasonalEvent.desc}</div>
+            </div>
+            <div style={{fontSize:9,color:C.muted,fontWeight:600,background:C.pill,padding:"3px 8px",borderRadius:6,whiteSpace:"nowrap",flexShrink:0,marginLeft:8}}>Ends {seasonalEvent.ends}</div>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+            <span style={{fontSize:12,fontWeight:600,color:C.bark}}>{seasonalEvent.progress}/{seasonalEvent.goal} completed</span>
+            <span style={{fontSize:12,color:seasonalEvent.color,fontWeight:700}}>🏅 {seasonalEvent.badge.label}</span>
+          </div>
+          <XPBar pct={Math.round(seasonalEvent.progress/seasonalEvent.goal*100)} color={seasonalEvent.color} h={6}/>
+        </div>
+      )}
       <div style={{padding:"0 16px"}}>
         {active.length>0&&<><div style={{fontWeight:900,fontSize:17,color:C.bark,marginBottom:3,fontFamily:DF}}>In Progress</div><div style={{fontSize:12,color:C.muted,marginBottom:12}}>Keep going.</div>{active.map(ch=><Card key={ch.id} ch={ch}/>)}</>}
         {completed.length>0&&<><div style={{fontWeight:900,fontSize:17,color:C.bark,marginBottom:3,fontFamily:DF,marginTop:active.length?20:0}}>Completed 🏅</div><div style={{fontSize:12,color:C.muted,marginBottom:12}}>These are yours.</div>{completed.map(ch=><Card key={ch.id} ch={ch}/>)}</>}
@@ -1730,139 +1748,123 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 }
 
 /* ═══ HOME TAB ════════════════════════════════════════════════════════════ */
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,null}){
-  const [completing,setCompleting]=useState(null);
-  const quickComplete=(e,r)=>{
-    e.stopPropagation();if(completing)return;
-    setCompleting(r.id);
-    setTimeout(()=>{setXp(x=>x+r.xp);const di=new Date().getDay();const idx=di===0?6:di-1;setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});onComplete(r,null,"",0);setCompleting(null);},900);
-  };
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
   const goalDone=weekDone>=goal.target;
   const activeCh=CHALLENGES.find(ch=>(challengeProgress[ch.id]||0)>0&&(challengeProgress[ch.id]||0)<ch.target);
+  const today=new Date().getDay();
+  const todayIdx=today===0?6:today-1;
 
   return(
     <div style={{paddingBottom:24}}>
-      {/* Streak hero */}
-      <div style={{margin:"0 16px 18px",maxWidth:"calc(100% - 32px)",background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"20px 20px 18px",color:"#fff",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-18,right:-18,fontSize:88,opacity:.1,transform:"rotate(-15deg)",lineHeight:1}}>{goal.icon}</div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-          <div>
-            <div style={{fontSize:11,letterSpacing:".1em",textTransform:"uppercase",opacity:.6,marginBottom:4}}>This Week · {goal.label}</div>
-            <div style={{display:"flex",alignItems:"baseline",gap:8}}>
-              <span style={{fontSize:42,fontWeight:900,lineHeight:1,fontFamily:DF}}>{weekDone}/{goal.target}</span>
-              <span style={{fontSize:16,opacity:.7}}>{goal.icon}</span>
-            </div>
+
+      {/* ── Stats box ─────────────────────────────────────────────── */}
+      <div style={{margin:"0 16px 14px",position:"relative",background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"14px 16px",overflow:"hidden",color:"#fff"}}>
+
+        {/* Goal row */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+            <span style={{fontSize:28,fontWeight:900,lineHeight:1,fontFamily:DF}}>{weekDone}/{goal.target}</span>
+            <span style={{fontSize:12,opacity:.65,fontWeight:600}}>this week</span>
           </div>
-          <button onClick={onEditGoal} className="tap" style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,padding:"6px 12px",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:700}}>Edit Goal</button>
+          <button onClick={onEditGoal} className="tap" style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,color:"rgba(255,255,255,.8)",padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+            Edit Goal
+          </button>
         </div>
-        <div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:10,overflow:"hidden",marginBottom:5}}>
-          <div style={{width:`${pct}%`,height:"100%",background:goalDone?C.gold:goal.color,borderRadius:99,transition:"width .9s cubic-bezier(.4,0,.2,1)"}}/>
+
+        {/* Progress bar */}
+        <div style={{background:"rgba(255,255,255,.15)",borderRadius:99,height:4,overflow:"hidden",marginBottom:10}}>
+          <div style={{width:`${pct}%`,height:"100%",background:goalDone?C.gold:goal.color,borderRadius:99,transition:"width .5s"}}/>
         </div>
-        <div style={{fontSize:11,opacity:.6,marginBottom:14}}>{goalDone?" Goal smashed this week!":`${goal.target-weekDone} more cook${goal.target-weekDone===1?"":"s"} to go`}</div>
-        <div style={{display:"flex",gap:3,marginBottom:16}}>
-          {WEEK_LABELS.map((d,i)=>(
-            <div key={i} style={{flex:1,textAlign:"center"}}>
-              <div style={{height:26,borderRadius:7,background:cookedDays[i]?goal.color:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>{cookedDays[i]?"✓":""}</div>
-              <div style={{fontSize:8,marginTop:3,opacity:.45}}>{d}</div>
+
+        {/* Streak dots */}
+        <div style={{display:"flex",gap:4,marginBottom:12,alignItems:"center"}}>
+          {WEEK_LABELS.map((d,i)=>{
+            const done=cookedDays[i];
+            const isToday=i===todayIdx;
+            return(
+              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                <div style={{
+                  width:isToday?12:8,
+                  height:isToday?12:8,
+                  borderRadius:"50%",
+                  background:done?goal.color:"rgba(255,255,255,.2)",
+                  border:isToday?`2px solid rgba(255,255,255,.7)`:"none",
+                  transition:"all .2s",
+                  flexShrink:0,
+                }}/>
+                <div style={{fontSize:8,opacity:.45,letterSpacing:".02em"}}>{d}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Stats row */}
+        <div style={{display:"flex",borderTop:"1px solid rgba(255,255,255,.1)",paddingTop:10,gap:4}}>
+          {[
+            {label:"Heat",value:`${xp} 🔥`},
+            {label:"Level",value:levelInfo.current.title,big:true},
+            {label:"Cooked",value:cookedDays.filter(Boolean).length},
+          ].map(({label,value,big})=>(
+            <div key={label} style={{flex:1,textAlign:"center"}}>
+              <div style={{fontSize:9,opacity:.5,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>{label}</div>
+              <div style={{fontSize:big?13:14,fontWeight:big?900:700,lineHeight:1,opacity:.95}}>{value}</div>
             </div>
           ))}
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid rgba(255,255,255,.12)",paddingTop:14}}>
-          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Total Heat</div><div style={{fontSize:20,fontWeight:900}}>{xp.toLocaleString()}</div></div>
-          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Level</div><div style={{fontSize:20,fontWeight:900}}>{levelInfo.current.icon} {levelInfo.current.title}</div></div>
-          <div><div style={{fontSize:10,opacity:.55,textTransform:"uppercase",letterSpacing:".1em"}}>Cooked</div><div style={{fontSize:20,fontWeight:900}}>{recipes.filter(r=>r.done).length}</div></div>
-        </div>
       </div>
 
-      {/* Level bar */}
+      {/* ── Level bar ─────────────────────────────────────────────── */}
       {levelInfo.next&&(
-        <div style={{margin:"0 16px 18px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-            <span style={{fontSize:12,color:C.muted,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"60%"}}>Next: {levelInfo.next.title} {levelInfo.next.icon}</span>
-            <span style={{fontSize:12,color:levelInfo.current.color,fontWeight:700}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 Heat</span>
+        <div style={{margin:"0 16px 14px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+            <span style={{fontSize:11,color:C.muted,fontWeight:600}}>{levelInfo.current.title}</span>
+            <span style={{fontSize:11,color:levelInfo.current.color,fontWeight:700}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForNext} Heat</span>
           </div>
           <XPBar pct={levelInfo.pct} color={levelInfo.current.color}/>
         </div>
       )}
 
-      {/* Active challenge teaser */}
+      {/* ── Active challenge ──────────────────────────────────────── */}
       {activeCh&&(
-        <div style={{margin:"0 16px 18px",background:`${activeCh.color}0F`,border:`2px solid ${activeCh.color}33`,borderRadius:16,padding:"14px 18px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontSize:28}}>{activeCh.emoji}</span>
+        <div style={{margin:"0 16px 14px",background:`${activeCh.color}0F`,border:`2px solid ${activeCh.color}33`,borderRadius:16,padding:"12px 14px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{flex:1}}>
-              <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{activeCh.name}</div>
-              <div style={{fontSize:11,color:activeCh.color,fontWeight:600,marginTop:2}}>{challengeProgress[activeCh.id]}/{activeCh.target} {activeCh.unit} complete</div>
-              <div style={{marginTop:6}}><XPBar pct={Math.round((challengeProgress[activeCh.id]||0)/activeCh.target*100)} color={activeCh.color} h={5}/></div>
+              <div style={{fontWeight:800,fontSize:13,color:C.bark}}>{activeCh.name}</div>
+              <div style={{fontSize:11,color:activeCh.color,fontWeight:600,marginTop:2,marginBottom:6}}>{challengeProgress[activeCh.id]||0}/{activeCh.target} complete</div>
+              <XPBar pct={Math.round((challengeProgress[activeCh.id]||0)/activeCh.target*100)} color={activeCh.color} h={4}/>
             </div>
           </div>
         </div>
       )}
 
-      {/* Seasonal Event */}
-      {seasonalEvent&&(
-        <div style={{margin:"0 16px 18px",background:`${seasonalEvent.color}0F`,border:`2px solid ${seasonalEvent.color}33`,borderRadius:18,padding:"16px 18px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-            <div>
-              <div style={{fontWeight:900,fontSize:15,color:C.bark,fontFamily:DF}}>{seasonalEvent.name}</div>
-              <div style={{fontSize:12,color:C.muted,marginTop:2}}>{seasonalEvent.desc}</div>
-            </div>
-            <div style={{fontSize:9,color:C.muted,fontWeight:600,background:C.pill,padding:"3px 6px",borderRadius:8,flexShrink:0,whiteSpace:"nowrap"}}>Ends {seasonalEvent.ends}</div>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-            <span style={{fontSize:12,fontWeight:600,color:C.bark}}>{seasonalEvent.progress}/{seasonalEvent.goal} completed</span>
-            <span style={{fontSize:12,color:seasonalEvent.color,fontWeight:700}}>Badge: {seasonalEvent.badge.emoji} {seasonalEvent.badge.label}</span>
-          </div>
-          <XPBar pct={Math.round(seasonalEvent.progress/seasonalEvent.goal*100)} color={seasonalEvent.color} h={6}/>
-        </div>
-      )}
-
-      {/* Action buttons row */}
-      <div style={{margin:"0 16px 18px",display:"flex",gap:10}}>
-        <button onClick={onQuickLog} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}></div>
-          <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Quick Log</div>
-        </button>
-        <button onClick={onShowCalendar} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}></div>
-          <div style={{fontSize:11,fontWeight:800,color:C.bark}}>History</div>
-        </button>
-        <button onClick={onShowRecap} className="tap" style={{flex:1,background:C.cream,border:`2px solid ${C.border}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:3}}>📊</div>
-          <div style={{fontSize:11,fontWeight:800,color:C.bark}}>Weekly Recap</div>
-        </button>
-        {null&&(
-          <div style={{flex:1,background:`${C.flame}0F`,border:`2px solid ${C.flame}22`,borderRadius:14,padding:"12px 8px",textAlign:"center"}}>
-            <div style={{fontSize:20,marginBottom:3}}>{null.emoji}</div>
-            <div style={{fontSize:10,fontWeight:800,color:C.flame}}>Signature</div>
-          </div>
-        )}
-      </div>
-
+      {/* ── Cook Today ────────────────────────────────────────────── */}
       <div style={{padding:"0 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <h2 style={{fontSize:18,fontWeight:900,color:C.bark,margin:0,fontFamily:DF}}>Cook Today</h2>
           <span style={{fontSize:12,color:C.flame,fontWeight:700}}>{recipes.filter(r=>!r.done).length} remaining</span>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {recipes.slice(0,6).map(r=>(
-            <div key={r.id} onClick={()=>onOpen(r)} className="ch" style={{background:r.done?"#F5F0EB":C.cream,border:`2px solid ${r.done?"#E0D5CB":C.border}`,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,opacity:r.done?.65:1,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.04)",transition:"transform .18s,box-shadow .18s"}}>
+            <div key={r.id} onClick={()=>onOpen(r)} className="ch" style={{background:r.done?"#F5F0EB":C.cream,borderRadius:16,padding:"10px 12px",display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.border}`,cursor:"pointer",opacity:r.done?.6:1,position:"relative"}}>
               {r.photo&&!r.done
-  ?<img src={r.photo} alt={r.name} style={{width:52,height:52,borderRadius:14,objectFit:"cover",flexShrink:0}}/>
-  :<div style={{width:52,height:52,borderRadius:14,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.done?"✅":r.emoji}</div>
-}
+                ?<img src={r.photo} alt={r.name} style={{width:48,height:48,borderRadius:12,objectFit:"cover",flexShrink:0}}/>
+                :<div style={{width:48,height:48,borderRadius:12,background:r.done?"#E0D5CB":`${C.ember}22`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>{r.done?"✓":""}</div>
+              }
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:800,fontSize:14,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>{r.name}</div>
-                <div style={{display:"flex",gap:8,marginTop:4}}><span style={{fontSize:11,color:C.muted}}>⏱ {r.time}</span><DiffBadge level={r.difficulty}/></div>
-                {r.macros&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>🔥 {r.macros.calories} kcal · 💪 {r.macros.protein}g protein</div>}
+                <div style={{fontWeight:800,fontSize:14,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
+                <div style={{display:"flex",gap:6,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
+                  <span style={{fontSize:11,color:C.muted}}>{r.time}</span>
+                  <span style={{fontSize:11,color:C.muted,opacity:.4}}>·</span>
+                  <span style={{fontSize:11,color:C.muted}}>{r.difficulty}</span>
+                  {r.xp>0&&<>
+                    <span style={{fontSize:11,color:C.muted,opacity:.4}}>·</span>
+                    <span style={{fontSize:11,fontWeight:600,color:C.muted}}>{r.xp} 🔥</span>
+                  </>}
+                </div>
+                {r.macros&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>{r.macros.calories} kcal · {r.macros.protein}g protein</div>}
               </div>
-              {!r.done&&(
-                <button onClick={e=>quickComplete(e,r)} className="tap" style={{background:completing===r.id?C.sage:C.flame,color:"#fff",border:"none",borderRadius:12,padding:"8px 14px",fontWeight:800,fontSize:12,cursor:"pointer",flexShrink:0,boxShadow:`0 3px 10px ${C.flame}44`,transition:"background .2s"}}>
-                  {completing===r.id?`+${r.xp} 🔥`:`Cook · ${r.xp} 🔥`}
-                </button>
-              )}
             </div>
           ))}
         </div>
@@ -1871,7 +1873,6 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
   );
 }
 
-/* ═══ RECIPES TAB ═════════════════════════════════════════════════════════ */
 function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport}){
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
@@ -3772,7 +3773,7 @@ export default function App(){
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);}}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)}/>}
-          {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)}/>}
+          {!detailRecipe&&tab==="challenges"&&<ChallengesTab challengeProgress={challengeProgress} onInvite={(name,ch)=>alert(`Challenge sent to ${name}! 💪`)} seasonalEvent={seasonalEvent}/>}
           {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe}/>}
           {!detailRecipe&&tab==="profile"&&<ProfileTab user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} allRecipes={allRecipes} cookLog={cookLog} earnedBadges={earnedBadges} cookedDays={cookedDays} onShowSettings={()=>setShowSettings(true)} onShowCalendar={()=>setShowCalendar(true)} onShowYearReview={()=>setShowYearReview(true)} signOut={signOut} weeklyXp={weeklyXp} challengeProgress={challengeProgress} goal={goal} onEditGoal={()=>setShowGoal(true)}/>}
@@ -3827,4 +3828,23 @@ export default function App(){
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
     </>
   );
+
+      {/* Seasonal Event */}
+      {seasonalEvent&&(
+        <div style={{margin:"0 0 18px",background:`${seasonalEvent.color}0F`,border:`2px solid ${seasonalEvent.color}33`,borderRadius:18,padding:"14px 16px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:seasonalEvent.color,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>Seasonal Event</div>
+              <div style={{fontWeight:900,fontSize:16,color:C.bark,fontFamily:DF}}>{seasonalEvent.name}</div>
+              <div style={{fontSize:12,color:C.muted,marginTop:2}}>{seasonalEvent.desc}</div>
+            </div>
+            <div style={{fontSize:9,color:C.muted,fontWeight:600,background:C.pill,padding:"3px 8px",borderRadius:6,whiteSpace:"nowrap",flexShrink:0,marginLeft:8}}>Ends {seasonalEvent.ends}</div>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+            <span style={{fontSize:12,fontWeight:600,color:C.bark}}>{seasonalEvent.progress}/{seasonalEvent.goal} completed</span>
+            <span style={{fontSize:12,color:seasonalEvent.color,fontWeight:700}}>Badge: {seasonalEvent.badge.emoji} {seasonalEvent.badge.label}</span>
+          </div>
+          <XPBar pct={Math.round(seasonalEvent.progress/seasonalEvent.goal*100)} color={seasonalEvent.color} h={6}/>
+        </div>
+      )}
 }
