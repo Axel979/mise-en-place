@@ -1484,7 +1484,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               {hasPhotos?(
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,marginBottom:16}}>
                   {filtered.map((entry,i)=>(
-                    <div key={i} style={{borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:"hidden",position:"relative",aspectRatio:"1/1",background:C.pill}}>
+                    <div key={i} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:"hidden",position:"relative",aspectRatio:"1/1",background:C.pill}}>
                       {entry.photo
                         ?<img src={entry.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                         :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${C.bark}18,${C.ember}10)`}}>
@@ -1501,7 +1501,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {filtered.map((entry,i)=>(
-                    <div key={i} style={{background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center"}}>
+                    <div key={i} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center"}}>
                       <div style={{width:44,height:44,borderRadius:12,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".6"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
                       </div>
@@ -1583,7 +1583,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Saved posts</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {(posts||[]).filter(p=>savedPosts?.has(p.id)).map(p=>(
-                  <div key={p.id} style={{background:C.cream,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,display:"flex"}}>
+                  <div key={p.id} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===p.recipe);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",background:C.cream,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,display:"flex"}}>
                     {p.photo
                       ?<img src={p.photo} alt="" style={{width:72,height:72,objectFit:"cover",flexShrink:0}}/>
                       :<div style={{width:72,height:72,background:`${C.flame}08`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
