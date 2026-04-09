@@ -2,10 +2,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0'
-);
+const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
+const SUPA_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0';
+if (typeof window !== 'undefined') {
+  console.log("Supabase URL:", SUPA_URL.slice(0,30));
+  console.log("Supabase key prefix:", SUPA_KEY.slice(0,20));
+}
+const supabase = createBrowserClient(SUPA_URL, SUPA_KEY);
 
 export function useAuth() {
   const [user, setUser]       = useState<any>(null);
@@ -17,14 +20,21 @@ export function useAuth() {
 
   useEffect(() => {
     console.log("useAuth init");
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Session result:", session?.user?.email || "none");
-      const u = session?.user ?? null;
-      setUser(u);
-      userIdRef.current = u?.id ?? null;
-      if (u) loadProfile(u.id);
-      else setLoading(false);
-    });
+    (async () => {
+      console.log("calling getSession...");
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("getSession returned:", session?.user?.email || "no session", error);
+        const u = session?.user ?? null;
+        setUser(u);
+        userIdRef.current = u?.id ?? null;
+        if (u) await loadProfile(u.id);
+        else setLoading(false);
+      } catch (e) {
+        console.log("getSession threw:", e);
+        setLoading(false);
+      }
+    })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
