@@ -16,7 +16,9 @@ export function useAuth() {
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    console.log("useAuth init");
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Session result:", session?.user?.email || "none");
       const u = session?.user ?? null;
       setUser(u);
       userIdRef.current = u?.id ?? null;
@@ -55,6 +57,7 @@ export function useAuth() {
           .single();
         setProfile(newProfile);
       }
+      console.log("Profile ready");
     } catch (e) {
       console.error('loadProfile error:', e);
     } finally {
