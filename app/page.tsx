@@ -4248,7 +4248,7 @@ export default function App(){
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
   },[user]);
-  const [onboarded,  setOnboarded]  = useState(()=>{ try{ return localStorage.getItem("mep_onboarded")==="true"; }catch{ return false; } });
+  const [onboarded,  setOnboarded]  = useState(false);
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
   const [xp,         setXp]         = useState(0);
@@ -4257,7 +4257,7 @@ export default function App(){
   const [detailRecipe,setDetailRecipe]=useState(null);
   const [showGoal,   setShowGoal]   = useState(false);
   const [posts,      setPosts]      = useState(SEED_POSTS);
-  const [goal,setGoal]=useState(()=>{ try{ const g=localStorage.getItem('mep_goal'); return g?JSON.parse(g):STREAK_GOALS[2]; }catch{ return STREAK_GOALS[2]; } });
+  const [goal,setGoal]=useState(STREAK_GOALS[2]);
   const [cookedDays, setCookedDays] = useState([false,false,false,false,false,false,false]);
   const [cookedDatesAll, setCookedDatesAll] = useState([]);
   const hydratedRef = useRef(false);
@@ -4279,7 +4279,7 @@ export default function App(){
   const [showDrawer,      setShowDrawer]      = useState(false);
   const [savedPosts,     setSavedPosts]       = useState(() => new Set());
   const [recipeFilter,   setRecipeFilter]     = useState(null);
-  const [userDiet,       setUserDiet]         = useState(()=>{ try{ return localStorage.getItem("mep_diet")||"None"; }catch{ return "None"; } });
+  const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [showCommunity,   setShowCommunity]   = useState(false);
@@ -4312,7 +4312,13 @@ export default function App(){
   ]);
   const prevLevel = useRef(null);
 
-  useEffect(()=>{setTimeout(()=>setMounted(true),60);},[]);
+  useEffect(()=>{
+    setTimeout(()=>setMounted(true),60);
+    // Hydrate from localStorage after mount (avoid SSR mismatch)
+    try{ if(localStorage.getItem("mep_onboarded")==="true") setOnboarded(true); }catch{}
+    try{ const g=localStorage.getItem('mep_goal'); if(g){ const parsed=JSON.parse(g); if(parsed) setGoal(parsed); } }catch{}
+    try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
+  },[]);
   useEffect(()=>{
     if(profile){
       if(profile.xp>0) setXp(profile.xp);
