@@ -4572,21 +4572,6 @@ export default function App(){
 
   const weekDone=cookedDays.filter(Boolean).length;
 
-  // Auth gate: wait for session, then redirect unauthenticated users to /login
-  useEffect(()=>{
-    if(loading || user) return;
-    // Avoid redirect loop if already on /login; delay to give session a chance to resolve
-    if(typeof window!=='undefined' && window.location.pathname==='/login') return;
-    const t = setTimeout(()=>{
-      if(typeof window!=='undefined' && window.location.pathname!=='/login'){
-        window.location.href = '/login';
-      }
-    },500);
-    return ()=>clearTimeout(t);
-  },[loading,user]);
-  if(loading) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
-  if(!user) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
-
   if(!onboarded)return(
     <>
       <style>{CSS}</style>
