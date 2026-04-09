@@ -1,10 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0';
-const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_KEY);
+import { supabase } from '@/lib/supabase/client';
 
 const AVATAR_COLORS = ['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#FF4D1C','#CC2200','#4A7A8A','#8BAF78','#C4814A','#6B4A8A'];
 const AVATAR_LABELS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
