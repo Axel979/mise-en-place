@@ -1344,6 +1344,7 @@ function ChallengesTab({challengeProgress,onInvite,onStartCooking,earnedBadges,c
 
 function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe}){
   const [libTab,setLibTab]=useState("cooked");
+  const [showBadges,setShowBadges]=useState(false);
   const [filter,setFilter]=useState("all");
   const [sort,setSort]=useState("recent");
 
@@ -1386,16 +1387,58 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
         <div style={{display:"flex",gap:8}}>
           <StatBubble label="Cooked" value={totalCooked} active={libTab==="cooked"} onClick={()=>setLibTab("cooked")}/>
           <StatBubble label="Streak" value={`${streak}🔥`} onClick={onShowCalendar}/>
-          <StatBubble label="Badges" value={badgeCount} active={libTab==="badges"} onClick={()=>setLibTab("badges")}/>
+          <StatBubble label="Badges" value={badgeCount} active={showBadges} onClick={()=>setShowBadges(b=>!b)}/>
         </div>
       </div>
 
       {/* ── Tabs ─────────────────────────────────────────────────── */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:3}}>
-        {[["cooked","Cooked"],["cooks","My Cooks"],["saved","Saved"],["badges","Badges"]].map(([id,lbl])=>(
+        {[["cooked","Cooked"],["recipes","My Recipes"],["saved","Saved"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setLibTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
         ))}
       </div>
+
+      {/* ── INLINE BADGES ───────────────────────────────────────── */}
+      {showBadges&&(
+        <div style={{padding:"0 16px 16px"}}>
+          {safeBadges.length>0&&(
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Earned</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {BADGES.filter(b=>safeBadges.includes(b.id)).map(b=>(
+                  <div key={b.id} style={{background:`${C.gold}10`,border:`1.5px solid ${C.gold}44`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:34,height:34,borderRadius:10,background:`${C.gold}20`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:13,color:C.bark}}>{b.label}</div>
+                      <div style={{fontSize:11,color:C.muted,marginTop:1}}>{b.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>
+              {safeBadges.length===0?"All badges":"Locked"}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {BADGES.filter(b=>!safeBadges.includes(b.id)).slice(0,6).map(b=>(
+                <div key={b.id} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,opacity:.65}}>
+                  <div style={{width:34,height:34,borderRadius:10,background:C.pill,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:13,color:C.muted}}>{b.label}</div>
+                    <div style={{fontSize:11,color:C.muted,marginTop:1}}>{b.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── COOKED TAB ───────────────────────────────────────────── */}
       {libTab==="cooked"&&(
@@ -1502,19 +1545,19 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       )}
 
       {/* ── MY COOKS TAB ─────────────────────────────────────────── */}
-      {libTab==="cooks"&&(
+      {libTab==="recipes"&&(
         <div style={{padding:"0 16px"}}>
-          {myRecipes.length===0?(
+          {(myRecipes.length+savedRecipes.length)===0?(
             <div style={{textAlign:"center",padding:"60px 20px"}}>
               <div style={{width:56,height:56,borderRadius:18,background:`${C.sage}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </div>
-              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>No recipes created yet</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:260,margin:"0 auto"}}>Recipes you create appear here. Share them with friends from the recipe page.</div>
+              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>No recipes yet</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:260,margin:"0 auto"}}>Create a recipe from the Recipes tab. Your recipes appear here.</div>
             </div>
           ):(
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {myRecipes.map(r=>(
+              {[...myRecipes,...savedRecipes].map(r=>(
                 <div key={r.id} onClick={()=>onOpen&&onOpen(r)} className="tap" style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden",cursor:"pointer",display:"flex"}}>
                   <div style={{width:80,flexShrink:0,background:`linear-gradient(135deg,${C.sage}20,${C.sage}08)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5" opacity=".6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
