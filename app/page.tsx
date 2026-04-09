@@ -4243,7 +4243,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, saveXp, logCompletedRecipe, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
+  const { user, profile, loading, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4260,6 +4260,8 @@ export default function App(){
   const [posts,      setPosts]      = useState(SEED_POSTS);
   const [goal,setGoal]=useState(()=>{ try{ const g=localStorage.getItem('mep_goal'); return g?JSON.parse(g):STREAK_GOALS[2]; }catch{ return STREAK_GOALS[2]; } });
   const [cookedDays, setCookedDays] = useState([false,false,false,false,false,false,false]);
+  const [cookedDatesAll, setCookedDatesAll] = useState([]);
+  const hydratedRef = useRef(false);
   const [skillData,  setSkillData]  = useState({});
   const [challengeProgress,setChallengeProgress]=useState({});
   const [earnedBadges,setEarnedBadges]=useState([]);
@@ -4319,6 +4321,48 @@ export default function App(){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
       }
+      // Hydrate persisted state from profile row
+      if(Array.isArray(profile.earned_badges)) setEarnedBadges(profile.earned_badges);
+      if(profile.challenge_progress && typeof profile.challenge_progress==="object") setChallengeProgress(profile.challenge_progress);
+      if(Array.isArray(profile.saved_posts)) setSavedPosts(new Set(profile.saved_posts));
+      if(Array.isArray(profile.cooked_dates)){
+        setCookedDatesAll(profile.cooked_dates);
+        // Rebuild cookedDays (Mon-Sun) for current week
+        const now=new Date();
+        const day=now.getDay();
+        const monday=new Date(now);
+        monday.setDate(now.getDate()-((day+6)%7));
+        const set=new Set(profile.cooked_dates);
+        const week=[];
+        for(let i=0;i<7;i++){
+          const d=new Date(monday); d.setDate(monday.getDate()+i);
+          week.push(set.has(d.toISOString().slice(0,10)));
+        }
+        setCookedDays(week);
+      }
+      if(profile.goal_id){
+        const g=STREAK_GOALS.find(x=>x.id===profile.goal_id);
+        if(g) setGoal(g);
+      }
+      // Rebuild cook log from completed_recipes
+      loadCompletedRecipes().then(rows=>{
+        if(rows && rows.length>0){
+          setCookLog(rows.map(r=>({
+            id:`log-${r.id}`,
+            name:r.name||r.recipe_id||"",
+            emoji:r.emoji||"",
+            category:r.category||"",
+            xp:r.xp||0,
+            difficulty:r.difficulty||"Medium",
+            rating:r.rating||0,
+            photo:r.photo_url||null,
+            caption:r.notes||"",
+            date: r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
+          })));
+        }
+      }).catch(e=>console.error('loadCompletedRecipes failed',e));
+      // Mark hydrated on next tick so save effects don't fire on initial load
+      setTimeout(()=>{hydratedRef.current=true;},0);
       // Load user's personal recipes from Supabase
       loadUserRecipes().then(userRecipes=>{
         if(userRecipes.length>0){
@@ -4346,6 +4390,12 @@ export default function App(){
       }).catch(e=>console.error('loadFeed failed',e));
     }
   },[profile]);
+
+  // Persist state changes to Supabase (fire and forget, skip initial hydration)
+  useEffect(()=>{ if(hydratedRef.current&&user?.id) saveEarnedBadges(user.id, earnedBadges); },[earnedBadges,user]);
+  useEffect(()=>{ if(hydratedRef.current&&user?.id) saveChallengeProgress(user.id, challengeProgress); },[challengeProgress,user]);
+  useEffect(()=>{ if(hydratedRef.current&&user?.id) saveSavedPosts(user.id, Array.from(savedPosts)); },[savedPosts,user]);
+  useEffect(()=>{ if(hydratedRef.current&&user?.id&&goal?.id) saveGoal(user.id, goal.id); },[goal,user]);
 
   const levelInfo=useMemo(()=>getLevelInfo(xp),[xp]);
 
@@ -4377,6 +4427,14 @@ export default function App(){
     setWeeklyXp(w=>w+recipe.xp);
     const di=new Date().getDay();const idx=di===0?6:di-1;
     setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});
+    // Persist cooked date
+    const todayIso=new Date().toISOString().slice(0,10);
+    setCookedDatesAll(prev=>{
+      if(prev.includes(todayIso)) return prev;
+      const next=[...prev,todayIso];
+      if(uid) saveCookedDates(uid,next);
+      return next;
+    });
 
     // Update skills
     const cat=recipe.category;

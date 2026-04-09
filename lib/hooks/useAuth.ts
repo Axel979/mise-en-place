@@ -80,12 +80,54 @@ export function useAuth() {
         recipe_id: String(recipe.id),
         cooked_at: new Date().toISOString(),
         rating: recipe.rating || null,
-        notes: recipe.notes || null,
+        notes: recipe.caption || recipe.notes || null,
+        name: recipe.name || null,
+        emoji: recipe.emoji || null,
+        category: recipe.category || null,
+        difficulty: recipe.difficulty || null,
+        xp: recipe.xp || 0,
+        photo_url: recipe.photo || null,
       });
     } catch (e) {
       console.error('logCompletedRecipe error:', e);
     }
   };
+
+  const loadCompletedRecipes = async () => {
+    const uid = userIdRef.current;
+    if (!uid) return [];
+    try {
+      const { data, error } = await supabase
+        .from('completed_recipes')
+        .select('*')
+        .eq('user_id', uid)
+        .order('cooked_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.error('loadCompletedRecipes error:', e);
+      return [];
+    }
+  };
+
+  // ── Profile field savers (fire and forget) ───────────────
+  const saveProfileField = async (userId: string, fields: Record<string, any>) => {
+    if (!userId) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+      if (error) console.error('saveProfileField error:', error);
+    } catch (e) {
+      console.error('saveProfileField threw:', e);
+    }
+  };
+  const saveEarnedBadges       = (uid: string, badges: string[])      => saveProfileField(uid, { earned_badges: badges });
+  const saveChallengeProgress  = (uid: string, progress: any)         => saveProfileField(uid, { challenge_progress: progress });
+  const saveCookedDates        = (uid: string, dates: string[])       => saveProfileField(uid, { cooked_dates: dates });
+  const saveSavedPosts         = (uid: string, postIds: string[])     => saveProfileField(uid, { saved_posts: postIds });
+  const saveGoal               = (uid: string, goalId: string)        => saveProfileField(uid, { goal_id: goalId });
 
   // ── Activity feed ─────────────────────────────────────────
   const postActivity = async (entry: {
@@ -327,7 +369,8 @@ export function useAuth() {
 
   return {
     user, profile, loading, supabase,
-    saveXp, logCompletedRecipe,
+    saveXp, logCompletedRecipe, loadCompletedRecipes,
+    saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal,
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
     searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends,
