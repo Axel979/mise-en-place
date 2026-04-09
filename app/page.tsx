@@ -4320,6 +4320,7 @@ export default function App(){
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
   },[]);
   useEffect(()=>{
+    console.log("Profile loaded for:", profile?.id);
     if(profile){
       if(profile.xp>0) setXp(profile.xp);
       if(!onboarded){
@@ -4570,6 +4571,15 @@ export default function App(){
   ];
 
   const weekDone=cookedDays.filter(Boolean).length;
+
+  // Auth gate: wait for session, then redirect unauthenticated users to /login
+  useEffect(()=>{
+    if(!loading && !user){
+      try{ window.location.href = '/login'; }catch{}
+    }
+  },[loading,user]);
+  if(loading) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
+  if(!user) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
 
   if(!onboarded)return(
     <>
