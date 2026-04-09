@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
-  flame:"#FF4D1C", ember:"#FF8C42", cream:"#FFF8F0", paper:"#FAF4EE",
+  flame:"#E8442A", ember:"#D63920", cream:"#FFF8F0", paper:"#FAF4EE",
   bark:"#3B2A1A",  sage:"#5C7A4E",  moss:"#8BAF78",  gold:"#F5C842",
   muted:"#9E8C7E", border:"#EEE5DC",pill:"#F0EBE6",  sky:"#4A90D9",
   plum:"#9B5DE5",  rose:"#E05C7A",  dark:"#111118",
