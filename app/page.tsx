@@ -1394,7 +1394,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       {/* ── Tabs ─────────────────────────────────────────────────── */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:3}}>
         {[["cooked","Cooked"],["recipes","My Recipes"],["saved","Saved"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>setLibTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
+          <button key={id} onClick={()=>{setLibTab(id);setShowBadges(false);}} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
         ))}
       </div>
 
@@ -1441,7 +1441,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       )}
 
       {/* ── COOKED TAB ───────────────────────────────────────────── */}
-      {libTab==="cooked"&&(
+      {!showBadges&&libTab==="cooked"&&(
         <div>
           {safeLog.length===0?(
             <div style={{textAlign:"center",padding:"60px 32px"}}>
@@ -1545,7 +1545,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       )}
 
       {/* ── MY COOKS TAB ─────────────────────────────────────────── */}
-      {libTab==="recipes"&&(
+      {!showBadges&&libTab==="recipes"&&(
         <div style={{padding:"0 16px"}}>
           {(myRecipes.length+savedRecipes.length)===0?(
             <div style={{textAlign:"center",padding:"60px 20px"}}>
@@ -1578,7 +1578,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       )}
 
       {/* ── SAVED TAB ────────────────────────────────────────────── */}
-      {libTab==="saved"&&(
+      {!showBadges&&libTab==="saved"&&(
         <div style={{padding:"0 16px"}}>
           {/* Saved recipes from app */}
           {savedRecipes.length>0&&(
