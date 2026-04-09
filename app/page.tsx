@@ -1516,29 +1516,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
                 </div>
               )}
 
-              {/* Badges strip */}
-              {safeBadges.length>0&&(
-                <div style={{marginTop:20}}>
-                  <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Badges earned</div>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {BADGES.filter(b=>safeBadges.includes(b.id)).map(b=>(
-                      <div key={b.id} style={{background:`${C.gold}12`,border:`1px solid ${C.gold}40`,borderRadius:10,padding:"6px 12px"}}>
-                        <div style={{fontSize:12,fontWeight:700,color:C.bark}}>{b.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Locked badges — next to earn */}
-                  <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",margin:"14px 0 10px"}}>Next to earn</div>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {BADGES.filter(b=>!safeBadges.includes(b.id)).slice(0,4).map(b=>(
-                      <div key={b.id} style={{background:C.pill,border:`1px solid ${C.border}`,borderRadius:10,padding:"6px 12px",opacity:.7}}>
-                        <div style={{fontSize:12,fontWeight:700,color:C.muted}}>{b.label}</div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>{b.desc}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
