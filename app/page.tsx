@@ -4247,7 +4247,6 @@ export default function App(){
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
-    console.log("Auth user:", user?.email || "NOT LOGGED IN");
   },[user]);
   const [onboarded,  setOnboarded]  = useState(()=>{ try{ return localStorage.getItem("mep_onboarded")==="true"; }catch{ return false; } });
   const [tab,        setTab]        = useState("home");
@@ -4346,6 +4345,7 @@ export default function App(){
       }
       // Rebuild cook log from completed_recipes
       loadCompletedRecipes().then(rows=>{
+        console.log("Loaded cook log:", (rows||[]).length, "entries");
         if(rows && rows.length>0){
           setCookLog(rows.map(r=>({
             id:`log-${r.id}`,
