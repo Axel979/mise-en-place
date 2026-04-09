@@ -4320,7 +4320,6 @@ export default function App(){
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
   },[]);
   useEffect(()=>{
-    console.log("Profile loaded for:", profile?.id);
     if(profile){
       if(profile.xp>0) setXp(profile.xp);
       if(!onboarded){
@@ -4352,7 +4351,6 @@ export default function App(){
       }
       // Rebuild cook log from completed_recipes
       loadCompletedRecipes().then(rows=>{
-        console.log("Loaded cook log:", (rows||[]).length, "entries");
         if(rows && rows.length>0){
           setCookLog(rows.map(r=>({
             id:`log-${r.id}`,

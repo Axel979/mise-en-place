@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 
 const AVATAR_COLORS = ['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#FF4D1C','#CC2200','#4A7A8A','#8BAF78','#C4814A','#6B4A8A'];
@@ -128,12 +129,13 @@ function LoginScreen({onSignup, onReset}:{onSignup:()=>void, onReset:()=>void}) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setError(error.message); setLoading(false); }
-    else window.location.href = '/';
+    else router.push('/');
   };
 
   return (

@@ -11,23 +11,8 @@ export function useAuth() {
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    console.log("useAuth init");
-    (async () => {
-      console.log("calling getSession...");
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log("getSession returned:", session?.user?.email || "no session", error);
-        const u = session?.user ?? null;
-        setUser(u);
-        userIdRef.current = u?.id ?? null;
-        if (u) await loadProfile(u.id);
-        else setLoading(false);
-      } catch (e) {
-        console.log("getSession threw:", e);
-        setLoading(false);
-      }
-    })();
-
+    // Primary source of truth: onAuthStateChange fires on mount with the current session
+    // (INITIAL_SESSION event) and on every subsequent auth change.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const u = session?.user ?? null;
@@ -37,6 +22,16 @@ export function useAuth() {
         else { setProfile(null); setLoading(false); }
       }
     );
+
+    // Fallback: if for any reason INITIAL_SESSION doesn't fire, still resolve loading.
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) setLoading(false);
+      } catch {
+        setLoading(false);
+      }
+    })();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -59,7 +54,6 @@ export function useAuth() {
           .single();
         setProfile(newProfile);
       }
-      console.log("Profile ready");
     } catch (e) {
       console.error('loadProfile error:', e);
     } finally {
