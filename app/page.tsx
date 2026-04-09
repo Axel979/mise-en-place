@@ -4571,6 +4571,17 @@ export default function App(){
 
   const weekDone=cookedDays.filter(Boolean).length;
 
+  // Auth gate: no user after loading resolves → go to /login (overrides onboarded flag)
+  useEffect(()=>{
+    if(loading) return;
+    if(user) return;
+    if(typeof window==='undefined') return;
+    if(window.location.pathname==='/login') return;
+    window.location.href = '/login';
+  },[loading,user]);
+  if(loading) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
+  if(!user)   return <div style={{background:C.paper,minHeight:"100vh"}}/>;
+
   if(!onboarded)return(
     <>
       <style>{CSS}</style>
