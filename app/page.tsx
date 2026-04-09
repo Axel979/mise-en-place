@@ -1386,13 +1386,13 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
         <div style={{display:"flex",gap:8}}>
           <StatBubble label="Cooked" value={totalCooked} active={libTab==="cooked"} onClick={()=>setLibTab("cooked")}/>
           <StatBubble label="Streak" value={`${streak}🔥`} onClick={onShowCalendar}/>
-          <StatBubble label="Badges" value={badgeCount} active={libTab==="badges_inline"} onClick={()=>setLibTab("cooked")}/>
+          <StatBubble label="Badges" value={badgeCount} active={libTab==="badges"} onClick={()=>setLibTab("badges")}/>
         </div>
       </div>
 
       {/* ── Tabs ─────────────────────────────────────────────────── */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:3}}>
-        {[["cooked","Cooked"],["cooks","My Cooks"],["saved","Saved"]].map(([id,lbl])=>(
+        {[["cooked","Cooked"],["cooks","My Cooks"],["saved","Saved"],["badges","Badges"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setLibTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
         ))}
       </div>
@@ -3305,28 +3305,23 @@ function StreakCalendar({cookedDays, cookLog, onClose}){
   const [viewYear, setViewYear] = useState(today.getFullYear());
 
   const getDaysInMonth=(m,y)=>new Date(y,m+1,0).getDate();
-  const getFirstDay=(m,y)=>new Date(y,m,1).getDay(); // 0=Sun
+  const getFirstDay=(m,y)=>new Date(y,m,1).getDay();
 
-  // Build a set of cooked date strings from cookLog + current week
   const cookedSet = useMemo(()=>{
     const dates = new Set();
-    // From cook log (real data)
     (cookLog||[]).forEach(entry=>{
       if(entry.date){
-        // entry.date is like "8 Apr 2026"
         try{
           const d=new Date(entry.date);
           if(!isNaN(d)) dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
         }catch{}
       }
     });
-    // From current week cookedDays array
     const now=new Date();
-    const dayOfWeek=now.getDay(); // 0=Sun
-    cookedDays.forEach((cooked,i)=>{
+    const dayOfWeek=now.getDay();
+    (cookedDays||[]).forEach((cooked,i)=>{
       if(cooked){
         const d=new Date(now);
-        // i=0 is Mon, i=6 is Sun
         const diff=(dayOfWeek===0?-6:1)-dayOfWeek+i;
         d.setDate(now.getDate()+diff);
         dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
@@ -3336,11 +3331,10 @@ function StreakCalendar({cookedDays, cookLog, onClose}){
   },[cookLog,cookedDays]);
 
   const daysInMonth=getDaysInMonth(viewMonth,viewYear);
-  const firstDay=getFirstDay(viewMonth,viewYear); // 0=Sun
-  const monthName=new Date(viewYear,viewMonth).toLocaleString('default',{month:'long',year:'numeric'});
+  const firstDay=getFirstDay(viewMonth,viewYear);
+  const monthName=new Date(viewYear,viewMonth).toLocaleString("default",{month:"long",year:"numeric"});
   const totalCooked=Array.from(cookedSet).filter(d=>d.startsWith(`${viewYear}-${viewMonth}-`)).length;
 
-  // Calculate current streak
   const currentStreak=useMemo(()=>{
     let streak=0;
     const d=new Date();
@@ -3352,77 +3346,74 @@ function StreakCalendar({cookedDays, cookLog, onClose}){
     return streak;
   },[cookedSet]);
 
-  const prevMonth=()=>{
-    if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}
-    else setViewMonth(m=>m-1);
-  };
-  const nextMonth=()=>{
-    if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}
-    else setViewMonth(m=>m+1);
-  };
+  const prevMonth=()=>{ if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1); };
+  const nextMonth=()=>{ if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1); };
   const canGoNext=viewYear<today.getFullYear()||(viewYear===today.getFullYear()&&viewMonth<today.getMonth());
 
-  // Check if two adjacent days are both cooked (for streak connector)
   const isStreakStart=(day)=>{
     const prev=new Date(viewYear,viewMonth,day-1);
-    const prevKey=`${prev.getFullYear()}-${prev.getMonth()}-${prev.getDate()}`;
-    return !cookedSet.has(prevKey);
+    return !cookedSet.has(`${prev.getFullYear()}-${prev.getMonth()}-${prev.getDate()}`);
   };
   const isStreakEnd=(day)=>{
     const next=new Date(viewYear,viewMonth,day+1);
-    const nextKey=`${next.getFullYear()}-${next.getMonth()}-${next.getDate()}`;
-    return !cookedSet.has(nextKey);
+    return !cookedSet.has(`${next.getFullYear()}-${next.getMonth()}-${next.getDate()}`);
   };
 
   const MILESTONES=[
-    {days:7,  label:"Week Warrior",   desc:"Cook 7 days in a row",     icon:"🔥"},
-    {days:14, label:"Fortnight Chef", desc:"Cook 14 days in a row",    icon:"⚡"},
-    {days:30, label:"Month Master",   desc:"Cook every day for a month",icon:"👑"},
-    {days:100,label:"Legend",         desc:"100 day streak",            icon:"💎"},
+    {days:3,  label:"3 day streak",   desc:"Cook 3 days in a row"},
+    {days:7,  label:"Week streak",    desc:"Cook 7 days in a row"},
+    {days:14, label:"2 week streak",  desc:"Cook 14 days in a row"},
+    {days:30, label:"Month streak",   desc:"Cook every day for a month"},
   ];
+
+  const FlameIcon=({size=28,col=C.flame})=>(
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={col} stroke="none">
+      <path d="M12 2C9 7 6 9 6 13a6 6 0 0012 0c0-4-3-6-6-11zm0 17a3 3 0 01-3-3c0-2 1.5-3 3-5 1.5 2 3 3 3 5a3 3 0 01-3 3z"/>
+    </svg>
+  );
 
   return(
     <Sheet onClose={onClose}>
       <div style={{padding:"0 0 44px"}}>
 
         {/* Header */}
-        <div style={{padding:"24px 20px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Streak Calendar</div>
+        <div style={{padding:"24px 20px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Streak</div>
           <CloseBtn onClose={onClose}/>
         </div>
 
-        {/* Streak hero */}
-        <div style={{margin:"0 16px 20px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px 20px",color:"#fff",display:"flex",alignItems:"center",gap:16}}>
-          <div style={{fontSize:52,lineHeight:1}}>🔥</div>
+        {/* Streak hero — clean, no emoji */}
+        <div style={{margin:"0 16px 20px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"20px",color:"#fff",display:"flex",alignItems:"center",gap:20}}>
+          <div style={{width:56,height:56,borderRadius:16,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <FlameIcon size={30} col={C.flame}/>
+          </div>
           <div>
-            <div style={{fontWeight:900,fontSize:32,lineHeight:1,fontFamily:DF}}>{currentStreak}</div>
-            <div style={{fontSize:13,opacity:.7,marginTop:2}}>day streak</div>
+            <div style={{fontWeight:900,fontSize:42,lineHeight:1,fontFamily:DF}}>{currentStreak}</div>
+            <div style={{fontSize:13,opacity:.6,marginTop:2}}>day streak</div>
           </div>
           <div style={{marginLeft:"auto",textAlign:"right"}}>
-            <div style={{fontWeight:800,fontSize:16}}>{totalCooked}</div>
-            <div style={{fontSize:11,opacity:.6}}>this month</div>
+            <div style={{fontWeight:800,fontSize:20}}>{totalCooked}</div>
+            <div style={{fontSize:11,opacity:.5}}>this month</div>
           </div>
         </div>
 
-        {/* Month navigation */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",marginBottom:12}}>
-          <button onClick={prevMonth} style={{background:"none",border:"none",cursor:"pointer",padding:"8px",borderRadius:10,color:C.bark,fontSize:18}}>‹</button>
-          <div style={{fontWeight:800,fontSize:16,color:C.bark}}>{monthName}</div>
-          <button onClick={nextMonth} disabled={!canGoNext} style={{background:"none",border:"none",cursor:canGoNext?"pointer":"default",padding:"8px",borderRadius:10,color:canGoNext?C.bark:C.border,fontSize:18}}>›</button>
+        {/* Month nav */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",marginBottom:8}}>
+          <button onClick={prevMonth} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 12px",borderRadius:10,color:C.bark,fontSize:20,lineHeight:1}}>‹</button>
+          <div style={{fontWeight:800,fontSize:15,color:C.bark}}>{monthName}</div>
+          <button onClick={nextMonth} disabled={!canGoNext} style={{background:"none",border:"none",cursor:canGoNext?"pointer":"default",padding:"8px 12px",borderRadius:10,color:canGoNext?C.bark:C.border,fontSize:20,lineHeight:1}}>›</button>
         </div>
 
-        {/* Day labels — Sun first */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",marginBottom:4}}>
+        {/* Day labels */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",marginBottom:2}}>
           {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d,i)=>(
             <div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.muted,padding:"4px 0"}}>{d}</div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",gap:"4px 0"}}>
-          {/* Empty cells before first day */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",gap:"2px 0"}}>
           {Array.from({length:firstDay}).map((_,i)=><div key={`e${i}`}/>)}
-
           {Array.from({length:daysInMonth}).map((_,i)=>{
             const day=i+1;
             const key=`${viewYear}-${viewMonth}-${day}`;
@@ -3430,73 +3421,66 @@ function StreakCalendar({cookedDays, cookLog, onClose}){
             const isToday=day===today.getDate()&&viewMonth===today.getMonth()&&viewYear===today.getFullYear();
             const streakStart=isCooked&&isStreakStart(day);
             const streakEnd=isCooked&&isStreakEnd(day);
-            // Day of week for this cell (0=Sun)
             const totalOffset=firstDay+i;
             const dayOfWeek=totalOffset%7;
             const isFirstCol=dayOfWeek===0;
             const isLastCol=dayOfWeek===6;
 
             return(
-              <div key={day} style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",height:44}}>
-                {/* Streak connector bar */}
+              <div key={day} style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",height:42}}>
+                {/* Streak connector */}
                 {isCooked&&!streakStart&&!isFirstCol&&(
-                  <div style={{position:"absolute",left:0,right:"50%",top:"50%",transform:"translateY(-50%)",height:32,background:`${C.flame}25`,zIndex:0}}/>
+                  <div style={{position:"absolute",left:0,right:"50%",top:"50%",transform:"translateY(-50%)",height:34,background:`${C.flame}18`,zIndex:0}}/>
                 )}
                 {isCooked&&!streakEnd&&!isLastCol&&(
-                  <div style={{position:"absolute",left:"50%",right:0,top:"50%",transform:"translateY(-50%)",height:32,background:`${C.flame}25`,zIndex:0}}/>
+                  <div style={{position:"absolute",left:"50%",right:0,top:"50%",transform:"translateY(-50%)",height:34,background:`${C.flame}18`,zIndex:0}}/>
                 )}
-                {/* Day circle */}
                 <div style={{
                   position:"relative",zIndex:1,
-                  width:36,height:36,
+                  width:34,height:34,
                   borderRadius:"50%",
                   background:isCooked?C.flame:isToday?`${C.flame}15`:"transparent",
                   border:isToday&&!isCooked?`2px solid ${C.flame}`:"none",
                   display:"flex",alignItems:"center",justifyContent:"center",
-                  flexDirection:"column",
-                  gap:1,
                 }}>
                   <div style={{
                     fontSize:13,fontWeight:isCooked||isToday?800:400,
                     color:isCooked?"#fff":isToday?C.flame:C.muted,
                     lineHeight:1,
                   }}>{day}</div>
-                  {isCooked&&<div style={{fontSize:8,lineHeight:1}}>🔥</div>}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Streak Society milestones */}
+        {/* Milestones — clean, no emoji */}
         <div style={{padding:"24px 16px 0"}}>
-          <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:4}}>Streak Society</div>
-          <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Keep cooking to unlock exclusive rewards</div>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:14}}>Milestones</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {MILESTONES.map(m=>{
               const unlocked=currentStreak>=m.days;
               const progress=Math.min(100,Math.round(currentStreak/m.days*100));
               return(
-                <div key={m.days} style={{background:unlocked?`${C.flame}08`:C.cream,borderRadius:16,padding:"14px 16px",border:`1.5px solid ${unlocked?C.flame:C.border}`,display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{width:44,height:44,borderRadius:13,background:unlocked?`${C.flame}20`:"#E8E0D8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,filter:unlocked?"none":"grayscale(1)",opacity:unlocked?1:.5}}>
-                    {m.icon}
+                <div key={m.days} style={{background:unlocked?`${C.flame}08`:C.cream,borderRadius:14,padding:"13px 16px",border:`1.5px solid ${unlocked?C.flame+"44":C.border}`,display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:38,height:38,borderRadius:11,background:unlocked?`${C.flame}18`:C.pill,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    {unlocked
+                      ?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      :<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    }
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:800,fontSize:14,color:unlocked?C.bark:C.muted}}>{m.label}</div>
-                    <div style={{fontSize:11,color:C.muted,marginTop:1}}>{m.desc}</div>
+                    <div style={{fontWeight:700,fontSize:13,color:unlocked?C.bark:C.muted,marginBottom:unlocked?0:5}}>{m.label}</div>
                     {!unlocked&&(
-                      <div style={{marginTop:6}}>
+                      <>
                         <div style={{background:C.border,borderRadius:99,height:4,overflow:"hidden"}}>
-                          <div style={{width:`${progress}%`,height:"100%",background:C.flame,borderRadius:99,transition:"width .5s"}}/>
+                          <div style={{width:`${progress}%`,height:"100%",background:C.flame,borderRadius:99}}/>
                         </div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:3}}>{currentStreak}/{m.days} days</div>
-                      </div>
+                        <div style={{fontSize:10,color:C.muted,marginTop:3}}>{currentStreak} of {m.days} days</div>
+                      </>
                     )}
                   </div>
-                  {unlocked&&<div style={{fontSize:11,fontWeight:700,color:C.flame,flexShrink:0}}>Unlocked!</div>}
-                  {!unlocked&&<div style={{width:24,height:24,borderRadius:"50%",background:C.pill,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                  </div>}
+                  {unlocked&&<div style={{fontSize:11,fontWeight:700,color:C.flame,flexShrink:0}}>Done</div>}
                 </div>
               );
             })}
