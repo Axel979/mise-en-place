@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
-  flame:"#E8442A", ember:"#D63920", cream:"#FFF8F0", paper:"#FAF4EE",
+  flame:"#FF4D1C", ember:"#FF8C42", cream:"#FFF8F0", paper:"#FAF4EE",
   bark:"#3B2A1A",  sage:"#5C7A4E",  moss:"#8BAF78",  gold:"#F5C842",
   muted:"#9E8C7E", border:"#EEE5DC",pill:"#F0EBE6",  sky:"#4A90D9",
   plum:"#9B5DE5",  rose:"#E05C7A",  dark:"#111118",
@@ -648,8 +648,8 @@ const XPBar=({pct,color=C.flame,h=8})=>(
 const DiffBadge=({level})=>{const c={Easy:C.sage,Medium:C.ember,Hard:C.flame}[level]||C.muted;return<span style={{fontSize:10,fontWeight:800,color:c,background:`${c}1A`,borderRadius:6,padding:"2px 7px"}}>{level}</span>;};
 const Chip=({label,color=C.muted,bg})=><span style={{fontSize:10,fontWeight:700,color,background:bg||`${color}18`,borderRadius:6,padding:"2px 8px",whiteSpace:"nowrap"}}>{label}</span>;
 const Sheet=({children,onClose})=>(
-  <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-    <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxHeight:"94vh",overflowY:"auto",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>{children}</div>
+  <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,maxHeight:"94vh",overflowY:"auto",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>{children}</div>
   </div>
 );
 const CloseBtn=({onClose})=><button onClick={onClose} style={{background:C.pill,border:"none",borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:18,color:C.muted,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>;
@@ -3376,7 +3376,7 @@ function StreakCalendar({cookedDays, cookLog, onClose}){
   const daysInMonth=getDaysInMonth(viewMonth,viewYear);
   const firstDay=getFirstDay(viewMonth,viewYear);
   const monthName=new Date(viewYear,viewMonth).toLocaleString("default",{month:"long",year:"numeric"});
-  const totalCooked=Array.from(cookedSet).filter(d=>d.startsWith(`${viewYear}-${viewMonth}-`)).length;
+  const monthCooked=Array.from(cookedSet).filter(d=>d.startsWith(`${viewYear}-${viewMonth}-`)).length;
 
   const currentStreak=useMemo(()=>{
     let streak=0;
@@ -3393,141 +3393,90 @@ function StreakCalendar({cookedDays, cookLog, onClose}){
   const nextMonth=()=>{ if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1); };
   const canGoNext=viewYear<today.getFullYear()||(viewYear===today.getFullYear()&&viewMonth<today.getMonth());
 
-  const isStreakStart=(day)=>{
-    const prev=new Date(viewYear,viewMonth,day-1);
-    return !cookedSet.has(`${prev.getFullYear()}-${prev.getMonth()}-${prev.getDate()}`);
+  const isStreakConn=(day, offset)=>{
+    const d=new Date(viewYear,viewMonth,day+offset);
+    return cookedSet.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
   };
-  const isStreakEnd=(day)=>{
-    const next=new Date(viewYear,viewMonth,day+1);
-    return !cookedSet.has(`${next.getFullYear()}-${next.getMonth()}-${next.getDate()}`);
-  };
-
-  const MILESTONES=[
-    {days:3,  label:"3 day streak",   desc:"Cook 3 days in a row"},
-    {days:7,  label:"Week streak",    desc:"Cook 7 days in a row"},
-    {days:14, label:"2 week streak",  desc:"Cook 14 days in a row"},
-    {days:30, label:"Month streak",   desc:"Cook every day for a month"},
-  ];
-
-  const FlameIcon=({size=28,col=C.flame})=>(
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={col} stroke="none">
-      <path d="M12 2C9 7 6 9 6 13a6 6 0 0012 0c0-4-3-6-6-11zm0 17a3 3 0 01-3-3c0-2 1.5-3 3-5 1.5 2 3 3 3 5a3 3 0 01-3 3z"/>
-    </svg>
-  );
 
   return(
     <Sheet onClose={onClose}>
-      <div style={{padding:"0 0 44px"}}>
+      <div style={{padding:"0 0 40px"}}>
 
-        {/* Header */}
-        <div style={{padding:"24px 20px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Streak</div>
-          <CloseBtn onClose={onClose}/>
+        {/* Handle bar */}
+        <div style={{display:"flex",justifyContent:"center",padding:"12px 0 0"}}>
+          <div style={{width:36,height:4,borderRadius:99,background:C.border}}/>
         </div>
 
-        {/* Streak hero — clean, no emoji */}
-        <div style={{margin:"0 16px 20px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"20px",color:"#fff",display:"flex",alignItems:"center",gap:20}}>
-          <div style={{width:56,height:56,borderRadius:16,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <FlameIcon size={30} col={C.flame}/>
-          </div>
+        {/* Streak count */}
+        <div style={{padding:"20px 20px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
-            <div style={{fontWeight:900,fontSize:42,lineHeight:1,fontFamily:DF}}>{currentStreak}</div>
-            <div style={{fontSize:13,opacity:.6,marginTop:2}}>day streak</div>
+            <div style={{fontWeight:900,fontSize:36,color:C.bark,fontFamily:DF,lineHeight:1}}>{currentStreak}</div>
+            <div style={{fontSize:13,color:C.muted,fontWeight:600,marginTop:2}}>day streak</div>
           </div>
-          <div style={{marginLeft:"auto",textAlign:"right"}}>
-            <div style={{fontWeight:800,fontSize:20}}>{totalCooked}</div>
-            <div style={{fontSize:11,opacity:.5}}>this month</div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontWeight:800,fontSize:20,color:C.bark}}>{monthCooked}</div>
+            <div style={{fontSize:12,color:C.muted}}>this month</div>
           </div>
         </div>
 
         {/* Month nav */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",marginBottom:8}}>
-          <button onClick={prevMonth} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 12px",borderRadius:10,color:C.bark,fontSize:20,lineHeight:1}}>‹</button>
-          <div style={{fontWeight:800,fontSize:15,color:C.bark}}>{monthName}</div>
-          <button onClick={nextMonth} disabled={!canGoNext} style={{background:"none",border:"none",cursor:canGoNext?"pointer":"default",padding:"8px 12px",borderRadius:10,color:canGoNext?C.bark:C.border,fontSize:20,lineHeight:1}}>›</button>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"24px 8px 8px"}}>
+          <button onClick={prevMonth} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 16px",color:C.muted,fontSize:22,lineHeight:1,borderRadius:10}}>‹</button>
+          <div style={{fontWeight:700,fontSize:15,color:C.bark}}>{monthName}</div>
+          <button onClick={nextMonth} disabled={!canGoNext} style={{background:"none",border:"none",cursor:canGoNext?"pointer":"default",padding:"8px 16px",color:canGoNext?C.muted:C.border,fontSize:22,lineHeight:1,borderRadius:10}}>›</button>
         </div>
 
         {/* Day labels */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",marginBottom:2}}>
-          {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d,i)=>(
-            <div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.muted,padding:"4px 0"}}>{d}</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",marginBottom:4}}>
+          {["S","M","T","W","T","F","S"].map((d,i)=>(
+            <div key={i} style={{textAlign:"center",fontSize:11,fontWeight:700,color:C.muted,padding:"4px 0"}}>{d}</div>
           ))}
         </div>
 
-        {/* Calendar grid */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 16px",gap:"2px 0"}}>
+        {/* Calendar */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 12px",rowGap:4}}>
           {Array.from({length:firstDay}).map((_,i)=><div key={`e${i}`}/>)}
           {Array.from({length:daysInMonth}).map((_,i)=>{
             const day=i+1;
             const key=`${viewYear}-${viewMonth}-${day}`;
-            const isCooked=cookedSet.has(key);
+            const cooked=cookedSet.has(key);
             const isToday=day===today.getDate()&&viewMonth===today.getMonth()&&viewYear===today.getFullYear();
-            const streakStart=isCooked&&isStreakStart(day);
-            const streakEnd=isCooked&&isStreakEnd(day);
+            const prevCooked=isStreakConn(day,-1);
+            const nextCooked=isStreakConn(day,1);
             const totalOffset=firstDay+i;
-            const dayOfWeek=totalOffset%7;
-            const isFirstCol=dayOfWeek===0;
-            const isLastCol=dayOfWeek===6;
+            const col=totalOffset%7;
+            const isFirst=col===0;
+            const isLast=col===6;
 
             return(
-              <div key={day} style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",height:42}}>
-                {/* Streak connector */}
-                {isCooked&&!streakStart&&!isFirstCol&&(
-                  <div style={{position:"absolute",left:0,right:"50%",top:"50%",transform:"translateY(-50%)",height:34,background:`${C.flame}18`,zIndex:0}}/>
+              <div key={day} style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",height:46}}>
+                {/* Streak pill connector — left */}
+                {cooked&&prevCooked&&!isFirst&&(
+                  <div style={{position:"absolute",left:0,right:"50%",top:"50%",transform:"translateY(-50%)",height:36,background:`${C.flame}18`,zIndex:0}}/>
                 )}
-                {isCooked&&!streakEnd&&!isLastCol&&(
-                  <div style={{position:"absolute",left:"50%",right:0,top:"50%",transform:"translateY(-50%)",height:34,background:`${C.flame}18`,zIndex:0}}/>
+                {/* Streak pill connector — right */}
+                {cooked&&nextCooked&&!isLast&&(
+                  <div style={{position:"absolute",left:"50%",right:0,top:"50%",transform:"translateY(-50%)",height:36,background:`${C.flame}18`,zIndex:0}}/>
                 )}
+                {/* Day circle */}
                 <div style={{
                   position:"relative",zIndex:1,
-                  width:34,height:34,
-                  borderRadius:"50%",
-                  background:isCooked?C.flame:isToday?`${C.flame}15`:"transparent",
-                  border:isToday&&!isCooked?`2px solid ${C.flame}`:"none",
+                  width:36,height:36,borderRadius:"50%",
+                  background:cooked?C.flame:isToday?`${C.flame}15`:"transparent",
+                  border:isToday&&!cooked?`2px solid ${C.flame}`:"none",
                   display:"flex",alignItems:"center",justifyContent:"center",
+                  flexShrink:0,
                 }}>
-                  <div style={{
-                    fontSize:13,fontWeight:isCooked||isToday?800:400,
-                    color:isCooked?"#fff":isToday?C.flame:C.muted,
+                  <span style={{
+                    fontSize:14,
+                    fontWeight:cooked||isToday?800:400,
+                    color:cooked?"#fff":isToday?C.flame:C.muted,
                     lineHeight:1,
-                  }}>{day}</div>
+                  }}>{day}</span>
                 </div>
               </div>
             );
           })}
-        </div>
-
-        {/* Milestones — clean, no emoji */}
-        <div style={{padding:"24px 16px 0"}}>
-          <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:14}}>Milestones</div>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {MILESTONES.map(m=>{
-              const unlocked=currentStreak>=m.days;
-              const progress=Math.min(100,Math.round(currentStreak/m.days*100));
-              return(
-                <div key={m.days} style={{background:unlocked?`${C.flame}08`:C.cream,borderRadius:14,padding:"13px 16px",border:`1.5px solid ${unlocked?C.flame+"44":C.border}`,display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{width:38,height:38,borderRadius:11,background:unlocked?`${C.flame}18`:C.pill,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    {unlocked
-                      ?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      :<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                    }
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:13,color:unlocked?C.bark:C.muted,marginBottom:unlocked?0:5}}>{m.label}</div>
-                    {!unlocked&&(
-                      <>
-                        <div style={{background:C.border,borderRadius:99,height:4,overflow:"hidden"}}>
-                          <div style={{width:`${progress}%`,height:"100%",background:C.flame,borderRadius:99}}/>
-                        </div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:3}}>{currentStreak} of {m.days} days</div>
-                      </>
-                    )}
-                  </div>
-                  {unlocked&&<div style={{fontSize:11,fontWeight:700,color:C.flame,flexShrink:0}}>Done</div>}
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </Sheet>
@@ -4668,7 +4617,7 @@ export default function App(){
       {showDrawer&&(
         <div style={{position:"fixed",inset:0,zIndex:200}} onClick={e=>e.target===e.currentTarget&&setShowDrawer(false)}>
           <div style={{background:"rgba(0,0,0,.45)",position:"absolute",inset:0,backdropFilter:"blur(2px)"}} onClick={()=>setShowDrawer(false)}/>
-          <div style={{background:C.paper,width:"88%",maxWidth:360,height:"100%",overflowY:"auto",position:"absolute",right:0,top:0,padding:"0 20px 40px",boxShadow:"-8px 0 40px rgba(0,0,0,.15)",animation:"slideRight .25s cubic-bezier(.4,0,.2,1)"}}>
+          <div style={{background:C.paper,width:"88%",maxWidth:380,height:"100%",overflowY:"auto",position:"absolute",right:0,top:0,padding:"0 20px 40px",boxShadow:"-8px 0 40px rgba(0,0,0,.15)",animation:"slideRight .25s cubic-bezier(.4,0,.2,1)"}}>
             <div style={{display:"flex",justifyContent:"flex-end",padding:"14px 0 8px"}}>
               <button onClick={()=>setShowDrawer(false)} style={{background:"none",border:"none",cursor:"pointer",padding:4}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
