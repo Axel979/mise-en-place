@@ -67,33 +67,38 @@ export function useAuth() {
 
   // ── XP ────────────────────────────────────────────────────
   const saveXp = async (userId: string, xp: number) => {
+    console.log("SAVING saveXp:", { userId, xp });
     try {
-      await supabase
+      const { error } = await supabase
         .from('profiles')
         .upsert({ id: userId, xp, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      console.log("SAVING saveXp result:", error || "OK");
     } catch (e) {
-      console.error('saveXp error:', e);
+      console.error('SAVING saveXp threw:', e);
     }
   };
 
   // ── Completed recipes ─────────────────────────────────────
   const logCompletedRecipe = async (userId: string, recipe: any) => {
+    const payload = {
+      user_id: userId,
+      recipe_id: String(recipe.id),
+      cooked_at: new Date().toISOString(),
+      rating: recipe.rating || null,
+      notes: recipe.caption || recipe.notes || null,
+      name: recipe.name || null,
+      emoji: recipe.emoji || null,
+      category: recipe.category || null,
+      difficulty: recipe.difficulty || null,
+      xp: recipe.xp || 0,
+      photo_url: recipe.photo || null,
+    };
+    console.log("SAVING logCompletedRecipe:", payload);
     try {
-      await supabase.from('completed_recipes').insert({
-        user_id: userId,
-        recipe_id: String(recipe.id),
-        cooked_at: new Date().toISOString(),
-        rating: recipe.rating || null,
-        notes: recipe.caption || recipe.notes || null,
-        name: recipe.name || null,
-        emoji: recipe.emoji || null,
-        category: recipe.category || null,
-        difficulty: recipe.difficulty || null,
-        xp: recipe.xp || 0,
-        photo_url: recipe.photo || null,
-      });
+      const { error } = await supabase.from('completed_recipes').insert(payload);
+      console.log("SAVING logCompletedRecipe result:", error || "OK");
     } catch (e) {
-      console.error('logCompletedRecipe error:', e);
+      console.error('SAVING logCompletedRecipe threw:', e);
     }
   };
 
@@ -117,14 +122,15 @@ export function useAuth() {
   // ── Profile field savers (fire and forget) ───────────────
   const saveProfileField = async (userId: string, fields: Record<string, any>) => {
     if (!userId) return;
+    console.log("SAVING saveProfileField:", { userId, fields });
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ ...fields, updated_at: new Date().toISOString() })
         .eq('id', userId);
-      if (error) console.error('saveProfileField error:', error);
+      console.log("SAVING saveProfileField result:", error || "OK");
     } catch (e) {
-      console.error('saveProfileField threw:', e);
+      console.error('SAVING saveProfileField threw:', e);
     }
   };
   const saveEarnedBadges       = (uid: string, badges: string[])      => saveProfileField(uid, { earned_badges: badges });
