@@ -88,8 +88,6 @@ export function useAuth() {
       user_id: userId,
       recipe_id: String(recipe.id),
       cooked_at: new Date().toISOString(),
-      rating: recipe.rating || null,
-      notes: recipe.caption || recipe.notes || null,
       name: recipe.name || null,
       emoji: recipe.emoji || null,
       category: recipe.category || null,
@@ -131,7 +129,7 @@ export function useAuth() {
     console.log("SAVING saveProfileField:", { userId, fields });
     try {
       const { error } = await withTimeout(
-        supabase.from('profiles').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', userId)
+        supabase.from('profiles').upsert({ id: userId, ...fields, updated_at: new Date().toISOString() }, { onConflict: 'id' })
       ) as any;
       console.log("SAVING saveProfileField result:", error || "OK");
     } catch (e) {
