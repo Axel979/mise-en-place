@@ -4398,10 +4398,43 @@ export default function App(){
   },[profile]);
 
   // Persist state changes to Supabase (fire and forget, skip initial hydration)
-  useEffect(()=>{ if(hydratedRef.current&&user?.id) saveEarnedBadges(user.id, earnedBadges); },[earnedBadges,user]);
-  useEffect(()=>{ if(hydratedRef.current&&user?.id) saveChallengeProgress(user.id, challengeProgress); },[challengeProgress,user]);
-  useEffect(()=>{ if(hydratedRef.current&&user?.id) saveSavedPosts(user.id, Array.from(savedPosts)); },[savedPosts,user]);
-  useEffect(()=>{ if(hydratedRef.current&&user?.id&&goal?.id) saveGoal(user.id, goal.id); },[goal,user]);
+  const prevBadges=useRef(null);
+  const prevCP=useRef(null);
+  const prevSaved=useRef(null);
+  const prevGoal=useRef(null);
+  useEffect(()=>{
+    if(!hydratedRef.current) return;
+    const uid=userIdRef.current; if(!uid) return;
+    const json=JSON.stringify(earnedBadges);
+    if(prevBadges.current===json) return;
+    prevBadges.current=json;
+    saveEarnedBadges(uid,earnedBadges);
+  },[earnedBadges]);
+  useEffect(()=>{
+    if(!hydratedRef.current) return;
+    const uid=userIdRef.current; if(!uid) return;
+    const json=JSON.stringify(challengeProgress);
+    if(prevCP.current===json) return;
+    prevCP.current=json;
+    saveChallengeProgress(uid,challengeProgress);
+  },[challengeProgress]);
+  useEffect(()=>{
+    if(!hydratedRef.current) return;
+    const uid=userIdRef.current; if(!uid) return;
+    const arr=Array.from(savedPosts);
+    const json=JSON.stringify(arr);
+    if(prevSaved.current===json) return;
+    prevSaved.current=json;
+    saveSavedPosts(uid,arr);
+  },[savedPosts]);
+  useEffect(()=>{
+    if(!hydratedRef.current) return;
+    const uid=userIdRef.current; if(!uid) return;
+    const id=goal?.id||"";
+    if(prevGoal.current===id) return;
+    prevGoal.current=id;
+    saveGoal(uid,id);
+  },[goal]);
 
   const levelInfo=useMemo(()=>getLevelInfo(xp),[xp]);
 
