@@ -34,7 +34,10 @@ export function useAuth() {
       }
     })();
 
-    return () => subscription.unsubscribe();
+    // Safety net: force loading=false after 3s so the app never hangs on a blank screen.
+    const timeout = setTimeout(() => setLoading(false), 3000);
+
+    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
   }, []);
 
   const loadProfile = async (userId: string) => {
