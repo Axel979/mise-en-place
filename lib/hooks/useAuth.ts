@@ -83,7 +83,6 @@ export function useAuth() {
   const logCompletedRecipe = async (userId: string, recipe: any) => {
     const payload = {
       user_id: userId,
-      recipe_id: String(recipe.id),
       cooked_at: new Date().toISOString(),
       name: recipe.name || null,
       emoji: recipe.emoji || null,
