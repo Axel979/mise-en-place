@@ -65,13 +65,17 @@ export function useAuth() {
     }
   };
 
+  // ── Timeout wrapper ────────────────────────────────────────
+  const withTimeout = (promise: Promise<any>, ms = 5000) =>
+    Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+
   // ── XP ────────────────────────────────────────────────────
   const saveXp = async (userId: string, xp: number) => {
     console.log("SAVING saveXp:", { userId, xp });
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({ id: userId, xp, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      const { error } = await withTimeout(
+        supabase.from('profiles').update({ xp, updated_at: new Date().toISOString() }).eq('id', userId)
+      ) as any;
       console.log("SAVING saveXp result:", error || "OK");
     } catch (e) {
       console.error('SAVING saveXp threw:', e);
@@ -95,7 +99,9 @@ export function useAuth() {
     };
     console.log("SAVING logCompletedRecipe:", payload);
     try {
-      const { error } = await supabase.from('completed_recipes').insert(payload);
+      const { error } = await withTimeout(
+        supabase.from('completed_recipes').insert(payload)
+      ) as any;
       console.log("SAVING logCompletedRecipe result:", error || "OK");
     } catch (e) {
       console.error('SAVING logCompletedRecipe threw:', e);
@@ -124,10 +130,9 @@ export function useAuth() {
     if (!userId) return;
     console.log("SAVING saveProfileField:", { userId, fields });
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ ...fields, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const { error } = await withTimeout(
+        supabase.from('profiles').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', userId)
+      ) as any;
       console.log("SAVING saveProfileField result:", error || "OK");
     } catch (e) {
       console.error('SAVING saveProfileField threw:', e);
