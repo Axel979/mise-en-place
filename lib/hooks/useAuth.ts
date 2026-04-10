@@ -171,10 +171,7 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('activity_feed')
-        .select(`
-          *,
-          profiles:user_id (username, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;

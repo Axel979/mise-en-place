@@ -4384,7 +4384,7 @@ export default function App(){
         if(feedItems.length>0){
           setPosts(feedItems.map(f=>({
             id:f.id,
-            user:{name:f.profiles?.username||'Chef',avatar:f.profiles?.username||'?',level:''},
+            user:{name:f.username||'Chef',avatar:f.username||'?',level:''},
             recipe:f.recipe_name||'',
             photo:f.photo_url||null,
             caption:f.caption||'',
