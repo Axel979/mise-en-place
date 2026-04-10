@@ -7,15 +7,11 @@ export function useAuth() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Store userId in ref so async callbacks always have the latest value
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Primary source of truth: onAuthStateChange fires on mount with the current session
-    // (INITIAL_SESSION event) and on every subsequent auth change.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log("auth state change:", _event, session?.user?.email);
         const u = session?.user ?? null;
         setUser(u);
         userIdRef.current = u?.id ?? null;
@@ -24,7 +20,6 @@ export function useAuth() {
       }
     );
 
-    // Fallback: if for any reason INITIAL_SESSION doesn't fire, still resolve loading.
     (async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -34,7 +29,6 @@ export function useAuth() {
       }
     })();
 
-    // Safety net: force loading=false after 3s so the app never hangs on a blank screen.
     const timeout = setTimeout(() => setLoading(false), 3000);
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout); };
@@ -67,36 +61,31 @@ export function useAuth() {
 
   // ── XP ────────────────────────────────────────────────────
   const saveXp = async (userId: string, xp: number) => {
-    console.log("SAVING saveXp:", { userId, xp });
     try {
-      const { error } = await supabase
+      await supabase
         .from('profiles')
         .update({ xp, updated_at: new Date().toISOString() })
         .eq('id', userId);
-      console.log("SAVING saveXp result:", error || "OK");
     } catch (e) {
-      console.error('SAVING saveXp threw:', e);
+      console.error('saveXp error:', e);
     }
   };
 
   // ── Completed recipes ─────────────────────────────────────
   const logCompletedRecipe = async (userId: string, recipe: any) => {
-    const payload = {
-      user_id: userId,
-      cooked_at: new Date().toISOString(),
-      name: recipe.name || null,
-      emoji: recipe.emoji || null,
-      category: recipe.category || null,
-      difficulty: recipe.difficulty || null,
-      xp: recipe.xp || 0,
-      photo_url: recipe.photo || null,
-    };
-    console.log("SAVING logCompletedRecipe:", payload);
     try {
-      const { error } = await supabase.from('completed_recipes').insert(payload);
-      console.log("SAVING logCompletedRecipe result:", error || "OK");
+      await supabase.from('completed_recipes').insert({
+        user_id: userId,
+        cooked_at: new Date().toISOString(),
+        name: recipe.name || null,
+        emoji: recipe.emoji || null,
+        category: recipe.category || null,
+        difficulty: recipe.difficulty || null,
+        xp: recipe.xp || 0,
+        photo_url: recipe.photo || null,
+      });
     } catch (e) {
-      console.error('SAVING logCompletedRecipe threw:', e);
+      console.error('logCompletedRecipe error:', e);
     }
   };
 
@@ -120,14 +109,12 @@ export function useAuth() {
   // ── Profile field savers (fire and forget) ───────────────
   const saveProfileField = async (userId: string, fields: Record<string, any>) => {
     if (!userId) return;
-    console.log("SAVING saveProfileField:", { userId, fields });
     try {
-      const { error } = await supabase
+      await supabase
         .from('profiles')
         .upsert({ id: userId, ...fields, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-      console.log("SAVING saveProfileField result:", error || "OK");
     } catch (e) {
-      console.error('SAVING saveProfileField threw:', e);
+      console.error('saveProfileField error:', e);
     }
   };
   const saveEarnedBadges       = (uid: string, badges: string[])      => saveProfileField(uid, { earned_badges: badges });
@@ -207,7 +194,7 @@ export function useAuth() {
         done: false,
         diets: ['No restrictions'],
         macros: null,
-        _supabaseId: r.id, // keep original uuid
+        _supabaseId: r.id,
       }));
     } catch (e) {
       console.error('loadUserRecipes error:', e);

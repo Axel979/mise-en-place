@@ -4247,7 +4247,6 @@ export default function App(){
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
-    console.log("user changed:", user?.id, user?.email);
   },[user]);
   const [onboarded,  setOnboarded]  = useState(false);
   const [tab,        setTab]        = useState("home");
