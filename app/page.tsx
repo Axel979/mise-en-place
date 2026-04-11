@@ -2251,19 +2251,6 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         </div>
       </div>
 
-      {/* ── Level progress ───────────────────────────────────────── */}
-      {levelInfo.next&&(
-        <div style={{margin:"0 16px 14px",background:C.cream,borderRadius:16,padding:"12px 14px",border:`1px solid ${C.border}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <span style={{fontSize:12,color:C.bark,fontWeight:700}}>{levelInfo.current.title}</span>
-            <span style={{fontSize:11,color:levelInfo.current.color,fontWeight:600}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForNext} 🔥 to {levelInfo.next.title}</span>
-          </div>
-          <div style={{background:C.border,borderRadius:99,height:6,overflow:"hidden"}}>
-            <div style={{width:`${levelInfo.pct}%`,height:"100%",background:`linear-gradient(90deg,${levelInfo.current.color},${levelInfo.current.color}CC)`,borderRadius:99,transition:"width .5s"}}/>
-          </div>
-        </div>
-      )}
-
       {/* ── Active challenge ─────────────────────────────────────── */}
       {activeCh&&(
         <div style={{margin:"0 16px 14px",background:`${activeCh.color}0C`,border:`1.5px solid ${activeCh.color}30`,borderRadius:16,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
