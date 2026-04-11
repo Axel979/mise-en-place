@@ -4454,13 +4454,16 @@ export default function App(){
   },[earnedBadges]);
 
   const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends")=>{
+    console.log("handleComplete fired, user:", user?.id, "userIdRef:", userIdRef.current);
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
     const uid = user?.id || userIdRef.current;
     if(uid){
       try{ saveXp(uid, newXp); }catch(e){ console.error('saveXp failed',e); }
+      console.log("saveXp called with uid:", uid, "xp:", newXp);
       try{ logCompletedRecipe(uid, {...recipe, rating}); }catch(e){ console.error('logCompletedRecipe failed',e); }
+      console.log("logCompletedRecipe called with uid:", uid, "recipe:", recipe.name);
     }
     setWeeklyXp(w=>w+recipe.xp);
     const di=new Date().getDay();const idx=di===0?6:di-1;

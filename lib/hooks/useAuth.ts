@@ -77,14 +77,16 @@ export function useAuth() {
 
   // ── Completed recipes ─────────────────────────────────────
   const logCompletedRecipe = async (userId: string, recipe: any) => {
+    console.log("INSERTING completed_recipe:", JSON.stringify({user_id: userId, name: recipe.name}));
     try {
-      await supabase.from('completed_recipes').insert({
+      const { error } = await supabase.from('completed_recipes').insert({
         user_id: userId,
         recipe_id: String(recipe.id),
         cooked_at: new Date().toISOString(),
         rating: recipe.rating || null,
         notes: recipe.notes || null,
       });
+      console.log("INSERT result:", error ? JSON.stringify(error) : "OK");
     } catch (e) {
       console.error('logCompletedRecipe error:', e);
     }
