@@ -4243,7 +4243,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
+  const { user, profile, loading, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4396,27 +4396,9 @@ export default function App(){
     }
   },[profile]);
 
-  // Persist state changes to Supabase (fire and forget, skip initial hydration)
-  const prevBadges=useRef(null);
-  const prevCP=useRef(null);
+  // Saved posts and goal save on change (explicit, no loop risk)
   const prevSaved=useRef(null);
   const prevGoal=useRef(null);
-  useEffect(()=>{
-    if(!hydratedRef.current) return;
-    const uid=userIdRef.current; if(!uid) return;
-    const json=JSON.stringify(earnedBadges);
-    if(prevBadges.current===json) return;
-    prevBadges.current=json;
-    saveEarnedBadges(uid,earnedBadges);
-  },[earnedBadges]);
-  useEffect(()=>{
-    if(!hydratedRef.current) return;
-    const uid=userIdRef.current; if(!uid) return;
-    const json=JSON.stringify(challengeProgress);
-    if(prevCP.current===json) return;
-    prevCP.current=json;
-    saveChallengeProgress(uid,challengeProgress);
-  },[challengeProgress]);
   useEffect(()=>{
     if(!hydratedRef.current) return;
     const uid=userIdRef.current; if(!uid) return;
@@ -4454,27 +4436,19 @@ export default function App(){
   },[earnedBadges]);
 
   const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends")=>{
-    console.log("handleComplete fired, user:", user?.id, "userIdRef:", userIdRef.current);
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
     const uid = user?.id || userIdRef.current;
-    if(uid){
-      try{ saveXp(uid, newXp); }catch(e){ console.error('saveXp failed',e); }
-      console.log("saveXp called with uid:", uid, "xp:", newXp);
-      try{ logCompletedRecipe(uid, {...recipe, rating}); }catch(e){ console.error('logCompletedRecipe failed',e); }
-      console.log("logCompletedRecipe called with uid:", uid, "recipe:", recipe.name);
-    }
     setWeeklyXp(w=>w+recipe.xp);
     const di=new Date().getDay();const idx=di===0?6:di-1;
     setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});
-    // Persist cooked date
     const todayIso=new Date().toISOString().slice(0,10);
+    let newDates=cookedDatesAll;
     setCookedDatesAll(prev=>{
       if(prev.includes(todayIso)) return prev;
-      const next=[...prev,todayIso];
-      if(uid) saveCookedDates(uid,next);
-      return next;
+      newDates=[...prev,todayIso];
+      return newDates;
     });
 
     // Update skills
@@ -4542,7 +4516,17 @@ export default function App(){
     const streak=cookedDays.filter(Boolean).length+1;
     const doneChalls=Object.keys(newCP).filter(id=>(newCP[id]||0)>=(CHALLENGES.find(c=>c.id===id)?.target||99));
     checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,mwah:0});
-  },[xp,allRecipes,cookedDays,skillData,challengeProgress,levelInfo,checkBadges]);
+
+    // Persist everything to Supabase in one call
+    if(uid){
+      saveAllUserData(uid, {
+        xp: newXp,
+        completedRecipe: {...recipe, photo},
+        challengeProgress: newCP,
+        cookedDates: newDates,
+      });
+    }
+  },[xp,allRecipes,cookedDays,cookedDatesAll,skillData,challengeProgress,levelInfo,checkBadges]);
 
   const openRecipe=useCallback((recipe)=>{
     setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);

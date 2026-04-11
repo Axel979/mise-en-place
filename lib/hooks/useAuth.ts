@@ -1,17 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0'
-);
+import { supabase } from '@/lib/supabase/client';
 
 export function useAuth() {
   const [user, setUser]       = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Store userId in ref so async callbacks always have the latest value
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -33,7 +27,6 @@ export function useAuth() {
       }
     );
 
-    // Safety net: force loading=false after 3s so the app never hangs on a blank screen.
     const timeout = setTimeout(() => setLoading(false), 3000);
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout); };
@@ -64,20 +57,78 @@ export function useAuth() {
     }
   };
 
-  // ── XP ────────────────────────────────────────────────────
-  const saveXp = async (userId: string, xp: number) => {
+  // ── Save all user data in one call ────────────────────────
+  const saveAllUserData = async (userId: string, data: {
+    xp?: number;
+    completedRecipe?: any;
+    earnedBadges?: string[];
+    challengeProgress?: any;
+    cookedDates?: string[];
+    savedPosts?: string[];
+    goalId?: string;
+  }) => {
+    // Build profile update
+    const profileUpdates: any = { updated_at: new Date().toISOString() };
+    if (data.xp !== undefined) profileUpdates.xp = data.xp;
+    if (data.earnedBadges) profileUpdates.earned_badges = data.earnedBadges;
+    if (data.challengeProgress) profileUpdates.challenge_progress = data.challengeProgress;
+    if (data.cookedDates) profileUpdates.cooked_dates = data.cookedDates;
+    if (data.savedPosts) profileUpdates.saved_posts = data.savedPosts;
+    if (data.goalId) profileUpdates.goal_id = data.goalId;
+
     try {
-      await supabase
+      const { error } = await supabase
         .from('profiles')
-        .upsert({ id: userId, xp, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+        .update(profileUpdates)
+        .eq('id', userId);
+      if (error) console.error('saveAllUserData profiles error:', error);
     } catch (e) {
-      console.error('saveXp error:', e);
+      console.error('saveAllUserData profiles threw:', e);
+    }
+
+    // Save completed recipe separately
+    if (data.completedRecipe) {
+      try {
+        const r = data.completedRecipe;
+        const { error } = await supabase.from('completed_recipes').insert({
+          user_id: userId,
+          recipe_id: String(r.id),
+          cooked_at: new Date().toISOString(),
+          name: r.name || null,
+          emoji: r.emoji || null,
+          category: r.category || null,
+          difficulty: r.difficulty || null,
+          xp_earned: r.xp || 0,
+          photo_url: r.photo || null,
+        });
+        if (error) console.error('saveAllUserData recipe error:', error);
+      } catch (e) {
+        console.error('saveAllUserData recipe threw:', e);
+      }
     }
   };
 
-  // ── Completed recipes ─────────────────────────────────────
+  // ── Individual savers (kept for non-handleComplete uses) ──
+  const saveProfileField = async (userId: string, fields: Record<string, any>) => {
+    if (!userId) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+      if (error) console.error('saveProfileField error:', error);
+    } catch (e) {
+      console.error('saveProfileField threw:', e);
+    }
+  };
+  const saveXp                = (uid: string, xp: number)        => saveProfileField(uid, { xp });
+  const saveEarnedBadges      = (uid: string, badges: string[])  => saveProfileField(uid, { earned_badges: badges });
+  const saveChallengeProgress = (uid: string, progress: any)     => saveProfileField(uid, { challenge_progress: progress });
+  const saveCookedDates       = (uid: string, dates: string[])   => saveProfileField(uid, { cooked_dates: dates });
+  const saveSavedPosts        = (uid: string, postIds: string[]) => saveProfileField(uid, { saved_posts: postIds });
+  const saveGoal              = (uid: string, goalId: string)    => saveProfileField(uid, { goal_id: goalId });
+
   const logCompletedRecipe = async (userId: string, recipe: any) => {
-    console.log("INSERTING completed_recipe:", JSON.stringify({user_id: userId, name: recipe.name}));
     try {
       const { error } = await supabase.from('completed_recipes').insert({
         user_id: userId,
@@ -90,9 +141,9 @@ export function useAuth() {
         xp_earned: recipe.xp || 0,
         photo_url: recipe.photo || null,
       });
-      console.log("INSERT result:", error ? JSON.stringify(error) : "OK");
+      if (error) console.error('logCompletedRecipe error:', error);
     } catch (e) {
-      console.error('logCompletedRecipe error:', e);
+      console.error('logCompletedRecipe threw:', e);
     }
   };
 
@@ -112,24 +163,6 @@ export function useAuth() {
       return [];
     }
   };
-
-  // ── Profile field savers ──────────────────────────────────
-  const saveProfileField = async (userId: string, fields: Record<string, any>) => {
-    if (!userId) return;
-    try {
-      await supabase
-        .from('profiles')
-        .update({ ...fields, updated_at: new Date().toISOString() })
-        .eq('id', userId);
-    } catch (e) {
-      console.error('saveProfileField error:', e);
-    }
-  };
-  const saveEarnedBadges      = (uid: string, badges: string[])  => saveProfileField(uid, { earned_badges: badges });
-  const saveChallengeProgress = (uid: string, progress: any)     => saveProfileField(uid, { challenge_progress: progress });
-  const saveCookedDates       = (uid: string, dates: string[])   => saveProfileField(uid, { cooked_dates: dates });
-  const saveSavedPosts        = (uid: string, postIds: string[]) => saveProfileField(uid, { saved_posts: postIds });
-  const saveGoal              = (uid: string, goalId: string)    => saveProfileField(uid, { goal_id: goalId });
 
   // ── Activity feed ─────────────────────────────────────────
   const postActivity = async (entry: {
@@ -160,10 +193,7 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('activity_feed')
-        .select(`
-          *,
-          profiles:user_id (username, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -205,7 +235,7 @@ export function useAuth() {
         done: false,
         diets: ['No restrictions'],
         macros: null,
-        _supabaseId: r.id, // keep original uuid
+        _supabaseId: r.id,
       }));
     } catch (e) {
       console.error('loadUserRecipes error:', e);
@@ -371,6 +401,7 @@ export function useAuth() {
 
   return {
     user, profile, loading, supabase,
+    saveAllUserData,
     saveXp, logCompletedRecipe, loadCompletedRecipes,
     saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal,
     postActivity, loadFeed,
