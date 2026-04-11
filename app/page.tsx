@@ -2008,7 +2008,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
           }
           {mwahAnim===post.id&&(
             <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-              <div style={{fontSize:90,animation:"mwahPop .6s ease forwards"}}>🤌</div>
+              <div style={{fontSize:90,animation:"mwahPop .6s ease forwards"}}><span style={{display:"inline-block",transform:"rotate(-20deg)"}}>🤌</span></div>
             </div>
           )}
         </div>
@@ -2017,7 +2017,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
         <div style={{display:"flex",alignItems:"center",padding:"10px 16px 6px",gap:16}}>
           {/* Mwah */}
           <button onClick={()=>!post.myMwah&&giveMwah(post.id)} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:5}}>
-            <span style={{fontSize:24,lineHeight:1,filter:post.myMwah?"none":"grayscale(1)",opacity:post.myMwah?1:0.5,transition:"all .2s",transform:post.myMwah?"scale(1.15)":"scale(1)",display:"inline-block"}}>🤌</span>
+            <span style={{fontSize:24,lineHeight:1,filter:post.myMwah?"none":"grayscale(1)",opacity:post.myMwah?1:0.5,transition:"all .2s",transform:post.myMwah?"scale(1.15) rotate(-20deg)":"rotate(-20deg)",display:"inline-block"}}>🤌</span>
           </button>
           {/* Comment */}
           <button onClick={()=>setShowComments(showComments===post.id?null:post.id)} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
@@ -2034,7 +2034,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
         </div>
 
         {/* Mwah count */}
-        {post.mwah>0&&<div style={{padding:"0 16px 4px",fontSize:13,fontWeight:700,color:C.bark}}>{post.mwah} 🤌 mwah{post.mwah!==1?"s":""}</div>}
+        {post.mwah>0&&<div style={{padding:"0 16px 4px",fontSize:13,fontWeight:700,color:C.bark}}>{post.mwah} <span style={{display:"inline-block",transform:"rotate(-20deg)"}}>🤌</span> mwah{post.mwah!==1?"s":""}</div>}
 
         {/* Caption */}
         <div style={{padding:"2px 16px 8px"}}>
@@ -2993,7 +2993,7 @@ function NotificationsTab({notifications,setNotifications,setTab}){
         <div style={{textAlign:"center",padding:"60px 32px"}}>
           <div style={{fontSize:56,marginBottom:16}}>🔔</div>
           <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF,marginBottom:8}}>No notifications yet</div>
-          <div style={{fontSize:14,color:C.muted,lineHeight:1.6}}>When friends give you 🤌 Mwah, comment on your dishes, or challenge you — it'll show up here.</div>
+          <div style={{fontSize:14,color:C.muted,lineHeight:1.6}}>When friends give you <span style={{display:"inline-block",transform:"rotate(-20deg)"}}>🤌</span> Mwah, comment on your dishes, or challenge you — it'll show up here.</div>
         </div>
       )}
 
