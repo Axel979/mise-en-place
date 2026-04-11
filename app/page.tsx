@@ -4318,6 +4318,14 @@ export default function App(){
     try{ if(localStorage.getItem("mep_onboarded")==="true") setOnboarded(true); }catch{}
     try{ const g=localStorage.getItem('mep_goal'); if(g){ const parsed=JSON.parse(g); if(parsed) setGoal(parsed); } }catch{}
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
+    // Primary persistence: load all user state from localStorage
+    try{ const v=localStorage.getItem('mep_xp'); if(v) setXp(Number(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_cookLog'); if(v) setCookLog(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_earnedBadges'); if(v) setEarnedBadges(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_challengeProgress'); if(v) setChallengeProgress(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v))); }catch{}
   },[]);
   useEffect(()=>{
     if(profile){
@@ -4396,25 +4404,25 @@ export default function App(){
     }
   },[profile]);
 
-  // Saved posts and goal save on change (explicit, no loop risk)
+  // Saved posts and goal: localStorage primary, Supabase secondary
   const prevSaved=useRef(null);
   const prevGoal=useRef(null);
   useEffect(()=>{
     if(!hydratedRef.current) return;
-    const uid=userIdRef.current; if(!uid) return;
     const arr=Array.from(savedPosts);
     const json=JSON.stringify(arr);
     if(prevSaved.current===json) return;
     prevSaved.current=json;
-    saveSavedPosts(uid,arr);
+    try{ localStorage.setItem('mep_savedPosts', json); }catch{}
+    const uid=userIdRef.current; if(uid) saveSavedPosts(uid,arr);
   },[savedPosts]);
   useEffect(()=>{
     if(!hydratedRef.current) return;
-    const uid=userIdRef.current; if(!uid) return;
     const id=goal?.id||"";
     if(prevGoal.current===id) return;
     prevGoal.current=id;
-    saveGoal(uid,id);
+    try{ localStorage.setItem('mep_goal', JSON.stringify(goal)); }catch{}
+    const uid=userIdRef.current; if(uid) saveGoal(uid,id);
   },[goal]);
 
   const levelInfo=useMemo(()=>getLevelInfo(xp),[xp]);
@@ -4517,7 +4525,21 @@ export default function App(){
     const doneChalls=Object.keys(newCP).filter(id=>(newCP[id]||0)>=(CHALLENGES.find(c=>c.id===id)?.target||99));
     checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,mwah:0});
 
-    // Persist everything to Supabase in one call
+    // Primary persistence: save to localStorage immediately
+    try{
+      localStorage.setItem('mep_xp', String(newXp));
+      localStorage.setItem('mep_earnedBadges', JSON.stringify(earnedBadges));
+      localStorage.setItem('mep_challengeProgress', JSON.stringify(newCP));
+      localStorage.setItem('mep_cookedDatesAll', JSON.stringify(newDates));
+      const di2=new Date().getDay();const idx2=di2===0?6:di2-1;
+      const days=[...cookedDays];days[idx2]=true;
+      localStorage.setItem('mep_cookedDays', JSON.stringify(days));
+      // Save cook log with new entry prepended
+      const newLog=[{id:`log-${Date.now()}`,name:recipe.name,emoji:recipe.emoji,category:recipe.category,xp:recipe.xp,difficulty:recipe.difficulty,rating,photo,caption,date:dateStr},...(JSON.parse(localStorage.getItem('mep_cookLog')||'[]'))];
+      localStorage.setItem('mep_cookLog', JSON.stringify(newLog));
+    }catch{}
+
+    // Secondary: Supabase background sync (fire and forget)
     if(uid){
       saveAllUserData(uid, {
         xp: newXp,
