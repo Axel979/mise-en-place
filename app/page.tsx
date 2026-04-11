@@ -887,28 +887,35 @@ function Onboarding({onComplete}){
 /* ═══ SHARE CARD ═════════════════════════════════════════════════════════ */
 function ShareCardRender({recipe,photo,username,xp,isCooked,cardRef}){
   return(
-    <div ref={cardRef} style={{width:1080,height:1080,position:"absolute",left:"-9999px",top:0,background:"#FFF8F0",fontFamily:DF,overflow:"hidden",border:"4px solid #E8DDD4"}}>
+    <div ref={cardRef} style={{width:1080,height:1080,position:"absolute",left:"-9999px",top:0,background:"#FFF8F0",fontFamily:DF,overflow:"hidden"}}>
       {/* Top 60%: photo or gradient */}
       <div style={{height:648,width:"100%",position:"relative",overflow:"hidden"}}>
         {photo
           ?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} crossOrigin="anonymous"/>
           :<div style={{width:"100%",height:"100%",background:"linear-gradient(160deg,#3B2A1A,#5C3A20)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{fontSize:180,opacity:.15}}>{recipe?.emoji||"🍽"}</span>
+            <span style={{fontSize:200,opacity:.12}}>{recipe?.emoji||"🍽"}</span>
           </div>
         }
+        {/* Gradient overlay at bottom of photo */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:120,background:"linear-gradient(transparent,rgba(255,248,240,.6))"}}/>
       </div>
       {/* Bottom 40%: info */}
-      <div style={{height:432,padding:"40px 56px",display:"flex",flexDirection:"column",justifyContent:"center",position:"relative"}}>
-        <div style={{fontWeight:900,fontSize:52,color:"#3B2A1A",lineHeight:1.2,marginBottom:16,fontFamily:DF}}>{recipe?.name||"Recipe"}</div>
-        {isCooked?(
-          <div style={{fontSize:28,color:"#6A5C52",fontFamily:BF}}>
-            {username||"Chef"} cooked this · +{xp||0} <span style={{color:C.flame}}>🔥</span> Heat
+      <div style={{height:432,padding:"44px 56px 40px",display:"flex",flexDirection:"column",justifyContent:"space-between",position:"relative"}}>
+        <div>
+          <div style={{fontWeight:900,fontSize:56,color:"#3B2A1A",lineHeight:1.15,marginBottom:20,fontFamily:DF}}>{recipe?.name||"Recipe"}</div>
+          {isCooked?(
+            <div style={{fontSize:26,color:"#6A5C52",fontFamily:BF,display:"flex",alignItems:"center",gap:8}}>
+              {username||"Chef"} cooked this · +{xp||0} 🔥 Heat
+            </div>
+          ):(
+            <div style={{fontSize:26,color:"#6A5C52",fontFamily:BF}}>A recipe worth trying</div>
+          )}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+          <div style={{fontSize:18,color:"#B8A99A",fontFamily:BF}}>misenplace.app</div>
+          <div style={{fontSize:24,color:"#9E8C7E",fontWeight:900,fontFamily:DF,letterSpacing:"-.02em"}}>
+            mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place
           </div>
-        ):(
-          <div style={{fontSize:28,color:"#6A5C52",fontFamily:BF}}>Check out this recipe</div>
-        )}
-        <div style={{position:"absolute",bottom:40,right:56,fontSize:22,color:"#9E8C7E",fontWeight:700,fontFamily:DF,letterSpacing:"-.02em"}}>
-          mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place
         </div>
       </div>
     </div>
@@ -935,6 +942,7 @@ async function shareRecipe({recipe,photo,username,xp,isCooked,cardEl,setToast}){
     ?`I just cooked ${recipe?.name} and earned ${xp||0} 🔥 Heat on mise.en.place!`
     :`Check out ${recipe?.name} on mise.en.place!`;
   const blob=await generateShareImage(cardEl);
+  // Try native share with image file (covers WhatsApp, iMessage, Messenger, email, IG DMs)
   if(blob && navigator.share){
     try{
       const file=new File([blob],`${(recipe?.name||"recipe").replace(/\s+/g,"-")}.png`,{type:"image/png"});
@@ -942,24 +950,34 @@ async function shareRecipe({recipe,photo,username,xp,isCooked,cardEl,setToast}){
       return;
     }catch(e){
       if(e.name==="AbortError") return;
-      // files not supported — try text-only
       try{await navigator.share({title:recipe?.name||"Recipe",text:shareText});return;}catch{}
     }
   }
-  // Fallback: copy text
+  // Fallback: copy to clipboard
   try{await navigator.clipboard.writeText(shareText);if(setToast) setToast({emoji:"📋",title:"Copied!",subtitle:"Share text copied to clipboard"});}catch{}
 }
 
 async function shareToInstagramStory({cardEl,setToast}){
   const blob=await generateShareImage(cardEl);
   if(!blob){if(setToast) setToast({emoji:"❌",title:"Error",subtitle:"Could not generate image"});return;}
+  // Try instagram-stories:// deep link (works on iOS/Android with Instagram installed)
   try{
-    const file=new File([blob],"share.png",{type:"image/png"});
-    if(navigator.share){
-      await navigator.share({files:[file]});
-    }
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const dataUrl=reader.result;
+      const a=document.createElement("a");
+      a.href=`instagram-stories://share?backgroundImage=${encodeURIComponent(dataUrl)}`;
+      a.click();
+    };
+    reader.readAsDataURL(blob);
   }catch{
-    if(setToast) setToast({emoji:"📋",title:"Image ready",subtitle:"Save and share to Instagram Stories"});
+    // Fallback: native share with image
+    try{
+      const file=new File([blob],"mise-en-place-story.png",{type:"image/png"});
+      if(navigator.share) await navigator.share({files:[file]});
+    }catch{
+      if(setToast) setToast({emoji:"📸",title:"Image ready",subtitle:"Screenshot or save to share on Instagram"});
+    }
   }
 }
 
