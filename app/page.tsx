@@ -4251,21 +4251,21 @@ export default function App(){
   const [onboarded,  setOnboarded]  = useState(false);
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
-  const [xp,         setXp]         = useState(0);
+  const [xp,         setXp]         = useState(()=>{ try{ const v=localStorage.getItem('mep_xp'); return v?Number(v):0; }catch{ return 0; } });
   const [weeklyXp,   setWeeklyXp]   = useState(130);
   const [allRecipes, setAllRecipes] = useState(RECIPES);
   const [detailRecipe,setDetailRecipe]=useState(null);
   const [showGoal,   setShowGoal]   = useState(false);
   const [posts,      setPosts]      = useState(SEED_POSTS);
   const [goal,setGoal]=useState(STREAK_GOALS[2]);
-  const [cookedDays, setCookedDays] = useState([false,false,false,false,false,false,false]);
-  const [cookedDatesAll, setCookedDatesAll] = useState([]);
+  const [cookedDays, setCookedDays] = useState(()=>{ try{ const v=localStorage.getItem('mep_cookedDays'); return v?JSON.parse(v):[false,false,false,false,false,false,false]; }catch{ return [false,false,false,false,false,false,false]; } });
+  const [cookedDatesAll, setCookedDatesAll] = useState(()=>{ try{ const v=localStorage.getItem('mep_cookedDatesAll'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const hydratedRef = useRef(false);
   const [skillData,  setSkillData]  = useState({});
-  const [challengeProgress,setChallengeProgress]=useState({});
-  const [earnedBadges,setEarnedBadges]=useState([]);
+  const [challengeProgress,setChallengeProgress]=useState(()=>{ try{ const v=localStorage.getItem('mep_challengeProgress'); return v?JSON.parse(v):{}; }catch{ return {}; } });
+  const [earnedBadges,setEarnedBadges]=useState(()=>{ try{ const v=localStorage.getItem('mep_earnedBadges'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
-  const [cookLog,      setCookLog]      = useState([]); // Goodreads-style library
+  const [cookLog,      setCookLog]      = useState(()=>{ try{ const v=localStorage.getItem('mep_cookLog'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const [showCreate,   setShowCreate]   = useState(false);
   const [showImport,   setShowImport]   = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
@@ -4277,7 +4277,7 @@ export default function App(){
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
   const [showSettings,    setShowSettings]    = useState(false);
   const [showDrawer,      setShowDrawer]      = useState(false);
-  const [savedPosts,     setSavedPosts]       = useState(() => new Set());
+  const [savedPosts,     setSavedPosts]       = useState(()=>{ try{ const v=localStorage.getItem('mep_savedPosts'); return v?new Set(JSON.parse(v)):new Set(); }catch{ return new Set(); } });
   const [recipeFilter,   setRecipeFilter]     = useState(null);
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
@@ -4318,60 +4318,59 @@ export default function App(){
     try{ if(localStorage.getItem("mep_onboarded")==="true") setOnboarded(true); }catch{}
     try{ const g=localStorage.getItem('mep_goal'); if(g){ const parsed=JSON.parse(g); if(parsed) setGoal(parsed); } }catch{}
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
-    // Primary persistence: load all user state from localStorage
-    try{ const v=localStorage.getItem('mep_xp'); if(v) setXp(Number(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_cookLog'); if(v) setCookLog(JSON.parse(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_earnedBadges'); if(v) setEarnedBadges(JSON.parse(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_challengeProgress'); if(v) setChallengeProgress(JSON.parse(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v))); }catch{}
+    // localStorage now loaded via useState initializers — no duplicate load needed
   },[]);
   useEffect(()=>{
     if(profile){
-      if(profile.xp>0) setXp(profile.xp);
+      // Only overwrite localStorage state with Supabase data if Supabase has more/better data
+      if(profile.xp>0) setXp(prev=>Math.max(prev,profile.xp));
       if(!onboarded){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
       }
-      // Hydrate persisted state from profile row
-      if(Array.isArray(profile.earned_badges)) setEarnedBadges(profile.earned_badges);
-      if(profile.challenge_progress && typeof profile.challenge_progress==="object") setChallengeProgress(profile.challenge_progress);
-      if(Array.isArray(profile.saved_posts)) setSavedPosts(new Set(profile.saved_posts));
-      if(Array.isArray(profile.cooked_dates)){
-        setCookedDatesAll(profile.cooked_dates);
-        // Rebuild cookedDays (Mon-Sun) for current week
-        const now=new Date();
-        const day=now.getDay();
-        const monday=new Date(now);
-        monday.setDate(now.getDate()-((day+6)%7));
-        const set=new Set(profile.cooked_dates);
-        const week=[];
-        for(let i=0;i<7;i++){
-          const d=new Date(monday); d.setDate(monday.getDate()+i);
-          week.push(set.has(d.toISOString().slice(0,10)));
-        }
-        setCookedDays(week);
+      if(Array.isArray(profile.earned_badges) && profile.earned_badges.length>0) setEarnedBadges(prev=>profile.earned_badges.length>prev.length?profile.earned_badges:prev);
+      if(profile.challenge_progress && typeof profile.challenge_progress==="object" && Object.keys(profile.challenge_progress).length>0) setChallengeProgress(prev=>Object.keys(profile.challenge_progress).length>Object.keys(prev).length?profile.challenge_progress:prev);
+      if(Array.isArray(profile.saved_posts) && profile.saved_posts.length>0) setSavedPosts(prev=>profile.saved_posts.length>prev.size?new Set(profile.saved_posts):prev);
+      if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length>0){
+        setCookedDatesAll(prev=>{
+          if(profile.cooked_dates.length<=prev.length) return prev;
+          // Supabase has more dates — use it and rebuild week
+          const now=new Date();
+          const day=now.getDay();
+          const monday=new Date(now);
+          monday.setDate(now.getDate()-((day+6)%7));
+          const set=new Set(profile.cooked_dates);
+          const week=[];
+          for(let i=0;i<7;i++){
+            const d=new Date(monday); d.setDate(monday.getDate()+i);
+            week.push(set.has(d.toISOString().slice(0,10)));
+          }
+          setCookedDays(week);
+          return profile.cooked_dates;
+        });
       }
       if(profile.goal_id){
         const g=STREAK_GOALS.find(x=>x.id===profile.goal_id);
         if(g) setGoal(g);
       }
-      // Rebuild cook log from completed_recipes
+      // Only load cook log from Supabase if it has more entries than localStorage
       loadCompletedRecipes().then(rows=>{
         if(rows && rows.length>0){
-          setCookLog(rows.map(r=>({
-            id:`log-${r.id}`,
-            name:r.name||r.recipe_id||"",
-            emoji:r.emoji||"",
-            category:r.category||"",
-            xp:r.xp_earned||r.xp||0,
-            difficulty:r.difficulty||"Medium",
-            rating:r.rating||0,
-            photo:r.photo_url||null,
-            caption:r.notes||"",
-            date: r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
-          })));
+          setCookLog(prev=>{
+            if(rows.length<=prev.length) return prev;
+            return rows.map(r=>({
+              id:`log-${r.id}`,
+              name:r.name||r.recipe_id||"",
+              emoji:r.emoji||"",
+              category:r.category||"",
+              xp:r.xp_earned||r.xp||0,
+              difficulty:r.difficulty||"Medium",
+              rating:r.rating||0,
+              photo:r.photo_url||null,
+              caption:r.notes||"",
+              date: r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
+            }));
+          });
         }
       }).catch(e=>console.error('loadCompletedRecipes failed',e));
       // Mark hydrated on next tick so save effects don't fire on initial load
