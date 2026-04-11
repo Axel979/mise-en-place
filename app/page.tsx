@@ -1876,9 +1876,13 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   });
 
   const giveMwah=(pid)=>{
-    setMwahAnim(pid);
-    setTimeout(()=>setMwahAnim(null),700);
-    setPosts(ps=>ps.map(p=>p.id!==pid?p:{...p,mwah:p.myMwah?p.mwah-1:p.mwah+1,myMwah:!p.myMwah}));
+    setPosts(ps=>ps.map(p=>{
+      if(p.id!==pid) return p;
+      if(p.myMwah) return p; // already mwah'd — no toggle, no double fire
+      setMwahAnim(pid);
+      setTimeout(()=>setMwahAnim(null),700);
+      return {...p,mwah:p.mwah+1,myMwah:true};
+    }));
   };
 
   const addComment=(pid)=>{
@@ -1994,7 +1998,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
         {/* Action bar */}
         <div style={{display:"flex",alignItems:"center",padding:"10px 16px 6px",gap:16}}>
           {/* Mwah */}
-          <button onClick={()=>giveMwah(post.id)} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:5}}>
+          <button onClick={()=>!post.myMwah&&giveMwah(post.id)} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:5}}>
             <span style={{fontSize:24,lineHeight:1,filter:post.myMwah?"none":"grayscale(1)",opacity:post.myMwah?1:0.5,transition:"all .2s",transform:post.myMwah?"scale(1.15)":"scale(1)",display:"inline-block"}}>🤌</span>
           </button>
           {/* Comment */}
