@@ -67,6 +67,7 @@ export function useAuth() {
     savedPosts?: string[];
     goalId?: string;
   }) => {
+    console.log("saveAllUserData called for:", userId, "data keys:", Object.keys(data));
     // Build profile update
     const profileUpdates: any = { updated_at: new Date().toISOString() };
     if (data.xp !== undefined) profileUpdates.xp = data.xp;
@@ -81,7 +82,7 @@ export function useAuth() {
         .from('profiles')
         .update(profileUpdates)
         .eq('id', userId);
-      if (error) console.error('saveAllUserData profiles error:', error);
+      console.log("profiles update result:", error || "OK");
     } catch (e) {
       console.error('saveAllUserData profiles threw:', e);
     }
@@ -101,7 +102,7 @@ export function useAuth() {
           xp_earned: r.xp || 0,
           photo_url: r.photo || null,
         });
-        if (error) console.error('saveAllUserData recipe error:', error);
+        console.log("recipe insert result:", error || "OK");
       } catch (e) {
         console.error('saveAllUserData recipe threw:', e);
       }
