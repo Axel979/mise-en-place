@@ -1,15 +1,28 @@
-'use client';
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createBrowserClient } from '@supabase/ssr';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxamt4bXJoYWxybGJmYWNreWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzUwMjIsImV4cCI6MjA4OTkxMTAyMn0.3lR3Bvo9pFX1PvBF6XlXGiqEixC_l_G5gocX4MIETv0'
+);
 
 export function useAuth() {
   const [user, setUser]       = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Store userId in ref so async callbacks always have the latest value
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      userIdRef.current = u?.id ?? null;
+      if (u) loadProfile(u.id);
+      else setLoading(false);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const u = session?.user ?? null;
@@ -20,18 +33,7 @@ export function useAuth() {
       }
     );
 
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) setLoading(false);
-      } catch {
-        setLoading(false);
-      }
-    })();
-
-    const timeout = setTimeout(() => setLoading(false), 3000);
-
-    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
+    return () => subscription.unsubscribe();
   }, []);
 
   const loadProfile = async (userId: string) => {
@@ -64,8 +66,7 @@ export function useAuth() {
     try {
       await supabase
         .from('profiles')
-        .update({ xp, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+        .upsert({ id: userId, xp, updated_at: new Date().toISOString() }, { onConflict: 'id' });
     } catch (e) {
       console.error('saveXp error:', e);
     }
@@ -76,52 +77,15 @@ export function useAuth() {
     try {
       await supabase.from('completed_recipes').insert({
         user_id: userId,
+        recipe_id: String(recipe.id),
         cooked_at: new Date().toISOString(),
-        name: recipe.name || null,
-        emoji: recipe.emoji || null,
-        category: recipe.category || null,
-        difficulty: recipe.difficulty || null,
-        xp: recipe.xp || 0,
-        photo_url: recipe.photo || null,
+        rating: recipe.rating || null,
+        notes: recipe.notes || null,
       });
     } catch (e) {
       console.error('logCompletedRecipe error:', e);
     }
   };
-
-  const loadCompletedRecipes = async () => {
-    const uid = userIdRef.current;
-    if (!uid) return [];
-    try {
-      const { data, error } = await supabase
-        .from('completed_recipes')
-        .select('*')
-        .eq('user_id', uid)
-        .order('cooked_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    } catch (e) {
-      console.error('loadCompletedRecipes error:', e);
-      return [];
-    }
-  };
-
-  // ── Profile field savers (fire and forget) ───────────────
-  const saveProfileField = async (userId: string, fields: Record<string, any>) => {
-    if (!userId) return;
-    try {
-      await supabase
-        .from('profiles')
-        .upsert({ id: userId, ...fields, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-    } catch (e) {
-      console.error('saveProfileField error:', e);
-    }
-  };
-  const saveEarnedBadges       = (uid: string, badges: string[])      => saveProfileField(uid, { earned_badges: badges });
-  const saveChallengeProgress  = (uid: string, progress: any)         => saveProfileField(uid, { challenge_progress: progress });
-  const saveCookedDates        = (uid: string, dates: string[])       => saveProfileField(uid, { cooked_dates: dates });
-  const saveSavedPosts         = (uid: string, postIds: string[])     => saveProfileField(uid, { saved_posts: postIds });
-  const saveGoal               = (uid: string, goalId: string)        => saveProfileField(uid, { goal_id: goalId });
 
   // ── Activity feed ─────────────────────────────────────────
   const postActivity = async (entry: {
@@ -152,7 +116,10 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('activity_feed')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (username, avatar_url)
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -194,7 +161,7 @@ export function useAuth() {
         done: false,
         diets: ['No restrictions'],
         macros: null,
-        _supabaseId: r.id,
+        _supabaseId: r.id, // keep original uuid
       }));
     } catch (e) {
       console.error('loadUserRecipes error:', e);
@@ -360,8 +327,7 @@ export function useAuth() {
 
   return {
     user, profile, loading, supabase,
-    saveXp, logCompletedRecipe, loadCompletedRecipes,
-    saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal,
+    saveXp, logCompletedRecipe,
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
     searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends,
