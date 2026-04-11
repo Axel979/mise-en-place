@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(cp ~/Downloads/cooking-app.jsx app/page.tsx)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(printf \"'use client';\\\\n\")",
+      "Bash(ls:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

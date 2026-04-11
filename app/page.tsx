@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import html2canvas from "html2canvas";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
@@ -883,8 +884,87 @@ function Onboarding({onComplete}){
 }
 
 
+/* ═══ SHARE CARD ═════════════════════════════════════════════════════════ */
+function ShareCardRender({recipe,photo,username,xp,isCooked,cardRef}){
+  return(
+    <div ref={cardRef} style={{width:1080,height:1080,position:"absolute",left:"-9999px",top:0,background:"#FFF8F0",fontFamily:DF,overflow:"hidden",border:"4px solid #E8DDD4"}}>
+      {/* Top 60%: photo or gradient */}
+      <div style={{height:648,width:"100%",position:"relative",overflow:"hidden"}}>
+        {photo
+          ?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} crossOrigin="anonymous"/>
+          :<div style={{width:"100%",height:"100%",background:"linear-gradient(160deg,#3B2A1A,#5C3A20)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{fontSize:180,opacity:.15}}>{recipe?.emoji||"🍽"}</span>
+          </div>
+        }
+      </div>
+      {/* Bottom 40%: info */}
+      <div style={{height:432,padding:"40px 56px",display:"flex",flexDirection:"column",justifyContent:"center",position:"relative"}}>
+        <div style={{fontWeight:900,fontSize:52,color:"#3B2A1A",lineHeight:1.2,marginBottom:16,fontFamily:DF}}>{recipe?.name||"Recipe"}</div>
+        {isCooked?(
+          <div style={{fontSize:28,color:"#6A5C52",fontFamily:BF}}>
+            {username||"Chef"} cooked this · +{xp||0} <span style={{color:C.flame}}>🔥</span> Heat
+          </div>
+        ):(
+          <div style={{fontSize:28,color:"#6A5C52",fontFamily:BF}}>Check out this recipe</div>
+        )}
+        <div style={{position:"absolute",bottom:40,right:56,fontSize:22,color:"#9E8C7E",fontWeight:700,fontFamily:DF,letterSpacing:"-.02em"}}>
+          mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const isMobile=()=>typeof navigator!=="undefined"&&/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+async function generateShareImage(cardEl){
+  if(!cardEl) return null;
+  try{
+    const canvas=await html2canvas(cardEl,{scale:1,useCORS:true,allowTaint:true,backgroundColor:"#FFF8F0",width:1080,height:1080});
+    return new Promise(resolve=>{
+      canvas.toBlob(blob=>resolve(blob),"image/png",1);
+    });
+  }catch(e){
+    console.error("html2canvas error:",e);
+    return null;
+  }
+}
+
+async function shareRecipe({recipe,photo,username,xp,isCooked,cardEl,setToast}){
+  const shareText=isCooked
+    ?`I just cooked ${recipe?.name} and earned ${xp||0} 🔥 Heat on mise.en.place!`
+    :`Check out ${recipe?.name} on mise.en.place!`;
+  const blob=await generateShareImage(cardEl);
+  if(blob && navigator.share){
+    try{
+      const file=new File([blob],`${(recipe?.name||"recipe").replace(/\s+/g,"-")}.png`,{type:"image/png"});
+      await navigator.share({files:[file],title:recipe?.name||"Recipe",text:shareText});
+      return;
+    }catch(e){
+      if(e.name==="AbortError") return;
+      // files not supported — try text-only
+      try{await navigator.share({title:recipe?.name||"Recipe",text:shareText});return;}catch{}
+    }
+  }
+  // Fallback: copy text
+  try{await navigator.clipboard.writeText(shareText);if(setToast) setToast({emoji:"📋",title:"Copied!",subtitle:"Share text copied to clipboard"});}catch{}
+}
+
+async function shareToInstagramStory({cardEl,setToast}){
+  const blob=await generateShareImage(cardEl);
+  if(!blob){if(setToast) setToast({emoji:"❌",title:"Error",subtitle:"Could not generate image"});return;}
+  try{
+    const file=new File([blob],"share.png",{type:"image/png"});
+    if(navigator.share){
+      await navigator.share({files:[file]});
+    }
+  }catch{
+    if(setToast) setToast({emoji:"📋",title:"Image ready",subtitle:"Save and share to Instagram Stories"});
+  }
+}
+
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
-function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
+function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
   const [showEdit,setShowEdit]=useState(false);
   const [step,setStep]=useState(0);
   const [mode,setMode]=useState("overview");
@@ -893,7 +973,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
   const [caption,setCaption]=useState("");
   const [rating,setRating]=useState(0);
   const [photoPreview,setPhotoPreview]=useState(null);
-  const [visibility,setVisibility]=useState("friends"); // private | friends | community
+  const [visibility,setVisibility]=useState("friends");
+  const shareCardRef=useRef(null);
   const fileRef=useRef();
   const steps_=(recipe.steps||[]);
   const nSteps=steps_.length;
@@ -979,6 +1060,9 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
                 setToast({emoji:"",title:"Added to grocery list!",subtitle:`${ings.length} ingredients from ${recipe.name}`});
               }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
+              </button>
+              <button onClick={()=>shareRecipe({recipe,photo:recipe.photo,username,xp:recipe.xp,isCooked:false,cardEl:shareCardRef.current,setToast})} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
+                Share Recipe
               </button>
             </div>
             {recipe.tip&&<div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}55`,borderRadius:18,padding:"14px 18px",marginBottom:16}}><div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:6}}>Chef's Tip</div><div style={{fontSize:13,color:"#6A5C52",lineHeight:1.65}}>{recipe.tip}</div></div>}
@@ -1073,9 +1157,20 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast}){
               <Btn onClick={handleSkip} outline color={C.muted} style={{flex:1}}>Skip</Btn>
               <Btn onClick={handlePost} color={C.sage} style={{flex:2}}>Save & Share</Btn>
             </div>
+            <button onClick={()=>shareRecipe({recipe,photo:photoPreview||recipe.photo,username,xp:recipe.xp,isCooked:true,cardEl:shareCardRef.current,setToast})} className="tap" style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,border:`2px solid ${C.flame}30`,background:`${C.flame}08`,cursor:"pointer",fontWeight:700,fontSize:13,color:C.flame,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Share your cook
+            </button>
+            {isMobile()&&(
+              <button onClick={()=>shareToInstagramStory({cardEl:shareCardRef.current,setToast})} className="tap" style={{width:"100%",marginTop:8,padding:"12px",borderRadius:14,border:`2px solid #E1306C30`,background:"#E1306C08",cursor:"pointer",fontWeight:700,fontSize:13,color:"#E1306C",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="18" cy="6" r="1.5" fill="#E1306C"/></svg>
+                Share to Instagram Story
+              </button>
+            )}
           </div>
         </Sheet>
       )}
+      <ShareCardRender ref={null} recipe={recipe} photo={photoPreview||recipe.photo} username={username} xp={recipe.xp} isCooked={done} cardRef={shareCardRef}/>
     </div>
   );
 }
@@ -1761,7 +1856,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
 }
 
 
-function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts}){
+function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts,username}){
   const [feedView,setFeedView]=useState("friends");
   const [activeTab,setActiveTab]=useState("feed");
   const [showComments,setShowComments]=useState(null);
@@ -1834,6 +1929,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
     const isMe=post.user?.name===myName||post.isOwn;
     const [menuOpen,setMenuOpen]=useState(false);
     const isSaved=(savedPosts||new Set()).has(post.id);
+    const postShareRef=useRef(null);
 
     return(
       <div style={{borderBottom:`1px solid ${C.border}`,paddingBottom:0}}>
@@ -1906,7 +2002,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           </button>
           {/* Share */}
-          <button onClick={()=>onShareInsta&&onShareInsta(post)} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
+          <button onClick={()=>shareRecipe({recipe:{name:post.recipe,emoji:post.emoji,xp:post.xp||0},photo:post.photo,username:post.user?.name,xp:post.xp||0,isCooked:true,cardEl:postShareRef.current,setToast})} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
           {/* Save — right side like Instagram */}
@@ -1963,6 +2059,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
             <button onClick={()=>addComment(post.id)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,color:C.flame,fontFamily:"inherit",padding:0}}>Post</button>
           )}
         </div>
+        <ShareCardRender ref={null} recipe={{name:post.recipe,emoji:post.emoji}} photo={post.photo} username={post.user?.name} xp={post.xp||0} isCooked={true} cardRef={postShareRef}/>
       </div>
     );
   };
@@ -4651,10 +4748,10 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast}/>;})()}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
-                    {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts}/>}
+                    {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
