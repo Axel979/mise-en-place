@@ -4357,7 +4357,7 @@ export default function App(){
             name:r.name||r.recipe_id||"",
             emoji:r.emoji||"",
             category:r.category||"",
-            xp:r.xp||0,
+            xp:r.xp_earned||r.xp||0,
             difficulty:r.difficulty||"Medium",
             rating:r.rating||0,
             photo:r.photo_url||null,

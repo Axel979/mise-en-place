@@ -87,7 +87,7 @@ export function useAuth() {
         emoji: recipe.emoji || null,
         category: recipe.category || null,
         difficulty: recipe.difficulty || null,
-        xp: recipe.xp || 0,
+        xp_earned: recipe.xp || 0,
         photo_url: recipe.photo || null,
       });
       console.log("INSERT result:", error ? JSON.stringify(error) : "OK");
