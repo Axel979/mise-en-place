@@ -1,16 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export function useAuth() {
   const [user, setUser]       = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      const u = s?.user ?? null;
       setUser(u);
       userIdRef.current = u?.id ?? null;
       if (u) loadProfile(u.id);
@@ -18,8 +20,9 @@ export function useAuth() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const u = session?.user ?? null;
+      async (_event, s) => {
+        setSession(s);
+        const u = s?.user ?? null;
         setUser(u);
         userIdRef.current = u?.id ?? null;
         if (u) await loadProfile(u.id);
@@ -393,19 +396,33 @@ export function useAuth() {
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    return { data, error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = '/login';
   };
 
+  const refresh = async () => {
+    const { data: { session: s } } = await supabase.auth.refreshSession();
+    if (s) {
+      setSession(s);
+      setUser(s.user);
+      userIdRef.current = s.user?.id ?? null;
+    }
+  };
+
   return {
-    user, profile, loading, supabase,
+    user, session, profile, loading, supabase,
+    signIn, signOut, refresh,
     saveAllUserData,
     saveXp, logCompletedRecipe, loadCompletedRecipes,
     saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal,
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
     searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends,
-    signOut,
   };
 }
