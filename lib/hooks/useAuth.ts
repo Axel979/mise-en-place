@@ -83,8 +83,12 @@ export function useAuth() {
         user_id: userId,
         recipe_id: String(recipe.id),
         cooked_at: new Date().toISOString(),
-        rating: recipe.rating || null,
-        notes: recipe.notes || null,
+        name: recipe.name || null,
+        emoji: recipe.emoji || null,
+        category: recipe.category || null,
+        difficulty: recipe.difficulty || null,
+        xp: recipe.xp || 0,
+        photo_url: recipe.photo || null,
       });
       console.log("INSERT result:", error ? JSON.stringify(error) : "OK");
     } catch (e) {
