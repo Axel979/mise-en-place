@@ -4161,6 +4161,7 @@ export default function App(){
   },[earnedBadges]);
 
   const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends")=>{
+    console.log('[COMPLETE] handleComplete fired');
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
@@ -4241,8 +4242,10 @@ export default function App(){
       localStorage.setItem('mep_cookedDays', JSON.stringify(days));
       // Save cook log with new entry prepended
       const newLog=[{id:`log-${Date.now()}`,name:recipe.name,emoji:recipe.emoji,category:recipe.category,xp:recipe.xp,difficulty:recipe.difficulty,rating,photo,caption,date:dateStr},...(JSON.parse(localStorage.getItem('mep_cookLog')||'[]'))];
+      console.log('[COMPLETE] writing to localStorage, newLog length:', newLog.length);
       localStorage.setItem('mep_cookLog', JSON.stringify(newLog));
-    }catch{}
+      console.log('[COMPLETE] localStorage write done');
+    }catch(e){console.error('[COMPLETE] error:', e);}
 
     // Secondary: Supabase background sync (fire and forget)
     if(uid){
