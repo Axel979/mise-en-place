@@ -3972,6 +3972,7 @@ export default function App(){
   const [cookedDays, setCookedDays] = useState([false,false,false,false,false,false,false]);
   const [cookedDatesAll, setCookedDatesAll] = useState([]);
   const hydratedRef = useRef(false);
+  const storageLoadedRef = useRef(false);
   const [skillData,  setSkillData]  = useState({});
   const [earnedBadges,setEarnedBadges]=useState([]);
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
@@ -4022,22 +4023,26 @@ export default function App(){
   const prevLevel = useRef(null);
 
   useEffect(()=>{
+    console.log('[STORAGE] reading localStorage...');
     setTimeout(()=>setMounted(true),60);
-    // Hydrate from localStorage after mount (avoid SSR mismatch)
     try{ if(localStorage.getItem("mep_onboarded")==="true") setOnboarded(true); }catch{}
     try{ const g=localStorage.getItem('mep_goal'); if(g){ const parsed=JSON.parse(g); if(parsed) setGoal(parsed); } }catch{}
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
-    try{ const v=localStorage.getItem('mep_xp'); if(v) setXp(Number(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_cookLog'); if(v) setCookLog(JSON.parse(v)); }catch{}
+    let xpVal=null,cookLogVal=null;
+    try{ xpVal=localStorage.getItem('mep_xp'); if(xpVal) setXp(Number(xpVal)); }catch{}
+    try{ cookLogVal=localStorage.getItem('mep_cookLog'); if(cookLogVal) setCookLog(JSON.parse(cookLogVal)); }catch{}
     try{ const v=localStorage.getItem('mep_earnedBadges'); if(v) setEarnedBadges(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v))); }catch{}
+    console.log('[STORAGE] loaded xp:', xpVal, 'cookLog length:', cookLogVal ? JSON.parse(cookLogVal).length : 0);
+    storageLoadedRef.current = true;
   },[]);
   useEffect(()=>{
+    console.log('[PROFILE] effect fired, storageLoaded:', storageLoadedRef.current, 'profile:', profile?.id);
     if(profile){
       // Only overwrite localStorage state with Supabase data if Supabase has more/better data
-      if(profile.xp>0) setXp(prev=>Math.max(prev,profile.xp));
+      if(profile.xp>0) setXp(prev=>{if(profile.xp>prev){console.log('[PROFILE] xp upgrade',prev,'→',profile.xp);return profile.xp;}return prev;});
       if(!onboarded){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
@@ -4047,7 +4052,6 @@ export default function App(){
       if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length>0){
         setCookedDatesAll(prev=>{
           if(profile.cooked_dates.length<=prev.length) return prev;
-          // Supabase has more dates — use it and rebuild week
           const now=new Date();
           const day=now.getDay();
           const monday=new Date(now);
@@ -4071,6 +4075,7 @@ export default function App(){
         if(rows && rows.length>0){
           setCookLog(prev=>{
             if(rows.length<=prev.length) return prev;
+            console.log('[PROFILE] cookLog upgrade from Supabase:', rows.length, 'vs localStorage:', prev.length);
             return rows.map(r=>({
               id:`log-${r.id}`,
               name:r.name||r.recipe_id||"",
