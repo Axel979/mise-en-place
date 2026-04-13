@@ -4070,16 +4070,23 @@ export default function App(){
         const g=STREAK_GOALS.find(x=>x.id===profile.goal_id);
         if(g) setGoal(g);
       }
+      // Mirror profile fields to localStorage
+      if(profile.xp > 0){
+        try{ localStorage.setItem('mep_xp', String(profile.xp)); }catch{}
+      }
+      if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length > 0){
+        try{ localStorage.setItem('mep_cookedDatesAll', JSON.stringify(profile.cooked_dates)); }catch{}
+      }
       // Only load cook log from Supabase if it has more entries than localStorage
       loadCompletedRecipes().then(rows=>{
         if(rows && rows.length>0){
           setCookLog(prev=>{
             if(rows.length<=prev.length) return prev;
             console.log('[PROFILE] cookLog upgrade from Supabase:', rows.length, 'vs localStorage:', prev.length);
-            return rows.map(r=>({
+            const mapped=rows.map(r=>({
               id:`log-${r.id}`,
               name:r.name||r.recipe_id||"",
-              emoji:r.emoji||"",
+              emoji:r.emoji||"🍳",
               category:r.category||"",
               xp:r.xp_earned||r.xp||0,
               difficulty:r.difficulty||"Medium",
@@ -4088,6 +4095,8 @@ export default function App(){
               caption:r.notes||"",
               date: r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
             }));
+            try{ localStorage.setItem('mep_cookLog', JSON.stringify(mapped)); }catch{}
+            return mapped;
           });
         }
       }).catch(e=>console.error('loadCompletedRecipes failed',e));
