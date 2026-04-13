@@ -532,7 +532,7 @@ const DiffBadge=({level})=>{const c={Easy:C.sage,Medium:C.ember,Hard:C.flame}[le
 const Chip=({label,color=C.muted,bg})=><span style={{fontSize:10,fontWeight:700,color,background:bg||`${color}18`,borderRadius:6,padding:"2px 8px",whiteSpace:"nowrap"}}>{label}</span>;
 const Sheet=({children,onClose})=>(
   <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-    <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,maxHeight:"94vh",overflowY:"auto",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>{children}</div>
+    <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)",paddingBottom:60}}>{children}</div>
   </div>
 );
 const CloseBtn=({onClose})=><button onClick={onClose} style={{background:C.pill,border:"none",borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:18,color:C.muted,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>;
@@ -1076,7 +1076,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
 }
 
 
-function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe}){
+function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe,cookedDatesAll}){
   const [libTab,setLibTab]=useState("cooked");
   const [showBadges,setShowBadges]=useState(false);
   const [filter,setFilter]=useState("all");
@@ -1101,7 +1101,19 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
 
   // Stats
   const totalCooked=safeLog.length;
-  const streak=7; // will come from cookedDays prop
+  const streak=useMemo(()=>{
+    const dates=new Set(cookedDatesAll||[]);
+    if(dates.size===0) return 0;
+    let count=0;
+    const d=new Date();
+    for(let i=0;i<365;i++){
+      const iso=d.toISOString().slice(0,10);
+      if(!dates.has(iso)) break;
+      count++;
+      d.setDate(d.getDate()-1);
+    }
+    return count;
+  },[cookedDatesAll]);
   const badgeCount=safeBadges.length;
 
   const StatBubble=({label,value,onClick,active})=>(
@@ -3559,9 +3571,6 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
         <QuickBtn label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         }/>
-        <QuickBtn label="Recap" onClick={()=>{onShowRecap();onClose();}} icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sky} strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        }/>
       </div>
 
       {/* Settings button */}
@@ -4341,7 +4350,7 @@ export default function App(){
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
