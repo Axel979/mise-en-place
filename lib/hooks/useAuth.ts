@@ -91,7 +91,7 @@ export function useAuth() {
     if (data.completedRecipe) {
       try {
         const r = data.completedRecipe;
-        const { error } = await supabase.from('completed_recipes').insert({
+        const payload = {
           user_id: userId,
           recipe_id: String(r.id),
           cooked_at: new Date().toISOString(),
@@ -101,8 +101,12 @@ export function useAuth() {
           difficulty: r.difficulty || null,
           xp_earned: r.xp || 0,
           photo_url: r.photo || null,
-        });
-        if (error) console.error('saveAllUserData recipe error:', error);
+        };
+        const { error } = await supabase.from('completed_recipes').insert(payload);
+        if (error) {
+          console.error('completed_recipes error:', JSON.stringify(error, null, 2));
+          console.error('payload was:', JSON.stringify(payload, null, 2));
+        }
       } catch (e) {
         console.error('saveAllUserData recipe threw:', e);
       }
@@ -129,19 +133,23 @@ export function useAuth() {
   const saveGoal              = (uid: string, goalId: string)    => saveProfileField(uid, { goal_id: goalId });
 
   const logCompletedRecipe = async (userId: string, recipe: any) => {
+    const payload = {
+      user_id: userId,
+      recipe_id: String(recipe.id),
+      cooked_at: new Date().toISOString(),
+      name: recipe.name || null,
+      emoji: recipe.emoji || null,
+      category: recipe.category || null,
+      difficulty: recipe.difficulty || null,
+      xp_earned: recipe.xp || 0,
+      photo_url: recipe.photo || null,
+    };
     try {
-      const { error } = await supabase.from('completed_recipes').insert({
-        user_id: userId,
-        recipe_id: String(recipe.id),
-        cooked_at: new Date().toISOString(),
-        name: recipe.name || null,
-        emoji: recipe.emoji || null,
-        category: recipe.category || null,
-        difficulty: recipe.difficulty || null,
-        xp_earned: recipe.xp || 0,
-        photo_url: recipe.photo || null,
-      });
-      if (error) console.error('logCompletedRecipe error:', error);
+      const { error } = await supabase.from('completed_recipes').insert(payload);
+      if (error) {
+        console.error('completed_recipes error:', JSON.stringify(error, null, 2));
+        console.error('payload was:', JSON.stringify(payload, null, 2));
+      }
     } catch (e) {
       console.error('logCompletedRecipe threw:', e);
     }
