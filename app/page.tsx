@@ -4210,9 +4210,9 @@ export default function App(){
         recipe_name:recipe.name,
         recipe_id:String(recipe.id),
         caption:postCaption,
-        photo_url:photo||undefined,
+        photo_url:photo||null,
         xp_earned:recipe.xp||0,
-        rating:rating||undefined,
+        rating:rating||null,
       });
     }catch(e){console.error("postActivity failed",e);}
 

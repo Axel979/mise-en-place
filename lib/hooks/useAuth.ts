@@ -190,8 +190,13 @@ export function useAuth() {
         ...entry,
         created_at: new Date().toISOString(),
       });
-      if (error) { /* activity_feed FK may be misconfigured — non-critical, skip silently */ }
-    } catch { /* non-critical */ }
+      if (error) {
+        console.error('activity_feed error:', JSON.stringify(error, null, 2));
+        console.error('payload was:', JSON.stringify({...entry, user_id: uid}, null, 2));
+      }
+    } catch (e) {
+      console.error('postActivity threw:', e);
+    }
   };
 
   const loadFeed = async () => {
