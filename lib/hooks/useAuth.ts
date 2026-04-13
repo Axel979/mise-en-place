@@ -65,7 +65,6 @@ export function useAuth() {
     xp?: number;
     completedRecipe?: any;
     earnedBadges?: string[];
-    challengeProgress?: any;
     cookedDates?: string[];
     savedPosts?: string[];
     goalId?: string;
@@ -74,7 +73,6 @@ export function useAuth() {
     const profileUpdates: any = { updated_at: new Date().toISOString() };
     if (data.xp !== undefined) profileUpdates.xp = data.xp;
     if (data.earnedBadges) profileUpdates.earned_badges = data.earnedBadges;
-    if (data.challengeProgress) profileUpdates.challenge_progress = data.challengeProgress;
     if (data.cookedDates) profileUpdates.cooked_dates = data.cookedDates;
     if (data.savedPosts) profileUpdates.saved_posts = data.savedPosts;
     if (data.goalId) profileUpdates.goal_id = data.goalId;
@@ -126,7 +124,6 @@ export function useAuth() {
   };
   const saveXp                = (uid: string, xp: number)        => saveProfileField(uid, { xp });
   const saveEarnedBadges      = (uid: string, badges: string[])  => saveProfileField(uid, { earned_badges: badges });
-  const saveChallengeProgress = (uid: string, progress: any)     => saveProfileField(uid, { challenge_progress: progress });
   const saveCookedDates       = (uid: string, dates: string[])   => saveProfileField(uid, { cooked_dates: dates });
   const saveSavedPosts        = (uid: string, postIds: string[]) => saveProfileField(uid, { saved_posts: postIds });
   const saveGoal              = (uid: string, goalId: string)    => saveProfileField(uid, { goal_id: goalId });
@@ -420,7 +417,7 @@ export function useAuth() {
     signIn, signOut, refresh,
     saveAllUserData,
     saveXp, logCompletedRecipe, loadCompletedRecipes,
-    saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal,
+    saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal,
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
     searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends,

@@ -210,128 +210,10 @@ const BADGES = [
   {id:"streak_3",      label:"On Fire",            desc:"Cook 3 days in a row",                  check:s=>s.streak>=3},
   {id:"streak_7",      label:"Week Warrior",       desc:"Cook 7 days in a row",                  check:s=>s.streak>=7},
   {id:"world_tour",recipeFilter:{sort:"default"},    label:"World Tour",         desc:"Cook from 5 different cuisines",        check:s=>s.cuisines>=5},
-  {id:"breakfast_5",   label:"Breakfast Club",     desc:"Complete the Breakfast Club challenge", check:s=>s.challs.includes("breakfast_club")},
-  {id:"five_sprint",recipeFilter:{},   label:"5 Dish Sprint",      desc:"Complete the 5 Dish Sprint",            check:s=>s.challs.includes("five_sprint")},
-  {id:"date_night",recipeFilter:{minDifficulty:"Medium",sort:"hard"},    label:"Date Night",         desc:"Complete the Date Night challenge",     check:s=>s.challs.includes("date_night")},
-  {id:"world_ch",      label:"World Tour",         desc:"Complete the World Tour challenge",     check:s=>s.challs.includes("world_tour")},
-  {id:"explorer",      label:"Explorer",           desc:"Complete the 10 Meal Explorer",         check:s=>s.challs.includes("explorer_10")},
-  {id:"journey",       label:"Journey",            desc:"Complete the 20 Meal Journey",          check:s=>s.challs.includes("journey_20")},
-  {id:"marathoner",    label:"Marathoner",         desc:"Complete the 30 Cook Marathon",         check:s=>s.challs.includes("marathon_30")},
   {id:"asian_3",       label:"Asian Kitchen",      desc:"Cook 3 Asian dishes",                   check:s=>(s.cats.Asian||0)>=3},
   {id:"italian_3",     label:"Pasta Pro",          desc:"Cook 3 Italian dishes",                 check:s=>(s.cats.Italian||0)>=3},
   {id:"mwah_10",       label:"Fan Favourite",      desc:"Receive 10 Mwah reactions",             check:s=>(s.mwah||0)>=10},
 ];
-
-
-/* ═══ CHALLENGES ══════════════════════════════════════════════════════════ */
-const CHALLENGES = [
-  // ── Milestone challenges (permanent) ──────────────────────────────────
-  {
-    id:"breakfast_club",recipeFilter:{cat:"Breakfast"},name:"Breakfast Club",color:"#F5C842",dark:"#C9A020",
-    difficulty:"Beginner",duration:"Any time",target:5,unit:"breakfasts",xp:150,
-    category:"Breakfast",
-    milestones:[2,4,5],
-    tagline:"Cook 5 breakfast recipes.",
-    about:"Most people eat the same breakfast every day. Not anymore. Five breakfasts, five different recipes — from shakshuka to perfect omelettes to overnight oats. The most underrated meal in the kitchen.",
-    learn:["Egg cookery fundamentals","Working quickly under time pressure","How a good breakfast sets up your whole day"],
-    tips:["Prep ingredients the night before","Medium heat — eggs cook faster than you think","A non-stick pan is all you need"],
-  },
-  {
-    id:"five_sprint",recipeFilter:{},name:"5 Dish Sprint",color:"#FF4D1C",dark:"#CC3A12",
-    difficulty:"Beginner",duration:"1–2 weeks",target:5,unit:"dishes",xp:120,
-    category:null,
-    milestones:[2,4,5],
-    tagline:"Cook any 5 recipes. Your starting line.",
-    about:"No restrictions. No complexity. Just five meals cooked from scratch. This is where the habit begins — and where most people discover they're actually pretty good at this.",
-    learn:["How to read and follow a recipe","Basic mise en place","Managing your kitchen without stress"],
-    tips:["Start with Easy recipes","Cook things you already enjoy eating","A slightly overdone steak still counts"],
-  },
-  {
-    id:"date_night",recipeFilter:{minDifficulty:"Medium",sort:"hard"},name:"Date Night",color:"#E05C7A",dark:"#B33A57",
-    difficulty:"Intermediate",duration:"3 weeks",target:3,unit:"impressive meals",xp:350,
-    category:null,
-    minDifficulty:"Medium",
-    milestones:[1,2,3],
-    tagline:"Cook 3 genuinely impressive meals. Medium or harder.",
-    about:"Three meals worth cooking for someone else. Every detail matters — sourcing, timing, plating, care. This is the challenge that turns cooking from a chore into something you're proud of.",
-    learn:["How to plate food attractively","Timing multiple components together","When quality ingredients actually matter"],
-    tips:["Practice the dish once alone before cooking for someone else","Read the full recipe the night before","Choose dishes with visual wow factor"],
-  },
-  {
-    id:"world_tour",recipeFilter:{sort:"default"},name:"World Tour",color:"#00A896",dark:"#007A6E",
-    difficulty:"Intermediate",duration:"3–5 weeks",target:5,unit:"cuisines",xp:400,
-    category:null,
-    requiresDiversity:true,
-    milestones:[2,4,5],
-    tagline:"Cook from 5 different cuisines.",
-    about:"Every cuisine has solved the same problems differently. Five dishes, five countries. You'll come away with a broader palate, a wider repertoire, and a real understanding of how flavour works.",
-    learn:["How spice, acid, fat and salt work across cuisines","How to navigate unfamiliar recipes","Building a genuinely varied repertoire"],
-    tips:["Source one authentic ingredient per cuisine","Watch a YouTube video on the cuisine first","Don't simplify — the challenge is to actually cook the dish"],
-  },
-  {
-    id:"explorer_10",recipeFilter:{},name:"10 Meal Explorer",color:"#4A90D9",dark:"#2E6DB3",
-    difficulty:"Beginner",duration:"2–3 weeks",target:10,unit:"dishes",xp:280,
-    category:null,
-    milestones:[3,6,10],
-    tagline:"Branch out. Try 10 different recipes.",
-    about:"Ten meals — and this time, try something genuinely new. A cuisine you've never cooked. A technique you've been avoiding. At 10 meals, cooking starts to click.",
-    learn:["How different cuisines approach the same ingredients","Basic sauce and flavour building","How to improvise when things go wrong"],
-    tips:["Pick at least one dish from a new cuisine","Cook one dish twice — compare your attempts","Don't skip the tips — they're what cookbooks don't tell you"],
-  },
-  {
-    id:"journey_20",recipeFilter:{},name:"20 Meal Journey",color:"#FF8C42",dark:"#CC6A2A",
-    difficulty:"Intermediate",duration:"4–6 weeks",target:20,unit:"meals",xp:700,
-    category:null,
-    milestones:[5,10,15,20],
-    tagline:"Twenty meals. Real, lasting growth.",
-    about:"At 20 meals you will be a noticeably better cook than when you started. Real intuition develops — you'll taste and know what's missing, read a recipe and see where it might go wrong.",
-    learn:["Culinary intuition — tasting and adjusting","Building a personal repertoire","The relationship between technique and flavour"],
-    tips:["Keep a simple cooking journal","Repeat your favourites — getting a dish to 9/10 is a skill","Cook with a friend for at least a few meals"],
-  },
-  {
-    id:"marathon_30",recipeFilter:{},name:"30 Cook Marathon",color:"#3B2A1A",dark:"#1A1008",
-    difficulty:"Advanced",duration:"5–8 weeks",target:30,unit:"meals",xp:1500,
-    category:null,
-    milestones:[5,10,20,30],
-    tagline:"The full marathon. Thirty meals.",
-    about:"This is the one that changes everything. You will cook almost every day. You'll mess something up badly at least twice. You'll make at least one dish better than a restaurant. By meal 30, you think about food differently.",
-    learn:["Deep intuition that only comes from repetition","How to manage a week of cooking without waste","Three dishes you can cook from memory at a level that impresses anyone"],
-    tips:["Block out Sunday evening to plan ahead","Accept that some meals will be failures","Tell someone you're doing this — accountability is real","Consistency over perfection, always"],
-  },
-];
-
-// ── Monthly rotating challenge (auto-generated, zero maintenance) ─────────
-const MONTHLY_CHALLENGES = {
-  0:  {id:"veganuary",    recipeFilter:{diet:"Vegan"}, name:"Veganuary",         color:"#5C7A4E", tagline:"Cook 5 vegan recipes this January.",    target:5, filter:(r)=>(r.diets||[]).includes("Vegan"),            xp:200},
-  1:  {id:"french_feb",   recipeFilter:{cat:"Mediterranean"}, name:"French February",   color:"#4A90D9", tagline:"Cook 4 French or Mediterranean dishes.", target:4, filter:(r)=>r.category==="Mediterranean",              xp:220},
-  2:  {id:"meatball_mar", recipeFilter:{cat:"Italian"}, name:"Meatball March",    color:"#E05C7A", tagline:"Cook 4 Italian comfort dishes.",        target:4, filter:(r)=>r.category==="Italian",                    xp:200},
-  3:  {id:"asian_april",  recipeFilter:{cat:"Asian"}, name:"Asian April",       color:"#F5C842", tagline:"Cook 5 Asian recipes this month.",      target:5, filter:(r)=>["Asian","Japanese"].includes(r.category), xp:220},
-  4:  {id:"italian_may",  recipeFilter:{cat:"Italian"}, name:"Italian May",       color:"#FF4D1C", tagline:"Pasta, risotto, antipasti — 5 Italian dishes.", target:5, filter:(r)=>r.category==="Italian",           xp:230},
-  5:  {id:"bbq_june",     recipeFilter:{minDifficulty:"Medium"}, name:"BBQ June",          color:"#FF8C42", tagline:"4 grilled or roasted dishes.",          target:4, filter:(r)=>r.difficulty!=="Easy",                    xp:210},
-  6:  {id:"spice_july",   recipeFilter:{cat:"Indian"}, name:"Spice July",        color:"#9B5DE5", tagline:"Cook 4 Indian or spiced dishes.",       target:4, filter:(r)=>r.category==="Indian",                    xp:200},
-  7:  {id:"healthy_aug",  recipeFilter:{cat:"Healthy"}, name:"Healthy August",    color:"#00A896", tagline:"5 healthy recipes — light and clean.",  target:5, filter:(r)=>r.category==="Healthy",                   xp:180},
-  8:  {id:"comfort_sep",  recipeFilter:{cat:"Comfort"}, name:"Comfort September", color:"#C4814A", tagline:"4 proper comfort food recipes.",        target:4, filter:(r)=>r.category==="Comfort",                   xp:200},
-  9:  {id:"world_oct",    name:"World October",     color:"#3B2A1A", tagline:"Cook from 4 different countries.",      target:4, filter:(r)=>true,                                      xp:250},
-  10: {id:"baking_nov",   recipeFilter:{cat:"Baking"}, name:"Baking November",   color:"#F5C842", tagline:"4 baking recipes — bread, cake, pastry.", target:4, filter:(r)=>r.category==="Baking",                  xp:220},
-  11: {id:"feast_dec",    recipeFilter:{minDifficulty:"Hard"}, name:"Feast December",    color:"#E05C7A", tagline:"Cook 4 impressive festive dishes.",     target:4, filter:(r)=>r.difficulty==="Hard",                    xp:280},
-};
-
-function getCurrentMonthlyChallenge(){
-  const month=new Date().getMonth();
-  const mc=MONTHLY_CHALLENGES[month];
-  return {
-    ...mc,
-    dark:mc.color+"CC",
-    difficulty:"Any",
-    duration:"This month",
-    unit:"recipes",
-    milestones:[1,Math.ceil(mc.target/2),mc.target],
-    about:`A fresh challenge every month. This month: ${mc.tagline} Complete it before the month ends to earn the badge and bonus 🔥 Heat.`,
-    learn:["Exploring a specific cuisine or style in depth","Finding new favourite recipes","Building variety into your cooking routine"],
-    tips:["Check the Recipes tab — filter by category to find qualifying dishes","Start early in the month — don't leave it to the last week","Share your progress on the feed to stay motivated"],
-    isMonthly:true,
-  };
-}
 
 
 /* ═══ RECIPES ═════════════════════════════════════════════════════════════ */
@@ -1193,267 +1075,6 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
   );
 }
 
-/* ═══ CHALLENGES TAB ══════════════════════════════════════════════════════ */
-function ChallengeDetail({ch,progress,onBack,onInvite,onStartCooking}){
-  const prog=Math.min(progress,ch.target);
-  const pct=Math.round(prog/ch.target*100);
-  const done=prog>=ch.target;
-  const [showInvite,setShowInvite]=useState(false);
-
-  // Every step shown (1 to target)
-  const steps=Array.from({length:ch.target},(_,i)=>i+1);
-
-  const friendsOnChallenge=[
-    {username:"Sofia R.",prog:Math.min(ch.target,prog+2)},
-    {username:"Jake M.",prog:Math.min(ch.target,Math.floor(prog*0.7))},
-  ];
-
-  return(
-    <div style={{background:C.paper,minHeight:"100vh"}}>
-      {/* Hero */}
-      <div style={{background:`linear-gradient(160deg,${ch.color},${ch.dark||ch.color+"BB"})`,padding:"20px 20px 28px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",right:-20,top:-20,width:140,height:140,borderRadius:"50%",border:"28px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
-        <button onClick={onBack} style={{background:"rgba(255,255,255,.18)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:20,fontFamily:"inherit"}}>← Back</button>
-        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-          <span style={{background:"rgba(255,255,255,.18)",borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{ch.difficulty}</span>
-          <span style={{background:"rgba(255,255,255,.18)",borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>{ch.duration}</span>
-          <span style={{background:"rgba(255,255,255,.18)",borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>+{ch.xp} 🔥</span>
-          {done&&<span style={{background:"rgba(255,255,255,.25)",borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#fff"}}>Complete</span>}
-        </div>
-        <div style={{fontWeight:900,fontSize:24,color:"#fff",fontFamily:DF,lineHeight:1.2,marginBottom:6}}>{ch.name}</div>
-        <div style={{fontSize:14,color:"rgba(255,255,255,.8)",lineHeight:1.5}}>{ch.tagline}</div>
-      </div>
-
-      <div style={{padding:"20px 16px 100px"}}>
-
-        {/* Progress — every step */}
-        <div style={{background:C.cream,borderRadius:20,padding:18,marginBottom:12,border:`1px solid ${C.border}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontWeight:800,fontSize:15,color:C.bark}}>Your progress</div>
-            <div style={{fontWeight:900,fontSize:15,color:ch.color}}>{prog} of {ch.target}</div>
-          </div>
-          {/* Step dots */}
-          <div style={{display:"flex",gap:6}}>
-            {steps.map(n=>(
-              <div key={n} style={{flex:1,height:8,borderRadius:99,background:n<=prog?ch.color:C.border,transition:"background .3s"}}/>
-            ))}
-          </div>
-          {done?(
-            <div style={{background:`${C.gold}15`,borderRadius:12,padding:"12px",textAlign:"center",marginTop:14}}>
-              <div style={{fontWeight:800,fontSize:14,color:C.bark}}>Challenge complete — +{ch.xp} 🔥 earned</div>
-            </div>
-          ):(
-            <div style={{fontSize:12,color:C.muted,marginTop:10}}>{ch.target-prog} more to go</div>
-          )}
-        </div>
-
-        {/* About — one short paragraph, no AI tone */}
-        <div style={{background:C.cream,borderRadius:20,padding:18,marginBottom:12,border:`1px solid ${C.border}`}}>
-          <p style={{fontSize:14,color:"#6A5C52",lineHeight:1.75,margin:0}}>{ch.about}</p>
-        </div>
-
-        {/* Friends */}
-        <div style={{background:C.cream,borderRadius:20,padding:18,marginBottom:20,border:`1px solid ${C.border}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontWeight:800,fontSize:15,color:C.bark}}>Friends on this</div>
-            <button onClick={()=>setShowInvite(true)} style={{background:`${ch.color}15`,border:"none",borderRadius:8,padding:"5px 11px",color:ch.color,fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Invite</button>
-          </div>
-          {friendsOnChallenge.map((f,i)=>{
-            const fp=Math.min(f.prog||0,ch.target);
-            return(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:12,marginBottom:i<friendsOnChallenge.length-1?12:0}}>
-                <AvatarIcon username={f.username} size={36} fontSize={14}/>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                    <span style={{fontSize:13,fontWeight:700,color:C.bark}}>{f.username}</span>
-                    <span style={{fontSize:12,color:ch.color,fontWeight:700}}>{fp}/{ch.target}</span>
-                  </div>
-                  <div style={{display:"flex",gap:4}}>
-                    {steps.map(n=>(
-                      <div key={n} style={{flex:1,height:5,borderRadius:99,background:n<=fp?ch.color:C.border}}/>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* CTA */}
-        {!done&&(
-          <button onClick={()=>onStartCooking&&onStartCooking(ch.recipeFilter||{})} style={{width:"100%",padding:"15px",borderRadius:14,border:"none",background:ch.color,color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>
-            Find recipes for this challenge
-          </button>
-        )}
-        {done&&(
-          <button onClick={onBack} style={{width:"100%",padding:"15px",borderRadius:14,border:`1.5px solid ${ch.color}`,background:"transparent",color:ch.color,fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>
-            Challenge complete
-          </button>
-        )}
-      </div>
-
-      {showInvite&&(
-        <Sheet onClose={()=>setShowInvite(false)}>
-          <div style={{padding:"24px 20px 44px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Invite a friend</div>
-              <CloseBtn onClose={()=>setShowInvite(false)}/>
-            </div>
-            {["Sofia R.","Jake M.","Priya K.","Marcus T."].map(name=>(
-              <button key={name} onClick={()=>{onInvite&&onInvite(name,ch);setShowInvite(false);}} style={{display:"flex",alignItems:"center",gap:14,background:C.cream,border:`1.5px solid ${C.border}`,borderRadius:16,padding:"13px 16px",cursor:"pointer",textAlign:"left",width:"100%",marginBottom:10,fontFamily:"inherit"}}>
-                <AvatarIcon username={name} size={40} fontSize={16}/>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{name}</div>
-                  <div style={{fontSize:11,color:C.muted}}>Send challenge invite</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
-            ))}
-          </div>
-        </Sheet>
-      )}
-    </div>
-  );
-}
-
-function ChallengesTab({challengeProgress,onInvite,onStartCooking,earnedBadges,cookedDays,cookLog}){
-  const [selected,setSelected]=useState(null);
-  const [showCalendar,setShowCalendar]=useState(false);
-  const monthly=getCurrentMonthlyChallenge();
-  const allChallenges=[monthly,...CHALLENGES];
-
-  if(selected){
-    const ch=allChallenges.find(ch=>ch.id===selected);
-    if(!ch) return null;
-    return <ChallengeDetail ch={ch} progress={challengeProgress[selected]||0} onBack={()=>setSelected(null)} onInvite={onInvite} onStartCooking={onStartCooking}/>;
-  }
-
-  if(showCalendar) return <StreakCalendar cookedDays={cookedDays||[]} cookLog={cookLog||[]} onClose={()=>setShowCalendar(false)}/>;
-
-  const active=CHALLENGES.filter(ch=>(challengeProgress[ch.id]||0)>0&&(challengeProgress[ch.id]||0)<ch.target);
-  const completed=CHALLENGES.filter(ch=>(challengeProgress[ch.id]||0)>=ch.target);
-  const available=CHALLENGES.filter(ch=>!(challengeProgress[ch.id]>0));
-  const monthlyProgress=challengeProgress[monthly.id]||0;
-
-  const Tile=({ch,progress=0})=>{
-    const prog=Math.min(progress,ch.target);
-    const pct=Math.round(prog/ch.target*100);
-    const done=prog>=ch.target;
-    const steps=Math.min(ch.target,10); // cap at 10 segments
-    const stepSize=ch.target/steps;
-    return(
-      <button onClick={()=>setSelected(ch.id)} className="tap" style={{
-        background:done?`${ch.color}0E`:C.cream,
-        border:`1.5px solid ${done?ch.color+"55":pct>0?ch.color+"33":C.border}`,
-        borderRadius:20,padding:"0",cursor:"pointer",textAlign:"left",
-        fontFamily:"inherit",position:"relative",overflow:"hidden",
-        width:"100%",display:"block",
-      }}>
-        {/* Coloured left strip */}
-        <div style={{position:"absolute",left:0,top:0,bottom:0,width:5,background:ch.color,borderRadius:"20px 0 0 20px"}}/>
-        <div style={{padding:"15px 15px 14px 18px"}}>
-          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
-            <div style={{flex:1,minWidth:0,paddingRight:10}}>
-              <div style={{fontWeight:900,fontSize:16,color:C.bark,fontFamily:DF,marginBottom:3,lineHeight:1.2}}>{ch.name}</div>
-              <div style={{fontSize:12,color:C.muted,lineHeight:1.4}}>{ch.tagline}</div>
-            </div>
-            <div style={{flexShrink:0,textAlign:"right"}}>
-              <div style={{fontSize:13,fontWeight:800,color:ch.color}}>{ch.xp} 🔥</div>
-              <div style={{fontSize:10,color:C.muted,marginTop:2}}>{ch.difficulty}</div>
-            </div>
-          </div>
-          {/* Segmented progress bar */}
-          <div style={{display:"flex",gap:3,marginBottom:8}}>
-            {Array.from({length:steps}).map((_,i)=>{
-              const filled=(i+1)*stepSize<=prog;
-              const partial=!filled&&i*stepSize<prog;
-              return(
-                <div key={i} style={{
-                  flex:1,height:6,borderRadius:99,
-                  background:filled?ch.color:partial?`${ch.color}55`:C.border,
-                  transition:"background .3s"
-                }}/>
-              );
-            })}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:11,color:done?ch.color:pct>0?ch.color:C.muted,fontWeight:done||pct>0?600:400}}>
-              {done?"Complete":pct>0?`${prog} of ${ch.target}`:`0 of ${ch.target}`}
-            </span>
-            <div style={{display:"flex",alignItems:"center",gap:5}}>
-              {ch.isMonthly&&<span style={{fontSize:10,background:`${ch.color}18`,color:ch.color,borderRadius:5,padding:"2px 7px",fontWeight:700}}>This month</span>}
-              {!ch.isMonthly&&<span style={{fontSize:11,color:C.muted}}>{ch.duration}</span>}
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-          </div>
-        </div>
-      </button>
-    );
-  };
-
-  return(
-    <div style={{paddingBottom:40,padding:"4px 16px 40px"}}>
-
-      {/* Top row: streak + badges */}
-      <div style={{display:"flex",gap:10,marginBottom:20}}>
-        <button onClick={()=>setShowCalendar(true)} style={{flex:1,background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>Streak</div>
-          <div style={{fontWeight:900,fontSize:22,color:C.bark,fontFamily:DF}}>{(cookedDays||[]).filter(Boolean).length}<span style={{fontSize:12,fontWeight:600,color:C.muted,marginLeft:4}}>this week</span></div>
-          <div style={{marginTop:6,display:"flex",gap:3}}>
-            {(cookedDays||[false,false,false,false,false,false,false]).map((d,i)=>(
-              <div key={i} style={{flex:1,height:4,borderRadius:99,background:d?C.flame:C.border}}/>
-            ))}
-          </div>
-        </button>
-        <div style={{flex:1,background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px"}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:4}}>Badges</div>
-          <div style={{fontWeight:900,fontSize:22,color:C.bark,fontFamily:DF}}>{(earnedBadges||[]).length}<span style={{fontSize:12,fontWeight:600,color:C.muted,marginLeft:4}}>earned</span></div>
-          <div style={{marginTop:6,display:"flex",gap:4,flexWrap:"wrap"}}>
-            {BADGES.slice(0,(earnedBadges||[]).length||3).map((b,i)=>(
-              <div key={i} style={{width:16,height:16,borderRadius:4,background:(earnedBadges||[]).includes(b.id)?`${C.gold}`:C.border}}/>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Monthly challenge */}
-      <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>
-        {new Date().toLocaleString("default",{month:"long"})}
-      </div>
-      <div style={{marginBottom:20}}><Tile ch={monthly} progress={monthlyProgress}/></div>
-
-      {/* In progress */}
-      {active.length>0&&(
-        <div style={{marginBottom:20}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>In Progress</div>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {active.map(ch=><Tile key={ch.id} ch={ch} progress={challengeProgress[ch.id]||0}/>)}
-          </div>
-        </div>
-      )}
-
-      {/* All challenges */}
-      {available.length>0&&(
-        <div style={{marginBottom:20}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Challenges</div>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {available.map(ch=><Tile key={ch.id} ch={ch} progress={0}/>)}
-          </div>
-        </div>
-      )}
-
-      {/* Completed */}
-      {completed.length>0&&(
-        <div>
-          <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Completed</div>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {completed.map(ch=><Tile key={ch.id} ch={ch} progress={ch.target}/>)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe}){
   const [libTab,setLibTab]=useState("cooked");
@@ -2192,11 +1813,10 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   );
 }
 
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,challengeProgress,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
   const goalDone=weekDone>=goal.target;
-  const activeCh=CHALLENGES.find(ch=>(challengeProgress[ch.id]||0)>0&&(challengeProgress[ch.id]||0)<ch.target);
   const today=new Date().getDay();
   const todayIdx=today===0?6:today-1;
   const undone=recipes.filter(r=>!r.done&&!r.isPersonal);
@@ -2272,22 +1892,6 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
           )}
         </div>
       </div>
-
-      {/* ── Active challenge ─────────────────────────────────────── */}
-      {activeCh&&(
-        <div style={{margin:"0 16px 14px",background:`${activeCh.color}0C`,border:`1.5px solid ${activeCh.color}30`,borderRadius:16,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
-          <div style={{width:40,height:40,borderRadius:12,background:`${activeCh.color}20`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={activeCh.color} strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          </div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:800,fontSize:13,color:C.bark,marginBottom:2}}>{activeCh.name}</div>
-            <div style={{background:C.border,borderRadius:99,height:4,overflow:"hidden",marginBottom:3}}>
-              <div style={{width:`${Math.round((challengeProgress[activeCh.id]||0)/activeCh.target*100)}%`,height:"100%",background:activeCh.color,borderRadius:99,transition:"width .5s"}}/>
-            </div>
-            <div style={{fontSize:10,color:activeCh.color,fontWeight:600}}>{challengeProgress[activeCh.id]||0}/{activeCh.target} complete</div>
-          </div>
-        </div>
-      )}
 
       {/* ── Recipe cards ─────────────────────────────────────────── */}
       <div style={{padding:"0 16px"}}>
@@ -3031,12 +2635,7 @@ function NotificationsTab({notifications,setNotifications,setTab}){
                   <div style={{marginTop:8,fontSize:12,color:C.sage,fontWeight:700}}>✓ Following {n.name}</div>
                 )}
 
-                {/* Challenge action */}
-                {n.type==="challenge"&&(
-                  <div style={{display:"flex",gap:8,marginTop:10}}>
-                    <button onClick={e=>{e.stopPropagation();markRead(n.id);setTab("profile");}} className="tap" style={{flex:1,padding:"8px",borderRadius:10,border:"none",background:C.plum,color:"#fff",fontWeight:800,fontSize:12,cursor:"pointer"}}>View Challenge ⚔️</button>
-                  </div>
-                )}
+
               </div>
 
               {/* Unread dot */}
@@ -3819,7 +3418,7 @@ function PrivacySettings({onBack}){
 }
 
 function NotificationSettings({onBack}){
-  const [notifs, setNotifs] = useState({streaks:true,mwah:true,followers:true,challenges:false,recap:true,newRecipes:false});
+  const [notifs, setNotifs] = useState({streaks:true,mwah:true,followers:true,recap:true,newRecipes:false});
   const [reminderTime, setReminderTime] = useState('18:00');
   return(
     <div>
@@ -3829,7 +3428,7 @@ function NotificationSettings({onBack}){
         <input type="time" value={reminderTime} onChange={e=>setReminderTime(e.target.value)}
           style={{padding:"8px 12px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit"}}/>
       </div>
-      {[["streaks","Streak reminders","Before your streak resets"],["mwah","Mwah received","When someone mwahs your post"],["followers","New followers","When someone follows you"],["challenges","Challenge updates","Your challenge progress"],["recap","Weekly recap","Sunday cooking summary"],["newRecipes","New community recipes","Fresh from the community"]].map(([key,title,desc],i,arr)=>(
+      {[["streaks","Streak reminders","Before your streak resets"],["mwah","Mwah received","When someone mwahs your post"],["followers","New followers","When someone follows you"],["recap","Weekly recap","Sunday cooking summary"],["newRecipes","New community recipes","Fresh from the community"]].map(([key,title,desc],i,arr)=>(
         <div key={key} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none"}}>
           <div style={{flex:1}}>
             <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{title}</div>
@@ -3962,9 +3561,6 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
         }/>
         <QuickBtn label="Recap" onClick={()=>{onShowRecap();onClose();}} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sky} strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        }/>
-        <QuickBtn label="Challenges" onClick={()=>{setTab("profile");onClose();}} icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         }/>
       </div>
 
@@ -4349,7 +3945,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveChallengeProgress, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
+  const { user, profile, loading, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4368,7 +3964,6 @@ export default function App(){
   const [cookedDatesAll, setCookedDatesAll] = useState(()=>{ try{ const v=localStorage.getItem('mep_cookedDatesAll'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const hydratedRef = useRef(false);
   const [skillData,  setSkillData]  = useState({});
-  const [challengeProgress,setChallengeProgress]=useState(()=>{ try{ const v=localStorage.getItem('mep_challengeProgress'); return v?JSON.parse(v):{}; }catch{ return {}; } });
   const [earnedBadges,setEarnedBadges]=useState(()=>{ try{ const v=localStorage.getItem('mep_earnedBadges'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
   const [cookLog,      setCookLog]      = useState(()=>{ try{ const v=localStorage.getItem('mep_cookLog'); return v?JSON.parse(v):[]; }catch{ return []; } });
@@ -4408,7 +4003,6 @@ export default function App(){
     {id:"n1", type:"mwah",      read:false, avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2m ago",  emoji:"🍳"},
     {id:"n2", type:"friend_req",read:false, avatar:"🧑‍🍳", name:"Jake M.",    text:"sent you a friend request",                   time:"15m ago", emoji:null},
     {id:"n3", type:"comment",   read:false, avatar:"👩‍🦱", name:"Priya K.",   text:"commented on your Avocado Toast: \"Looks incredible!\"",time:"1h ago",emoji:"🥑"},
-    {id:"n4", type:"challenge", read:false, avatar:"🧔",   name:"Marcus T.",  text:"challenged you to the 10 Meal Explorer",      time:"2h ago",  emoji:"🗺️"},
     {id:"n5", type:"mwah",      read:true,  avatar:"👩",   name:"Yuki A.",    text:"gave you 🤌 Mwah on your Overnight Oats",     time:"3h ago",  emoji:"🥣"},
     {id:"n6", type:"streak",    read:true,  avatar:"🔥",   name:"mise.en.place", text:"You're on a 4-day streak. Keep it going!", time:"5h ago",  emoji:null},
     {id:"n7", type:"level",     read:true,  avatar:"⭐",   name:"mise.en.place", text:"You reached Prep Cook! You've earned 500 🔥 Heat",time:"1d ago",emoji:null},
@@ -4435,7 +4029,6 @@ export default function App(){
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
       }
       if(Array.isArray(profile.earned_badges) && profile.earned_badges.length>0) setEarnedBadges(prev=>profile.earned_badges.length>prev.length?profile.earned_badges:prev);
-      if(profile.challenge_progress && typeof profile.challenge_progress==="object" && Object.keys(profile.challenge_progress).length>0) setChallengeProgress(prev=>Object.keys(profile.challenge_progress).length>Object.keys(prev).length?profile.challenge_progress:prev);
       if(Array.isArray(profile.saved_posts) && profile.saved_posts.length>0) setSavedPosts(prev=>profile.saved_posts.length>prev.size?new Set(profile.saved_posts):prev);
       if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length>0){
         setCookedDatesAll(prev=>{
@@ -4573,16 +4166,6 @@ export default function App(){
       setSkillData(newSkill);
     }
 
-    // Update challenges
-    const newCP={...challengeProgress};
-    CHALLENGES.forEach(ch=>{
-      const curr=newCP[ch.id]||0;
-      if(curr>=ch.target)return;
-      if(ch.category&&recipe.category!==ch.category)return;
-      newCP[ch.id]=curr+1;
-    });
-    setChallengeProgress(newCP);
-
     // Add to cook library
     const today=new Date();
     const dateStr=today.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
@@ -4627,14 +4210,12 @@ export default function App(){
     const cats=Object.keys(SKILL_MAP).reduce((acc,c)=>{acc[c]=(newSkill[`${c}_count`]||0);return acc;},{});
     const uniqueCuisines=Object.values(cats).filter(v=>v>0).length;
     const streak=cookedDays.filter(Boolean).length+1;
-    const doneChalls=Object.keys(newCP).filter(id=>(newCP[id]||0)>=(CHALLENGES.find(c=>c.id===id)?.target||99));
-    checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:doneChalls,level:getLevelInfo(newXp).current.level,mwah:0});
+    checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:[],level:getLevelInfo(newXp).current.level,mwah:0});
 
     // Primary persistence: save to localStorage immediately
     try{
       localStorage.setItem('mep_xp', String(newXp));
       localStorage.setItem('mep_earnedBadges', JSON.stringify(earnedBadges));
-      localStorage.setItem('mep_challengeProgress', JSON.stringify(newCP));
       localStorage.setItem('mep_cookedDatesAll', JSON.stringify(newDates));
       const di2=new Date().getDay();const idx2=di2===0?6:di2-1;
       const days=[...cookedDays];days[idx2]=true;
@@ -4649,11 +4230,10 @@ export default function App(){
       saveAllUserData(uid, {
         xp: newXp,
         completedRecipe: {...recipe, photo},
-        challengeProgress: newCP,
         cookedDates: newDates,
       });
     }
-  },[xp,allRecipes,cookedDays,cookedDatesAll,skillData,challengeProgress,levelInfo,checkBadges]);
+  },[xp,allRecipes,cookedDays,cookedDatesAll,skillData,levelInfo,checkBadges]);
 
   const openRecipe=useCallback((recipe)=>{
     setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);
@@ -4758,7 +4338,7 @@ export default function App(){
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} challengeProgress={challengeProgress} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts}/>}
@@ -4773,7 +4353,6 @@ export default function App(){
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   {t.id==="home"&&<><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
                   {t.id==="recipes"&&<path d="M4 6h16M4 12h16M4 18h10"/>}
-                  {t.id==="challenges"&&<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>}
                   {t.id==="feed"&&<><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></>}
                   {t.id==="library"&&<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>}
                 </svg>
