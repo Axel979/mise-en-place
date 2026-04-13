@@ -3460,9 +3460,11 @@ function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
   const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
   const skills = ["Beginner","Intermediate","Advanced","Chef"];
   const [selectedDiet, setSelectedDiet] = useState(()=>{
+    if(typeof window==='undefined') return "None";
     try{ return localStorage.getItem("mep_diet")||"None"; }catch{ return "None"; }
   });
   const [selectedSkill, setSelectedSkill] = useState(()=>{
+    if(typeof window==='undefined') return "Beginner";
     try{ return localStorage.getItem("mep_skill")||"Beginner"; }catch{ return "Beginner"; }
   });
 
@@ -3962,20 +3964,20 @@ export default function App(){
   const [onboarded,  setOnboarded]  = useState(false);
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
-  const [xp,         setXp]         = useState(()=>{ try{ const v=localStorage.getItem('mep_xp'); return v?Number(v):0; }catch{ return 0; } });
+  const [xp,         setXp]         = useState(()=>{ if(typeof window==='undefined') return 0; try{ const v=localStorage.getItem('mep_xp'); return v?Number(v):0; }catch{ return 0; } });
   const [weeklyXp,   setWeeklyXp]   = useState(130);
   const [allRecipes, setAllRecipes] = useState(RECIPES);
   const [detailRecipe,setDetailRecipe]=useState(null);
   const [showGoal,   setShowGoal]   = useState(false);
   const [posts,      setPosts]      = useState(SEED_POSTS);
   const [goal,setGoal]=useState(STREAK_GOALS[2]);
-  const [cookedDays, setCookedDays] = useState(()=>{ try{ const v=localStorage.getItem('mep_cookedDays'); return v?JSON.parse(v):[false,false,false,false,false,false,false]; }catch{ return [false,false,false,false,false,false,false]; } });
-  const [cookedDatesAll, setCookedDatesAll] = useState(()=>{ try{ const v=localStorage.getItem('mep_cookedDatesAll'); return v?JSON.parse(v):[]; }catch{ return []; } });
+  const [cookedDays, setCookedDays] = useState(()=>{ if(typeof window==='undefined') return [false,false,false,false,false,false,false]; try{ const v=localStorage.getItem('mep_cookedDays'); return v?JSON.parse(v):[false,false,false,false,false,false,false]; }catch{ return [false,false,false,false,false,false,false]; } });
+  const [cookedDatesAll, setCookedDatesAll] = useState(()=>{ if(typeof window==='undefined') return []; try{ const v=localStorage.getItem('mep_cookedDatesAll'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const hydratedRef = useRef(false);
   const [skillData,  setSkillData]  = useState({});
-  const [earnedBadges,setEarnedBadges]=useState(()=>{ try{ const v=localStorage.getItem('mep_earnedBadges'); return v?JSON.parse(v):[]; }catch{ return []; } });
+  const [earnedBadges,setEarnedBadges]=useState(()=>{ if(typeof window==='undefined') return []; try{ const v=localStorage.getItem('mep_earnedBadges'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
-  const [cookLog,      setCookLog]      = useState(()=>{ try{ const v=localStorage.getItem('mep_cookLog'); return v?JSON.parse(v):[]; }catch{ return []; } });
+  const [cookLog,      setCookLog]      = useState(()=>{ if(typeof window==='undefined') return []; try{ const v=localStorage.getItem('mep_cookLog'); return v?JSON.parse(v):[]; }catch{ return []; } });
   const [showCreate,   setShowCreate]   = useState(false);
   const [showImport,   setShowImport]   = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
@@ -3987,7 +3989,7 @@ export default function App(){
   const [showCookTogether,setShowCookTogether]=useState(null); // recipe object
   const [showSettings,    setShowSettings]    = useState(false);
   const [showDrawer,      setShowDrawer]      = useState(false);
-  const [savedPosts,     setSavedPosts]       = useState(()=>{ try{ const v=localStorage.getItem('mep_savedPosts'); return v?new Set(JSON.parse(v)):new Set(); }catch{ return new Set(); } });
+  const [savedPosts,     setSavedPosts]       = useState(()=>{ if(typeof window==='undefined') return new Set(); try{ const v=localStorage.getItem('mep_savedPosts'); return v?new Set(JSON.parse(v)):new Set(); }catch{ return new Set(); } });
   const [recipeFilter,   setRecipeFilter]     = useState(null);
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
