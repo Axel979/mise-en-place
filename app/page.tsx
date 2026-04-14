@@ -4003,6 +4003,7 @@ export default function App(){
   const [cookedDays, setCookedDays] = useState([false,false,false,false,false,false,false]);
   const [cookedDatesAll, setCookedDatesAll] = useState([]);
   const hydratedRef = useRef(false);
+  const loadedBadgesRef = useRef(new Set());
   const storageLoadedRef = useRef(false);
   const getDeletedIds=()=>{try{return new Set(JSON.parse(localStorage.getItem('mep_deletedIds')||'[]'));}catch{return new Set();}};
   const addDeletedId=(id)=>{try{const s=getDeletedIds();s.add(String(id));localStorage.setItem('mep_deletedIds',JSON.stringify([...s]));}catch{}};
@@ -4065,7 +4066,7 @@ export default function App(){
     let xpVal=null,cookLogVal=null;
     try{ xpVal=localStorage.getItem('mep_xp'); if(xpVal) setXp(Number(xpVal)); }catch{}
     try{ cookLogVal=localStorage.getItem('mep_cookLog'); if(cookLogVal){const parsed=JSON.parse(cookLogVal).filter(r=>!del.has(String(r.id))&&!del.has(r.id));setCookLog(parsed);} }catch{}
-    try{ const v=localStorage.getItem('mep_earnedBadges'); if(v) setEarnedBadges(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_earnedBadges'); if(v){const parsed=JSON.parse(v);parsed.forEach(id=>loadedBadgesRef.current.add(id));setEarnedBadges(parsed);} }catch{}
     try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v).filter(id=>!del.has(String(id))))); }catch{}
@@ -4091,7 +4092,7 @@ export default function App(){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
       }
-      if(Array.isArray(profile.earned_badges) && profile.earned_badges.length>0) setEarnedBadges(prev=>profile.earned_badges.length>prev.length?profile.earned_badges:prev);
+      if(Array.isArray(profile.earned_badges) && profile.earned_badges.length>0){profile.earned_badges.forEach(id=>loadedBadgesRef.current.add(id));setEarnedBadges(prev=>profile.earned_badges.length>prev.length?profile.earned_badges:prev);}
       if(Array.isArray(profile.saved_posts) && profile.saved_posts.length>0) setSavedPosts(prev=>profile.saved_posts.length>prev.size?new Set(profile.saved_posts):prev);
       if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length>0){
         setCookedDatesAll(prev=>{
@@ -4212,7 +4213,9 @@ export default function App(){
     const newOnes=BADGES.filter(b=>{try{return !earnedBadges.includes(b.id)&&b.check(stats);}catch{return false;}});
     if(newOnes.length>0){
       setEarnedBadges(prev=>[...prev,...newOnes.map(b=>b.id)]);
-      setToast(t=>t||{emoji:newOnes[0].emoji,title:newOnes[0].label,subtitle:"Badge unlocked!"});
+      // Only toast for badges earned THIS session, not loaded from storage/Supabase
+      const freshBadges=newOnes.filter(b=>!loadedBadgesRef.current.has(b.id));
+      if(freshBadges.length>0) setToast(t=>t||{emoji:freshBadges[0].emoji,title:freshBadges[0].label,subtitle:"Badge unlocked!"});
     }
   },[earnedBadges]);
 
