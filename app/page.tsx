@@ -957,8 +957,15 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
             </div>
             <div style={{display:"flex",gap:10,marginBottom:12}}>
               <button onClick={()=>{
-                const ings = (recipe.ingredients||[]);
-                setToast({emoji:"",title:"Added to grocery list!",subtitle:`${ings.length} ingredients from ${recipe.name}`});
+                const ings=(recipe.ingredients||[]);
+                try{
+                  const existing=JSON.parse(localStorage.getItem('mep_groceryList')||'[]');
+                  const existingNames=new Set(existing.map(i=>i.toLowerCase().trim()));
+                  const newItems=ings.filter(i=>!existingNames.has(i.toLowerCase().trim()));
+                  const updated=[...existing,...newItems];
+                  localStorage.setItem('mep_groceryList',JSON.stringify(updated));
+                }catch{}
+                setToast({emoji:"",title:"Added to grocery list",subtitle:`${ings.length} ingredients from ${recipe.name}`});
               }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
@@ -3283,14 +3290,14 @@ function PrivacySettings({onBack}){
 }
 
 function NotificationSettings({onBack}){
-  const [notifs, setNotifs] = useState({streaks:true,mwah:true,followers:true,recap:true,newRecipes:false});
-  const [reminderTime, setReminderTime] = useState('18:00');
+  const [notifs, setNotifs] = useState(()=>{try{const v=localStorage.getItem('mep_notifPrefs');return v?JSON.parse(v):{streaks:true,mwah:true,followers:true,recap:true,newRecipes:false};}catch{return {streaks:true,mwah:true,followers:true,recap:true,newRecipes:false};}});
+  const [reminderTime, setReminderTime] = useState(()=>{try{return localStorage.getItem('mep_reminderTime')||'18:00';}catch{return '18:00';}});
   return(
     <div>
       <DrawerSectionHeader title="Notifications" onBack={onBack}/>
       <div style={{marginBottom:16}}>
         <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Daily reminder time</div>
-        <input type="time" value={reminderTime} onChange={e=>setReminderTime(e.target.value)}
+        <input type="time" value={reminderTime} onChange={e=>{setReminderTime(e.target.value);try{localStorage.setItem('mep_reminderTime',e.target.value);}catch{}}}
           style={{padding:"8px 12px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit"}}/>
       </div>
       {[["streaks","Streak reminders","Before your streak resets"],["mwah","Mwah received","When someone mwahs your post"],["followers","New followers","When someone follows you"],["recap","Weekly recap","Sunday cooking summary"],["newRecipes","New community recipes","Fresh from the community"]].map(([key,title,desc],i,arr)=>(
@@ -3299,7 +3306,7 @@ function NotificationSettings({onBack}){
             <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{title}</div>
             <div style={{fontSize:11,color:C.muted,marginTop:1}}>{desc}</div>
           </div>
-          <button onClick={()=>setNotifs(n=>({...n,[key]:!n[key]}))} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+          <button onClick={()=>setNotifs(n=>{const updated={...n,[key]:!n[key]};try{localStorage.setItem('mep_notifPrefs',JSON.stringify(updated));}catch{}return updated;})} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
             <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:notifs[key]?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
           </button>
         </div>
@@ -3360,7 +3367,18 @@ function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
   );
 }
 
-function DataSettings({onBack, signOut}){
+function DataSettings({onBack, supabase}){
+  const handleDeleteAccount=async()=>{
+    if(!confirm('Are you sure? This cannot be undone.')) return;
+    // TODO: call delete-user edge function to remove Supabase account
+    try{
+      await supabase.auth.signOut();
+      localStorage.clear();
+      window.location.href='/login';
+    }catch(e){
+      console.error('Delete account error:',e);
+    }
+  };
   return(
     <div>
       <DrawerSectionHeader title="Your Data" onBack={onBack}/>
@@ -3372,7 +3390,7 @@ function DataSettings({onBack, signOut}){
           </button>
         ))}
         <div style={{height:1,background:C.border}}/>
-        <button onClick={signOut} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+        <button onClick={handleDeleteAccount} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
           <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently remove your account and all data</div>
         </button>
@@ -3736,7 +3754,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="data") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <DataSettings onBack={()=>setSection(null)} signOut={()=>{}}/>
+        <DataSettings onBack={()=>setSection(null)} supabase={supabase}/>
       </div>
     </Sheet>
   );

@@ -173,6 +173,7 @@ export function useAuth() {
   };
 
   // ── Activity feed ─────────────────────────────────────────
+  // TODO: verify activity_feed FK constraints in Supabase dashboard
   const postActivity = async (entry: {
     type: string;
     recipe_name?: string;
@@ -191,12 +192,11 @@ export function useAuth() {
         created_at: new Date().toISOString(),
       });
       if (error) {
-        console.error('activity_feed error:', JSON.stringify(error, null, 2));
-        console.error('payload was:', JSON.stringify({...entry, user_id: uid}, null, 2));
+        // Known issues: 23503 = FK violation, 42P01 = table doesn't exist — non-critical, don't crash cook flow
+        if (error.code === '23503' || error.code === '42P01') return;
+        console.error('activity_feed error:', error.message);
       }
-    } catch (e) {
-      console.error('postActivity threw:', e);
-    }
+    } catch { /* non-critical — activity feed failure must never block cook flow */ }
   };
 
   const loadFeed = async () => {
