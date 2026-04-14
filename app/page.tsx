@@ -4095,13 +4095,11 @@ export default function App(){
         const g=STREAK_GOALS.find(x=>x.id===profile.goal_id);
         if(g) setGoal(g);
       }
-      // Mirror profile fields to localStorage
-      if(profile.xp > 0){
-        try{ localStorage.setItem('mep_xp', String(profile.xp)); }catch{}
-      }
-      if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length > 0){
-        try{ localStorage.setItem('mep_cookedDatesAll', JSON.stringify(profile.cooked_dates)); }catch{}
-      }
+      // Mirror Supabase data to localStorage cache
+      try{ if(profile.xp>0) localStorage.setItem('mep_xp', String(profile.xp)); }catch{}
+      try{ if(Array.isArray(profile.cooked_dates)&&profile.cooked_dates.length>0) localStorage.setItem('mep_cookedDatesAll', JSON.stringify(profile.cooked_dates)); }catch{}
+      try{ if(Array.isArray(profile.earned_badges)&&profile.earned_badges.length>0) localStorage.setItem('mep_earnedBadges', JSON.stringify(profile.earned_badges)); }catch{}
+      try{ if(Array.isArray(profile.saved_posts)&&profile.saved_posts.length>0) localStorage.setItem('mep_savedPosts', JSON.stringify(profile.saved_posts)); }catch{}
       // Only load cook log from Supabase if it has more entries than localStorage
       loadCompletedRecipes().then(rows=>{
         if(rows && rows.length>0){
