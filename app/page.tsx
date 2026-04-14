@@ -1102,6 +1102,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
   // Stats
   const totalCooked=safeLog.length;
   const streak=useMemo(()=>{
+    console.log('[STREAK] cookedDatesAll:', cookedDatesAll);
     const dates=new Set(cookedDatesAll||[]);
     if(dates.size===0) return 0;
     let count=0;
@@ -1303,6 +1304,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       {/* ── SAVED TAB ────────────────────────────────────────────── */}
       {!showBadges&&libTab==="saved"&&(
         <div style={{padding:"0 16px"}}>
+          {console.log('[SAVED] savedPosts:', [...(savedPosts||[])], 'posts available:', (posts||[]).length)}
           {/* Saved recipes from app */}
           {savedRecipes.length>0&&(
             <div style={{marginBottom:20}}>
