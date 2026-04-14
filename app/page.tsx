@@ -960,12 +960,20 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
                 const ings=(recipe.ingredients||[]);
                 try{
                   const existing=JSON.parse(localStorage.getItem('mep_groceryList')||'[]');
-                  const existingNames=new Set(existing.map(i=>i.toLowerCase().trim()));
-                  const newItems=ings.filter(i=>!existingNames.has(i.toLowerCase().trim()));
-                  const updated=[...existing,...newItems];
+                  const updated=[...existing];
+                  ings.forEach(ing=>{
+                    const ingName=typeof ing==='string'?ing:ing.name||String(ing);
+                    const norm=ingName.toLowerCase().replace(/s$/,'').trim();
+                    const idx=updated.findIndex(i=>(i.name||'').toLowerCase().replace(/s$/,'').trim()===norm);
+                    if(idx>=0){
+                      updated[idx]={...updated[idx],recipes:[...(updated[idx].recipes||[]),recipe.name],count:(updated[idx].count||1)+1};
+                    }else{
+                      updated.push({id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:ingName,amount:'',unit:'',recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ingName)});
+                    }
+                  });
                   localStorage.setItem('mep_groceryList',JSON.stringify(updated));
                 }catch{}
-                setToast({emoji:"",title:"Added to grocery list",subtitle:`${ings.length} ingredients from ${recipe.name}`});
+                setToast({emoji:"🛒",title:"Added to list",subtitle:`${ings.length} ingredients from ${recipe.name}`});
               }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
@@ -2896,6 +2904,94 @@ function AddFriendsSheet({onClose, searchUsers, sendFriendRequest, loadFriends})
   );
 }
 
+/* ═══ GROCERY LIST ═══════════════════════════════════════════════════════ */
+const GROCERY_CATS={
+  Produce:['tomato','onion','garlic','lemon','lime','pepper','carrot','potato','spinach','lettuce','mushroom','zucchini','eggplant','cucumber','celery','ginger','herb','basil','parsley','cilantro','mint','rosemary','thyme','apple','banana','berry','avocado','cabbage','kale','broccoli','pea','bean','corn','chili','chilli','scallion','shallot'],
+  'Meat & Fish':['chicken','beef','pork','lamb','fish','salmon','tuna','prawn','shrimp','bacon','sausage','mince','steak','turkey','duck','cod','crab'],
+  'Dairy & Eggs':['milk','cream','butter','cheese','yogurt','yoghurt','egg','mozzarella','parmesan','ricotta','cheddar','feta'],
+  Pantry:['flour','sugar','salt','oil','vinegar','sauce','paste','stock','broth','rice','pasta','bread','can','tin','noodle','honey','soy','sesame','coconut','cornstarch','baking'],
+  Spices:['cumin','paprika','turmeric','cinnamon','oregano','cayenne','coriander','cardamom','nutmeg','clove','fennel','star anise','saffron','bay leaf'],
+};
+function categoriseIngredient(name){
+  const n=(name||'').toLowerCase();
+  for(const [cat,keywords] of Object.entries(GROCERY_CATS)){
+    if(keywords.some(k=>n.includes(k))) return cat;
+  }
+  return 'Other';
+}
+
+function GroceryListSheet({groceryList,setGroceryList,onClose}){
+  const save=(list)=>{try{localStorage.setItem('mep_groceryList',JSON.stringify(list));}catch{}};
+  const toggle=(id)=>setGroceryList(prev=>{const u=prev.map(i=>i.id===id?{...i,checked:!i.checked}:i);save(u);return u;});
+  const clearAll=()=>{if(!confirm('Clear entire grocery list?'))return;setGroceryList([]);save([]);};
+  const removeChecked=()=>{setGroceryList(prev=>{const u=prev.filter(i=>!i.checked);save(u);return u;});};
+  const checkAll=()=>setGroceryList(prev=>{const u=prev.map(i=>({...i,checked:true}));save(u);return u;});
+
+  const grouped=useMemo(()=>{
+    const g={};
+    (groceryList||[]).forEach(item=>{
+      const cat=item.category||categoriseIngredient(item.name)||'Other';
+      if(!g[cat])g[cat]=[];
+      g[cat].push(item);
+    });
+    return g;
+  },[groceryList]);
+  const cats=Object.keys(grouped);
+  const uncheckedCount=(groceryList||[]).filter(i=>!i.checked).length;
+
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Grocery List</div>
+            {uncheckedCount>0&&<div style={{fontSize:12,color:C.muted,marginTop:2}}>{uncheckedCount} item{uncheckedCount!==1?'s':''} remaining</div>}
+          </div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+
+        {(groceryList||[]).length===0?(
+          <div style={{textAlign:"center",padding:"48px 20px"}}>
+            <div style={{width:56,height:56,borderRadius:18,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+            </div>
+            <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>List is empty</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Tap "+ Grocery List" on any recipe to add ingredients here.</div>
+          </div>
+        ):(
+          <>
+            {groceryList.length>0&&(
+              <div style={{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
+                <button onClick={clearAll} style={{fontSize:12,color:"#E05C7A",fontWeight:700,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Clear all</button>
+              </div>
+            )}
+            {cats.map(cat=>(
+              <div key={cat} style={{marginBottom:16}}>
+                <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>{cat}</div>
+                {grouped[cat].map(item=>(
+                  <div key={item.id} onClick={()=>toggle(item.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer",opacity:item.checked?.4:1,transition:"opacity .15s"}}>
+                    <div style={{width:22,height:22,borderRadius:"50%",border:`2px solid ${item.checked?C.flame:C.muted}`,background:item.checked?C.flame:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                      {item.checked&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:14,color:C.bark,textDecoration:item.checked?"line-through":"none",textTransform:"capitalize"}}>{item.name}{item.count>1?` (×${item.count} recipes)`:''}</div>
+                      {item.recipes&&item.recipes.length>0&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{item.recipes.join(', ')}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div style={{display:"flex",gap:10,marginTop:16}}>
+              <button onClick={checkAll} style={{flex:1,padding:"11px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,fontWeight:700,fontSize:13,color:C.muted,cursor:"pointer",fontFamily:"inherit"}}>Check all</button>
+              <button onClick={removeChecked} style={{flex:1,padding:"11px",borderRadius:14,border:`1.5px solid ${C.flame}30`,background:`${C.flame}08`,fontWeight:700,fontSize:13,color:C.flame,cursor:"pointer",fontFamily:"inherit"}}>Remove checked</button>
+            </div>
+          </>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
 function StreakCalendar({cookedDays, cookLog, onClose}){
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -3399,7 +3495,7 @@ function DataSettings({onBack, supabase}){
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings}){
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/(goal?.target||3)*100);
 
@@ -3442,6 +3538,12 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
         <QuickBtn label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         }/>
+        <div style={{position:"relative"}}>
+          <QuickBtn label="Groceries" onClick={()=>{onShowGroceryList();onClose();}} icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+          }/>
+          {groceryCount>0&&<div style={{position:"absolute",top:-4,right:-4,width:18,height:18,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:10,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{groceryCount}</div>}
+        </div>
       </div>
 
       {/* Settings button */}
@@ -3865,6 +3967,8 @@ export default function App(){
   const [recipeFilter,   setRecipeFilter]     = useState(null);
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
+  const [showGroceryList, setShowGroceryList] = useState(false);
+  const [groceryList, setGroceryList] = useState(()=>{try{const v=localStorage.getItem('mep_groceryList');return v?JSON.parse(v):[];}catch{return [];}});
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [wantToCook,      setWantToCook]      = useState([]);
   const [hearts,          setHearts]          = useState(5);
@@ -4343,13 +4447,14 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length}/>
           </div>
         </div>
       )}
       {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
+      {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}
     </AppErrorBoundary>
   );
 }
