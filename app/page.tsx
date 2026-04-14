@@ -1326,11 +1326,15 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
           )}
 
           {/* Saved posts from feed */}
-          {(savedPosts?.size||0)>0&&(
+          {(savedPosts?.size||0)>0&&(()=>{
+            const allAvailablePosts=[...(posts||[]),...SEED_POSTS];
+            const uniquePosts=allAvailablePosts.filter((p,i,arr)=>arr.findIndex(x=>x.id===p.id)===i);
+            const savedList=uniquePosts.filter(p=>savedPosts?.has(p.id));
+            return savedList.length>0?(
             <div style={{marginBottom:20}}>
               <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Saved posts</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {(posts||[]).filter(p=>savedPosts?.has(p.id)).map(p=>(
+                {savedList.map(p=>(
                   <div key={p.id} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===p.recipe);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",background:C.cream,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,display:"flex"}}>
                     {p.photo
                       ?<img src={p.photo} alt="" style={{width:72,height:72,objectFit:"cover",flexShrink:0}}/>
@@ -1347,7 +1351,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
                 ))}
               </div>
             </div>
-          )}
+            ):null;})()}
 
           {savedRecipes.length===0&&(savedPosts?.size||0)===0&&(
             <div style={{textAlign:"center",padding:"60px 20px"}}>
@@ -4205,10 +4209,11 @@ export default function App(){
     const todayIso=new Date().toISOString().slice(0,10);
     let newDates=cookedDatesAll;
     setCookedDatesAll(prev=>{
-      if(prev.includes(todayIso)) return prev;
+      if(prev.includes(todayIso)){ newDates=prev; return prev; }
       newDates=[...prev,todayIso];
       return newDates;
     });
+    console.log('[COMPLETE] cookedDatesAll after update:', newDates);
 
     // Update skills
     const cat=recipe.category;
@@ -4282,6 +4287,7 @@ export default function App(){
 
     // Secondary: Supabase background sync (fire and forget)
     if(uid){
+      console.log('[SUPABASE] saving cooked_dates:', newDates);
       saveAllUserData(uid, {
         xp: newXp,
         completedRecipe: {...recipe, photo},
