@@ -957,21 +957,18 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
             </div>
             <div style={{display:"flex",gap:10,marginBottom:12}}>
               <button onClick={()=>{
-                const ings=(recipe.ingredients||[]);
+                const ings=getRawIngredients(recipe);
                 if(!ings.length){setToast({emoji:"",title:"No ingredients",subtitle:"No ingredients found for this recipe"});return;}
                 try{
                   const existing=JSON.parse(localStorage.getItem('mep_groceryList')||'[]');
                   const updated=[...existing];
-                  ings.forEach(ing=>{
-                    const ingName=typeof ing==='string'?ing:ing.name||String(ing);
-                    const amount=typeof ing==='object'?(ing.amount||ing.quantity||''):'';
-                    const unit=typeof ing==='object'?(ing.unit||''):'';
+                  ings.forEach(({name:ingName,amount})=>{
                     const norm=ingName.toLowerCase().replace(/s$/,'').trim();
                     const idx=updated.findIndex(i=>(i.name||'').toLowerCase().replace(/s$/,'').trim()===norm);
                     if(idx>=0){
                       updated[idx]={...updated[idx],recipes:[...(updated[idx].recipes||[]),recipe.name],count:(updated[idx].count||1)+1};
                     }else{
-                      updated.push({id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:ingName,amount,unit,recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ingName)});
+                      updated.push({id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:ingName,amount:amount||'',unit:'',recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ingName)});
                     }
                   });
                   localStorage.setItem('mep_groceryList',JSON.stringify(updated));
@@ -2915,6 +2912,18 @@ const GROCERY_CATS={
   Pantry:['flour','sugar','salt','oil','vinegar','sauce','paste','stock','broth','rice','pasta','bread','can','tin','noodle','honey','soy','sesame','coconut','cornstarch','baking'],
   Spices:['cumin','paprika','turmeric','cinnamon','oregano','cayenne','coriander','cardamom','nutmeg','clove','fennel','star anise','saffron','bay leaf'],
 };
+function getRawIngredients(recipe){
+  if(recipe.strIngredient1!==undefined){
+    const ings=[];
+    for(let i=1;i<=20;i++){const name=recipe[`strIngredient${i}`];const measure=recipe[`strMeasure${i}`];if(name&&name.trim())ings.push({name:name.trim(),amount:measure?.trim()||''});}
+    return ings;
+  }
+  if(Array.isArray(recipe.ingredients)&&recipe.ingredients.length>0){
+    if(typeof recipe.ingredients[0]==='object') return recipe.ingredients.map(i=>({name:i.name||i.ingredient||String(i),amount:i.amount||i.measure||''}));
+    return recipe.ingredients.map(i=>({name:String(i),amount:''}));
+  }
+  return [];
+}
 function categoriseIngredient(name){
   const n=(name||'').toLowerCase();
   for(const [cat,keywords] of Object.entries(GROCERY_CATS)){
@@ -2929,7 +2938,6 @@ function GroceryListSheet({groceryList,setGroceryList,onClose}){
   const save=(list)=>{try{localStorage.setItem('mep_groceryList',JSON.stringify(list));}catch{}};
   const toggle=(id)=>setGroceryList(prev=>{const u=prev.map(i=>i.id===id?{...i,checked:!i.checked}:i);save(u);return u;});
   const remove=(id)=>setGroceryList(prev=>{const u=prev.filter(i=>i.id!==id);save(u);return u;});
-  const clearAll=()=>{if(!confirm('Clear entire grocery list?'))return;setGroceryList([]);save([]);};
   const removeAllChecked=()=>{if(!confirm('Remove all checked items?'))return;setGroceryList(prev=>{const u=prev.filter(i=>!i.checked);save(u);return u;});};
   const addItem=()=>{
     if(!newItem.trim())return;
@@ -2985,9 +2993,8 @@ function GroceryListSheet({groceryList,setGroceryList,onClose}){
             <button onClick={onClose} style={{background:C.flame,color:"#fff",border:"none",borderRadius:20,padding:"7px 20px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>Done</button>
           </div>
           {list.length>0&&(
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <span style={{fontSize:12,color:C.muted}}>{list.length} item{list.length!==1?'s':''} · {checked.length} checked</span>
-              <button onClick={clearAll} style={{fontSize:12,color:C.muted,fontWeight:600,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Clear all</button>
+            <div style={{marginBottom:12}}>
+              <span style={{fontSize:12,color:C.muted}}>{list.length} item{list.length!==1?'s':''}</span>
             </div>
           )}
           <div style={{height:1,background:C.border}}/>
@@ -3006,7 +3013,7 @@ function GroceryListSheet({groceryList,setGroceryList,onClose}){
               {catOrder.filter(c=>grouped[c]).map(cat=>(
                 <div key={cat} style={{marginTop:16}}>
                   <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:2,display:"flex",alignItems:"center",gap:6}}>
-                    {cat} ({grouped[cat].length})
+                    {cat}
                     <div style={{flex:1,height:1,background:C.border}}/>
                   </div>
                   {grouped[cat].map(item=><ItemRow key={item.id} item={item}/>)}
