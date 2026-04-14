@@ -958,22 +958,25 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
             <div style={{display:"flex",gap:10,marginBottom:12}}>
               <button onClick={()=>{
                 const ings=(recipe.ingredients||[]);
+                if(!ings.length){setToast({emoji:"",title:"No ingredients",subtitle:"No ingredients found for this recipe"});return;}
                 try{
                   const existing=JSON.parse(localStorage.getItem('mep_groceryList')||'[]');
                   const updated=[...existing];
                   ings.forEach(ing=>{
                     const ingName=typeof ing==='string'?ing:ing.name||String(ing);
+                    const amount=typeof ing==='object'?(ing.amount||ing.quantity||''):'';
+                    const unit=typeof ing==='object'?(ing.unit||''):'';
                     const norm=ingName.toLowerCase().replace(/s$/,'').trim();
                     const idx=updated.findIndex(i=>(i.name||'').toLowerCase().replace(/s$/,'').trim()===norm);
                     if(idx>=0){
                       updated[idx]={...updated[idx],recipes:[...(updated[idx].recipes||[]),recipe.name],count:(updated[idx].count||1)+1};
                     }else{
-                      updated.push({id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:ingName,amount:'',unit:'',recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ingName)});
+                      updated.push({id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:ingName,amount,unit,recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ingName)});
                     }
                   });
                   localStorage.setItem('mep_groceryList',JSON.stringify(updated));
                 }catch{}
-                setToast({emoji:"🛒",title:"Added to list",subtitle:`${ings.length} ingredients from ${recipe.name}`});
+                setToast({emoji:"🛒",title:`${ings.length} ingredients added`,subtitle:`from ${recipe.name}`});
               }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
@@ -2921,74 +2924,122 @@ function categoriseIngredient(name){
 }
 
 function GroceryListSheet({groceryList,setGroceryList,onClose}){
+  const [newItem,setNewItem]=useState("");
+  const [deleteId,setDeleteId]=useState(null);
   const save=(list)=>{try{localStorage.setItem('mep_groceryList',JSON.stringify(list));}catch{}};
   const toggle=(id)=>setGroceryList(prev=>{const u=prev.map(i=>i.id===id?{...i,checked:!i.checked}:i);save(u);return u;});
+  const remove=(id)=>setGroceryList(prev=>{const u=prev.filter(i=>i.id!==id);save(u);return u;});
   const clearAll=()=>{if(!confirm('Clear entire grocery list?'))return;setGroceryList([]);save([]);};
-  const removeChecked=()=>{setGroceryList(prev=>{const u=prev.filter(i=>!i.checked);save(u);return u;});};
-  const checkAll=()=>setGroceryList(prev=>{const u=prev.map(i=>({...i,checked:true}));save(u);return u;});
+  const removeAllChecked=()=>{if(!confirm('Remove all checked items?'))return;setGroceryList(prev=>{const u=prev.filter(i=>!i.checked);save(u);return u;});};
+  const addItem=()=>{
+    if(!newItem.trim())return;
+    setGroceryList(prev=>{
+      const u=[...prev,{id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:newItem.trim(),amount:'',unit:'',recipes:[],count:1,checked:false,category:categoriseIngredient(newItem.trim())}];
+      save(u);return u;
+    });
+    setNewItem("");
+  };
 
+  const list=groceryList||[];
+  const unchecked=list.filter(i=>!i.checked);
+  const checked=list.filter(i=>i.checked);
+  const catOrder=['Produce','Meat & Fish','Dairy & Eggs','Pantry','Spices','Other'];
   const grouped=useMemo(()=>{
     const g={};
-    (groceryList||[]).forEach(item=>{
-      const cat=item.category||categoriseIngredient(item.name)||'Other';
-      if(!g[cat])g[cat]=[];
-      g[cat].push(item);
-    });
+    unchecked.forEach(item=>{const cat=item.category||categoriseIngredient(item.name)||'Other';if(!g[cat])g[cat]=[];g[cat].push(item);});
     return g;
-  },[groceryList]);
-  const cats=Object.keys(grouped);
-  const uncheckedCount=(groceryList||[]).filter(i=>!i.checked).length;
+  },[unchecked]);
+
+  const longTimer=useRef(null);
+  const pressStart=(id)=>{longTimer.current=setTimeout(()=>setDeleteId(id),400);};
+  const pressEnd=()=>{clearTimeout(longTimer.current);};
+
+  const Checkbox=({on})=>(
+    <div style={{width:24,height:24,borderRadius:"50%",border:`2px solid ${on?C.flame:C.muted}`,background:on?C.flame:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .18s"}}>
+      {on&&<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+    </div>
+  );
+
+  const ItemRow=({item})=>(
+    <div onMouseDown={()=>pressStart(item.id)} onMouseUp={pressEnd} onTouchStart={()=>pressStart(item.id)} onTouchEnd={pressEnd}
+      onClick={()=>{if(deleteId===item.id){setDeleteId(null);return;}toggle(item.id);}}
+      style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",minHeight:52,cursor:"pointer",opacity:item.checked?.4:1,transition:"opacity .18s",position:"relative"}}>
+      <Checkbox on={item.checked}/>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:600,fontSize:15,color:C.bark,textDecoration:item.checked?"line-through":"none",textTransform:"capitalize"}}>
+          {item.name}{item.count>1?` (×${item.count})`:''}{item.amount?` · ${item.amount}${item.unit?' '+item.unit:''}`:''}
+        </div>
+        {item.recipes&&item.recipes.length>0&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>from {[...new Set(item.recipes)].join(', ')}</div>}
+      </div>
+      {deleteId===item.id&&<button onClick={e=>{e.stopPropagation();remove(item.id);setDeleteId(null);}} style={{background:"#E05C7A",color:"#fff",border:"none",borderRadius:10,padding:"6px 14px",fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,fontFamily:"inherit"}}>Delete</button>}
+    </div>
+  );
 
   return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Grocery List</div>
-            {uncheckedCount>0&&<div style={{fontSize:12,color:C.muted,marginTop:2}}>{uncheckedCount} item{uncheckedCount!==1?'s':''} remaining</div>}
+    <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,height:"95vh",display:"flex",flexDirection:"column",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>
+        {/* Fixed header */}
+        <div style={{padding:"20px 20px 0",flexShrink:0}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <div style={{fontWeight:900,fontSize:22,color:C.bark,fontFamily:DF}}>Grocery List</div>
+            <button onClick={onClose} style={{background:C.flame,color:"#fff",border:"none",borderRadius:20,padding:"7px 20px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>Done</button>
           </div>
-          <CloseBtn onClose={onClose}/>
+          {list.length>0&&(
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <span style={{fontSize:12,color:C.muted}}>{list.length} item{list.length!==1?'s':''} · {checked.length} checked</span>
+              <button onClick={clearAll} style={{fontSize:12,color:C.muted,fontWeight:600,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Clear all</button>
+            </div>
+          )}
+          <div style={{height:1,background:C.border}}/>
         </div>
 
-        {(groceryList||[]).length===0?(
-          <div style={{textAlign:"center",padding:"48px 20px"}}>
-            <div style={{width:56,height:56,borderRadius:18,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        {/* Scrollable list */}
+        <div style={{flex:1,overflowY:"auto",padding:"0 20px",WebkitOverflowScrolling:"touch"}}>
+          {list.length===0?(
+            <div style={{textAlign:"center",padding:"60px 20px"}}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="1" style={{margin:"0 auto 16px",display:"block",opacity:.5}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>Your list is empty</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Add ingredients from any recipe, or type items below.</div>
             </div>
-            <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>List is empty</div>
-            <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Tap "+ Grocery List" on any recipe to add ingredients here.</div>
-          </div>
-        ):(
-          <>
-            {groceryList.length>0&&(
-              <div style={{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
-                <button onClick={clearAll} style={{fontSize:12,color:"#E05C7A",fontWeight:700,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Clear all</button>
-              </div>
-            )}
-            {cats.map(cat=>(
-              <div key={cat} style={{marginBottom:16}}>
-                <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>{cat}</div>
-                {grouped[cat].map(item=>(
-                  <div key={item.id} onClick={()=>toggle(item.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer",opacity:item.checked?.4:1,transition:"opacity .15s"}}>
-                    <div style={{width:22,height:22,borderRadius:"50%",border:`2px solid ${item.checked?C.flame:C.muted}`,background:item.checked?C.flame:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
-                      {item.checked&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
-                    </div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:14,color:C.bark,textDecoration:item.checked?"line-through":"none",textTransform:"capitalize"}}>{item.name}{item.count>1?` (×${item.count} recipes)`:''}</div>
-                      {item.recipes&&item.recipes.length>0&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{item.recipes.join(', ')}</div>}
-                    </div>
+          ):(
+            <>
+              {catOrder.filter(c=>grouped[c]).map(cat=>(
+                <div key={cat} style={{marginTop:16}}>
+                  <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:2,display:"flex",alignItems:"center",gap:6}}>
+                    {cat} ({grouped[cat].length})
+                    <div style={{flex:1,height:1,background:C.border}}/>
                   </div>
-                ))}
-              </div>
-            ))}
-            <div style={{display:"flex",gap:10,marginTop:16}}>
-              <button onClick={checkAll} style={{flex:1,padding:"11px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,fontWeight:700,fontSize:13,color:C.muted,cursor:"pointer",fontFamily:"inherit"}}>Check all</button>
-              <button onClick={removeChecked} style={{flex:1,padding:"11px",borderRadius:14,border:`1.5px solid ${C.flame}30`,background:`${C.flame}08`,fontWeight:700,fontSize:13,color:C.flame,cursor:"pointer",fontFamily:"inherit"}}>Remove checked</button>
-            </div>
-          </>
-        )}
+                  {grouped[cat].map(item=><ItemRow key={item.id} item={item}/>)}
+                </div>
+              ))}
+              {checked.length>0&&(
+                <div style={{marginTop:20}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
+                    <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em"}}>In your basket ({checked.length})</div>
+                    <button onClick={removeAllChecked} style={{fontSize:11,color:C.muted,fontWeight:600,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Remove all</button>
+                  </div>
+                  <div style={{height:1,background:C.border,marginBottom:4}}/>
+                  {checked.map(item=><ItemRow key={item.id} item={item}/>)}
+                </div>
+              )}
+              <div style={{height:20}}/>
+            </>
+          )}
+        </div>
+
+        {/* Fixed footer — add item */}
+        <div style={{padding:"12px 20px 24px",borderTop:`1px solid ${C.border}`,flexShrink:0,background:C.paper}}>
+          <div style={{display:"flex",gap:8}}>
+            <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addItem();}}
+              placeholder="Add an item..."
+              style={{flex:1,padding:"11px 14px",borderRadius:12,border:`1.5px solid ${newItem?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit",transition:"border-color .18s"}}/>
+            <button onClick={addItem} disabled={!newItem.trim()} style={{width:44,height:44,borderRadius:12,background:newItem.trim()?C.flame:"#D8D0C8",border:"none",cursor:newItem.trim()?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .18s"}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
-    </Sheet>
+    </div>
   );
 }
 
