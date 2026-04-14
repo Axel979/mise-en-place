@@ -10,15 +10,7 @@ export function useAuth() {
   const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      const u = s?.user ?? null;
-      setUser(u);
-      userIdRef.current = u?.id ?? null;
-      if (u) loadProfile(u.id);
-      else setLoading(false);
-    });
-
+    // onAuthStateChange is the sole session handler — fires INITIAL_SESSION on mount
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, s) => {
         setSession(s);
@@ -30,6 +22,7 @@ export function useAuth() {
       }
     );
 
+    // Safety net: force loading=false after 3s if INITIAL_SESSION never fires
     const timeout = setTimeout(() => setLoading(false), 3000);
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout); };
