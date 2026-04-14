@@ -26,6 +26,7 @@ const CSS = `
   @keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
   @keyframes slideRight{from{transform:translateX(100%)}to{transform:none}}
   @keyframes levelUp{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+  @keyframes jiggle{0%,100%{transform:rotate(-1.5deg)}25%{transform:rotate(1.5deg)}50%{transform:rotate(-1.5deg)}75%{transform:rotate(1.5deg)}}
   .ch:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(0,0,0,.11)!important}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
 `;
@@ -1076,11 +1077,19 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
 }
 
 
-function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe,cookedDatesAll,initialLibTab}){
+function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe,cookedDatesAll,initialLibTab,onDeleteCookLog,onDeleteRecipe,onRemoveWantToCook,onUnsavePost,wantToCook}){
   const [libTab,setLibTab]=useState(initialLibTab||"cooked");
   const [showBadges,setShowBadges]=useState(false);
   const [filter,setFilter]=useState("all");
   const [sort,setSort]=useState("recent");
+  const [jiggleMode,setJiggleMode]=useState(false);
+  const longPressTimer=useRef(null);
+  const handlePressStart=()=>{longPressTimer.current=setTimeout(()=>setJiggleMode(true),500);};
+  const handlePressEnd=()=>{clearTimeout(longPressTimer.current);};
+  const jiggleStyle=jiggleMode?{animation:"jiggle .25s infinite"}:{};
+  const DeleteBadge=({onDel})=>(
+    jiggleMode?<button onClick={e=>{e.stopPropagation();onDel();}} style={{position:"absolute",top:-8,left:-8,zIndex:10,width:22,height:22,borderRadius:"50%",background:"#E05C7A",border:"2px solid #fff",color:"#fff",fontSize:12,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",lineHeight:1,padding:0}}>×</button>:null
+  );
 
   const safeBadges=earnedBadges||[];
   const safeLog=cookLog||[];
@@ -1125,7 +1134,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
   );
 
   return(
-    <div style={{paddingBottom:40}}>
+    <div style={{paddingBottom:40}} onClick={()=>{if(jiggleMode)setJiggleMode(false);}}>
 
       {/* ── Hero bubble ─────────────────────────────────────────── */}
       <div style={{margin:"4px 16px 14px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:22,padding:"18px 18px 16px",color:"#fff",position:"relative",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.12)"}}>
@@ -1144,6 +1153,12 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
           <button key={id} onClick={()=>{setLibTab(id);setShowBadges(false);}} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
         ))}
       </div>
+
+      {jiggleMode&&(
+        <div style={{display:"flex",justifyContent:"flex-end",padding:"0 16px 12px"}}>
+          <button onClick={()=>setJiggleMode(false)} style={{background:C.flame,color:"#fff",border:"none",borderRadius:20,padding:"6px 18px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>Done</button>
+        </div>
+      )}
 
       {/* ── INLINE BADGES ───────────────────────────────────────── */}
       {showBadges&&(
@@ -1231,7 +1246,8 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               {hasPhotos?(
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,marginBottom:16}}>
                   {filtered.map((entry,i)=>(
-                    <div key={i} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:"hidden",position:"relative",aspectRatio:"1/1",background:C.pill}}>
+                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:jiggleMode?"visible":"hidden",position:"relative",aspectRatio:"1/1",background:C.pill,...jiggleStyle}}>
+                      <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
                       {entry.photo
                         ?<img src={entry.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                         :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${C.bark}18,${C.ember}10)`}}>
@@ -1248,7 +1264,8 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {filtered.map((entry,i)=>(
-                    <div key={i} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center"}}>
+                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center",position:"relative",overflow:jiggleMode?"visible":"hidden",...jiggleStyle}}>
+                      <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
                       <div style={{width:44,height:44,borderRadius:12,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".6"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
                       </div>
@@ -1282,7 +1299,8 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
           ):(
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {[...myRecipes,...savedRecipes].map(r=>(
-                <div key={r.id} onClick={()=>onOpen&&onOpen(r)} className="tap" style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden",cursor:"pointer",display:"flex"}}>
+                <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
+                  <DeleteBadge onDel={()=>{if(onDeleteRecipe)onDeleteRecipe(r);}}/>
                   <div style={{width:80,flexShrink:0,background:`linear-gradient(135deg,${C.sage}20,${C.sage}08)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5" opacity=".6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </div>
@@ -1311,7 +1329,8 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Want to cook</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {savedRecipes.map(r=>(
-                  <div key={r.id} onClick={()=>onOpen&&onOpen(r)} className="tap" style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,overflow:"hidden",cursor:"pointer",display:"flex"}}>
+                  <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
+                    <DeleteBadge onDel={()=>{if(onRemoveWantToCook)onRemoveWantToCook(r.id);}}/>
                     <div style={{width:72,flexShrink:0,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".5"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
                     </div>
@@ -1335,7 +1354,8 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Saved posts</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {savedList.map(p=>(
-                  <div key={p.id} onClick={()=>{const m=(allRecipes||[]).find(r=>r.name===p.recipe);if(m&&onOpen)onOpen(m);}} className="tap" style={{cursor:"pointer",background:C.cream,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,display:"flex"}}>
+                  <div key={p.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===p.recipe);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:14,overflow:jiggleMode?"visible":"hidden",border:`1px solid ${C.border}`,display:"flex",position:"relative",...jiggleStyle}}>
+                    <DeleteBadge onDel={()=>{if(onUnsavePost)onUnsavePost(p.id);}}/>
                     {p.photo
                       ?<img src={p.photo} alt="" style={{width:72,height:72,objectFit:"cover",flexShrink:0}}/>
                       :<div style={{width:72,height:72,background:`${C.flame}08`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -4405,7 +4425,7 @@ export default function App(){
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook} onDeleteCookLog={(id)=>{const next=cookLog.filter(e=>e.id!==id);setCookLog(next);try{localStorage.setItem('mep_cookLog',JSON.stringify(next));}catch{}}} onDeleteRecipe={(r)=>{setAllRecipes(rs=>rs.filter(x=>x.id!==r.id));try{const s=JSON.parse(localStorage.getItem('mep_userRecipes')||'[]');localStorage.setItem('mep_userRecipes',JSON.stringify(s.filter(x=>x.id!==r.id)));}catch{}if(r._supabaseId)deleteUserRecipe(r._supabaseId);}} onRemoveWantToCook={(id)=>{const next=wantToCook.filter(x=>x!==id);setWantToCook(next);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}}} onUnsavePost={(pid)=>{setSavedPosts(s=>{const n=new Set(s);n.delete(pid);try{localStorage.setItem('mep_savedPosts',JSON.stringify([...n]));}catch{}return n;});}}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
