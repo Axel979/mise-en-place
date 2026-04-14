@@ -1076,8 +1076,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
 }
 
 
-function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe,cookedDatesAll}){
-  const [libTab,setLibTab]=useState("cooked");
+function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,savedPosts,posts,onOpenRecipe,cookedDatesAll,initialLibTab}){
+  const [libTab,setLibTab]=useState(initialLibTab||"cooked");
   const [showBadges,setShowBadges]=useState(false);
   const [filter,setFilter]=useState("all");
   const [sort,setSort]=useState("recent");
@@ -3989,6 +3989,7 @@ export default function App(){
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
   const [cookLog,      setCookLog]      = useState([]);
   const [showCreate,   setShowCreate]   = useState(false);
+  const [libraryInitTab, setLibraryInitTab] = useState(null);
   const [showImport,   setShowImport]   = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
   const [showAddFriends,setShowAddFriends]=useState(false);
@@ -4406,7 +4407,7 @@ export default function App(){
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
-          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll}/>}
+          {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab}/>}
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
@@ -4439,6 +4440,8 @@ export default function App(){
           localStorage.setItem('mep_userRecipes',JSON.stringify(updated));
         }catch{}
         setShowCreate(false);
+        setLibraryInitTab("recipes");
+        setTab("library");
         // Persist to Supabase
         const saved=await saveUserRecipe(r);
         if(saved){
