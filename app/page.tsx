@@ -4056,6 +4056,7 @@ export default function App(){
     {id:"n10",type:"mwah",      read:true,  avatar:"👩‍🍳", name:"Sofia R.",   text:"gave you 🤌 Mwah on your Shakshuka",         time:"2d ago",  emoji:"🍳"},
   ]);
   const prevLevel = useRef(null);
+  const sessionStartLevelRef = useRef(null);
 
   useEffect(()=>{
     setTimeout(()=>setMounted(true),60);
@@ -4064,7 +4065,7 @@ export default function App(){
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
     const del=getDeletedIds();
     let xpVal=null,cookLogVal=null;
-    try{ xpVal=localStorage.getItem('mep_xp'); if(xpVal) setXp(Number(xpVal)); }catch{}
+    try{ xpVal=localStorage.getItem('mep_xp'); if(xpVal){setXp(Number(xpVal));sessionStartLevelRef.current=getLevelInfo(Number(xpVal)).current.level;} }catch{}
     try{ cookLogVal=localStorage.getItem('mep_cookLog'); if(cookLogVal){const parsed=JSON.parse(cookLogVal).filter(r=>!del.has(String(r.id))&&!del.has(r.id));setCookLog(parsed);} }catch{}
     try{ const v=localStorage.getItem('mep_earnedBadges'); if(v){const parsed=JSON.parse(v);parsed.forEach(id=>loadedBadgesRef.current.add(id));setEarnedBadges(parsed);} }catch{}
     try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
@@ -4087,7 +4088,7 @@ export default function App(){
   useEffect(()=>{
     if(profile){
       // Only overwrite localStorage state with Supabase data if Supabase has more/better data
-      if(profile.xp>0) setXp(prev=>profile.xp>prev?profile.xp:prev);
+      if(profile.xp>0){setXp(prev=>profile.xp>prev?profile.xp:prev);if(sessionStartLevelRef.current===null)sessionStartLevelRef.current=getLevelInfo(profile.xp).current.level;}
       if(!onboarded){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
@@ -4201,12 +4202,14 @@ export default function App(){
 
   const levelInfo=useMemo(()=>getLevelInfo(xp),[xp]);
 
-  // Detect level up
+  // Detect level up — only toast for levels earned THIS session, not loaded from storage
   useEffect(()=>{
-    if(prevLevel.current!==null&&levelInfo.current.level>prevLevel.current){
-      setToast({emoji:levelInfo.current.icon,title:levelInfo.current.title,subtitle:`Level ${levelInfo.current.level} reached!`});
+    const newLvl=levelInfo.current.level;
+    if(prevLevel.current!==null&&newLvl>prevLevel.current&&sessionStartLevelRef.current!==null&&newLvl>sessionStartLevelRef.current){
+      setToast({emoji:levelInfo.current.icon,title:levelInfo.current.title,subtitle:`Level ${newLvl} reached!`});
+      sessionStartLevelRef.current=newLvl;
     }
-    prevLevel.current=levelInfo.current.level;
+    prevLevel.current=newLvl;
   },[levelInfo]);
 
   const checkBadges=useCallback((stats)=>{
