@@ -1554,7 +1554,12 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 
   const handleSavePost=(pid)=>{
     const isNowSaved=!(savedPosts||new Set()).has(pid);
-    if(setSavedPosts) setSavedPosts(s=>{const n=new Set(s);isNowSaved?n.add(pid):n.delete(pid);return n;});
+    if(setSavedPosts) setSavedPosts(s=>{
+      const n=new Set(s);
+      isNowSaved?n.add(pid):n.delete(pid);
+      try{ localStorage.setItem('mep_savedPosts',JSON.stringify([...n])); }catch{}
+      return n;
+    });
     if(isNowSaved&&setToast) setToast({emoji:"",title:"Saved",subtitle:"Find it in Library → Saved"});
   };
 
@@ -4035,6 +4040,17 @@ export default function App(){
     try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v))); }catch{}
+    try{
+      const v=localStorage.getItem('mep_userRecipes');
+      if(v){
+        const saved=JSON.parse(v);
+        if(saved.length>0) setAllRecipes(prev=>{
+          const existingIds=new Set(prev.map(r=>r.id));
+          const newOnes=saved.filter(r=>!existingIds.has(r.id));
+          return newOnes.length>0?[...newOnes,...prev]:prev;
+        });
+      }
+    }catch{}
     console.log('[STORAGE] loaded xp:', xpVal, 'cookLog length:', cookLogVal ? JSON.parse(cookLogVal).length : 0);
     storageLoadedRef.current = true;
   },[]);
@@ -4110,6 +4126,10 @@ export default function App(){
             const fresh=userRecipes.filter(r=>!ids.has(r._supabaseId));
             return [...fresh,...current.filter(r=>!r.isPersonal)];
           });
+          try{
+            const personal=userRecipes.filter(r=>r.isCustom||r.isPersonal);
+            if(personal.length>0) localStorage.setItem('mep_userRecipes',JSON.stringify(personal));
+          }catch{}
         }
       }).catch(e=>console.error('loadUserRecipes failed',e));
       // Load real feed
@@ -4399,6 +4419,11 @@ export default function App(){
       {showCreate&&<CreateRecipeSheet onSave={async r=>{
         // Optimistic update
         setAllRecipes(rs=>[r,...rs]);
+        try{
+          const existing=JSON.parse(localStorage.getItem('mep_userRecipes')||'[]');
+          const updated=[r,...existing.filter(x=>x.id!==r.id)];
+          localStorage.setItem('mep_userRecipes',JSON.stringify(updated));
+        }catch{}
         setShowCreate(false);
         // Persist to Supabase
         const saved=await saveUserRecipe(r);
