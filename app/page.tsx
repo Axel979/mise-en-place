@@ -865,7 +865,7 @@ async function shareToInstagramStory({cardEl,setToast}){
 }
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
-function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
+function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAddToGroceryList}){
   const [showEdit,setShowEdit]=useState(false);
   const [step,setStep]=useState(0);
   const [mode,setMode]=useState("overview");
@@ -956,26 +956,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
               ))}
             </div>
             <div style={{display:"flex",gap:10,marginBottom:12}}>
-              <button onClick={()=>{
-                const newIngs=getRawIngredients(recipe);
-                console.log('[GROCERY] ingredients found:', newIngs.length, 'for recipe:', recipe.name);
-                if(!newIngs.length){setToast({emoji:"🛒",title:"No ingredients found",subtitle:"This recipe has no ingredients listed"});return;}
-                setGroceryList(prev=>{
-                  const updated=[...prev];
-                  newIngs.forEach(ing=>{
-                    const norm=ing.name.toLowerCase().replace(/s$/,'').trim();
-                    const idx=updated.findIndex(i=>(i.name||'').toLowerCase().replace(/s$/,'').trim()===norm);
-                    if(idx>=0){
-                      updated[idx]={...updated[idx],recipes:[...new Set([...(updated[idx].recipes||[]),recipe.name])],count:(updated[idx].count||1)+1};
-                    }else{
-                      updated.push({id:`ing-${Date.now()}-${Math.random()}`,name:ing.name,amount:ing.amount||'',unit:ing.unit||'',recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ing.name)});
-                    }
-                  });
-                  try{localStorage.setItem('mep_groceryList',JSON.stringify(updated));}catch{}
-                  return updated;
-                });
-                setToast({emoji:"🛒",title:`${newIngs.length} ingredients added`,subtitle:`From ${recipe.name}`});
-              }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
+              <button onClick={()=>onAddToGroceryList&&onAddToGroceryList(recipe)} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
               <button onClick={()=>shareRecipe({recipe,photo:recipe.photo,username,xp:recipe.xp,isCooked:false,cardEl:shareCardRef.current,setToast})} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
@@ -4424,7 +4405,22 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username}/>;})()}
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
+              const newIngs=getRawIngredients(r);
+              if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
+              setGroceryList(prev=>{
+                const updated=[...prev];
+                newIngs.forEach(ing=>{
+                  const norm=ing.name.toLowerCase().replace(/s$/,'').trim();
+                  const idx=updated.findIndex(i=>(i.name||'').toLowerCase().replace(/s$/,'').trim()===norm);
+                  if(idx>=0){updated[idx]={...updated[idx],recipes:[...new Set([...(updated[idx].recipes||[]),r.name])],count:(updated[idx].count||1)+1};}
+                  else{updated.push({id:`ing-${Date.now()}-${Math.random()}`,name:ing.name,amount:ing.amount||'',unit:ing.unit||'',recipes:[r.name],count:1,checked:false,category:categoriseIngredient(ing.name)});}
+                });
+                try{localStorage.setItem('mep_groceryList',JSON.stringify(updated));}catch{}
+                return updated;
+              });
+              setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
+            }}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
