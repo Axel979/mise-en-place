@@ -4007,7 +4007,8 @@ export default function App(){
   const [cookedDatesAll, setCookedDatesAll] = useState([]);
   const hydratedRef = useRef(false);
   const storageLoadedRef = useRef(false);
-  const deletedIdsRef = useRef(new Set());
+  const getDeletedIds=()=>{try{return new Set(JSON.parse(localStorage.getItem('mep_deletedIds')||'[]'));}catch{return new Set();}};
+  const addDeletedId=(id)=>{try{const s=getDeletedIds();s.add(String(id));localStorage.setItem('mep_deletedIds',JSON.stringify([...s]));}catch{}};
   const [skillData,  setSkillData]  = useState({});
   const [earnedBadges,setEarnedBadges]=useState([]);
   const [toast,      setToast]      = useState(null); // {emoji,title,subtitle}
@@ -4064,18 +4065,19 @@ export default function App(){
     try{ if(localStorage.getItem("mep_onboarded")==="true") setOnboarded(true); }catch{}
     try{ const g=localStorage.getItem('mep_goal'); if(g){ const parsed=JSON.parse(g); if(parsed) setGoal(parsed); } }catch{}
     try{ const d=localStorage.getItem("mep_diet"); if(d) setUserDiet(d); }catch{}
+    const del=getDeletedIds();
     let xpVal=null,cookLogVal=null;
     try{ xpVal=localStorage.getItem('mep_xp'); if(xpVal) setXp(Number(xpVal)); }catch{}
-    try{ cookLogVal=localStorage.getItem('mep_cookLog'); if(cookLogVal) setCookLog(JSON.parse(cookLogVal)); }catch{}
+    try{ cookLogVal=localStorage.getItem('mep_cookLog'); if(cookLogVal){const parsed=JSON.parse(cookLogVal).filter(r=>!del.has(String(r.id))&&!del.has(r.id));setCookLog(parsed);} }catch{}
     try{ const v=localStorage.getItem('mep_earnedBadges'); if(v) setEarnedBadges(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
-    try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v))); }catch{}
-    try{ const v=localStorage.getItem('mep_wantToCook'); if(v) setWantToCook(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v).filter(id=>!del.has(String(id))))); }catch{}
+    try{ const v=localStorage.getItem('mep_wantToCook'); if(v) setWantToCook(JSON.parse(v).filter(id=>!del.has(String(id)))); }catch{}
     try{
       const v=localStorage.getItem('mep_userRecipes');
       if(v){
-        const saved=JSON.parse(v);
+        const saved=JSON.parse(v).filter(r=>!del.has(String(r.id)));
         console.log('[RECIPES] userRecipes loaded from localStorage:', saved.length);
         if(saved.length>0) setAllRecipes(prev=>{
           const existingIds=new Set(prev.map(r=>r.id));
@@ -4123,14 +4125,16 @@ export default function App(){
       try{ if(profile.xp>0) localStorage.setItem('mep_xp', String(profile.xp)); }catch{}
       try{ if(Array.isArray(profile.cooked_dates)&&profile.cooked_dates.length>0) localStorage.setItem('mep_cookedDatesAll', JSON.stringify(profile.cooked_dates)); }catch{}
       try{ if(Array.isArray(profile.earned_badges)&&profile.earned_badges.length>0) localStorage.setItem('mep_earnedBadges', JSON.stringify(profile.earned_badges)); }catch{}
-      try{ if(Array.isArray(profile.saved_posts)&&profile.saved_posts.length>0) localStorage.setItem('mep_savedPosts', JSON.stringify(profile.saved_posts.filter(id=>!deletedIdsRef.current.has(id)))); }catch{}
+      try{ if(Array.isArray(profile.saved_posts)&&profile.saved_posts.length>0){const del=getDeletedIds();localStorage.setItem('mep_savedPosts', JSON.stringify(profile.saved_posts.filter(id=>!del.has(String(id)))));} }catch{}
       // Only load cook log from Supabase if it has more entries than localStorage
       loadCompletedRecipes().then(rows=>{
         if(rows && rows.length>0){
+          const del2=getDeletedIds();
+          const filteredRows=rows.filter(r=>!del2.has(String(r.id))&&!del2.has('log-'+r.id));
           setCookLog(prev=>{
-            if(rows.length<=prev.length) return prev;
-            console.log('[PROFILE] cookLog upgrade from Supabase:', rows.length, 'vs localStorage:', prev.length);
-            const mapped=rows.map(r=>({
+            if(filteredRows.length<=prev.length) return prev;
+            console.log('[PROFILE] cookLog upgrade from Supabase:', filteredRows.length, 'vs localStorage:', prev.length);
+            const mapped=filteredRows.map(r=>({
               id:`log-${r.id}`,
               name:r.name||r.recipe_id||"",
               emoji:r.emoji||"🍳",
@@ -4141,7 +4145,7 @@ export default function App(){
               photo:r.photo_url||null,
               caption:r.notes||"",
               date: r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
-            })).filter(r=>!deletedIdsRef.current.has(r.id));
+            }));
             try{ localStorage.setItem('mep_cookLog', JSON.stringify(mapped)); }catch{}
             return mapped;
           });
@@ -4158,7 +4162,7 @@ export default function App(){
             return [...fresh,...current.filter(r=>!r.isPersonal)];
           });
           try{
-            const personal=userRecipes.filter(r=>(r.isCustom||r.isPersonal)&&!deletedIdsRef.current.has(r.id));
+            const del=getDeletedIds();const personal=userRecipes.filter(r=>(r.isCustom||r.isPersonal)&&!del.has(String(r.id)));
             if(personal.length>0) localStorage.setItem('mep_userRecipes',JSON.stringify(personal));
           }catch{}
         }
@@ -4431,7 +4435,7 @@ export default function App(){
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
             onDeleteCookLog={(id)=>{
-              deletedIdsRef.current.add(id);
+              addDeletedId(id);
               const next=cookLog.filter(e=>e.id!==id);
               setCookLog(next);
               try{localStorage.setItem('mep_cookLog',JSON.stringify(next));}catch{}
@@ -4439,7 +4443,7 @@ export default function App(){
               if(id&&uid){const realId=id.replace('log-','');supabase.from('completed_recipes').delete().eq('id',realId).eq('user_id',uid).then(({error})=>{if(error)console.error('delete completed_recipe error:',error);});}
             }}
             onDeleteRecipe={(r)=>{
-              deletedIdsRef.current.add(r.id);
+              addDeletedId(r.id);
               setAllRecipes(rs=>rs.filter(x=>x.id!==r.id));
               try{const s=JSON.parse(localStorage.getItem('mep_userRecipes')||'[]');localStorage.setItem('mep_userRecipes',JSON.stringify(s.filter(x=>x.id!==r.id)));}catch{}
               const uid=userIdRef.current;
@@ -4451,7 +4455,7 @@ export default function App(){
               try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}
             }}
             onUnsavePost={(pid)=>{
-              deletedIdsRef.current.add(pid);
+              addDeletedId(pid);
               setSavedPosts(s=>{const n=new Set(s);n.delete(pid);try{localStorage.setItem('mep_savedPosts',JSON.stringify([...n]));}catch{}return n;});
             }}
           />}
