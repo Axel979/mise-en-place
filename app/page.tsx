@@ -4040,10 +4040,12 @@ export default function App(){
     try{ const v=localStorage.getItem('mep_cookedDatesAll'); if(v) setCookedDatesAll(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v))); }catch{}
+    try{ const v=localStorage.getItem('mep_wantToCook'); if(v) setWantToCook(JSON.parse(v)); }catch{}
     try{
       const v=localStorage.getItem('mep_userRecipes');
       if(v){
         const saved=JSON.parse(v);
+        console.log('[RECIPES] userRecipes loaded from localStorage:', saved.length);
         if(saved.length>0) setAllRecipes(prev=>{
           const existingIds=new Set(prev.map(r=>r.id));
           const newOnes=saved.filter(r=>!existingIds.has(r.id));
@@ -4306,7 +4308,11 @@ export default function App(){
   },[detailRecipe]);
 
   const toggleWantToCook=(recipeId)=>{
-    setWantToCook(w=>w.includes(recipeId)?w.filter(id=>id!==recipeId):[...w,recipeId]);
+    setWantToCook(w=>{
+      const next=w.includes(recipeId)?w.filter(id=>id!==recipeId):[...w,recipeId];
+      try{ localStorage.setItem('mep_wantToCook',JSON.stringify(next)); }catch{}
+      return next;
+    });
   };
 
   const saveToLibrary=(communityRecipe)=>{
@@ -4461,7 +4467,7 @@ export default function App(){
         </div>
       )}
       {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
-      {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>setWantToCook(w=>w.filter(x=>x!==id))} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
+      {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
     </AppErrorBoundary>
   );
