@@ -1111,7 +1111,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
   // Stats
   const totalCooked=safeLog.length;
   const streak=useMemo(()=>{
-    console.log('[STREAK] cookedDatesAll:', cookedDatesAll);
     const dates=new Set(cookedDatesAll||[]);
     if(dates.size===0) return 0;
     let count=0;
@@ -1324,7 +1323,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       {/* ── SAVED TAB ────────────────────────────────────────────── */}
       {!showBadges&&libTab==="saved"&&(
         <div style={{padding:"0 16px"}}>
-          {console.log('[SAVED] savedPosts:', [...(savedPosts||[])], 'posts available:', (posts||[]).length)}
           {/* Saved recipes from app */}
           {savedRecipes.length>0&&(
             <div style={{marginBottom:20}}>
@@ -1988,7 +1986,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
   );
 }
 
-function RecipesTab({allRecipes,onOpen,onShowCreate,onShowImport,initialCat,initialDiet,initialSort,initialMinDifficulty}){
+function RecipesTab({allRecipes,onOpen,onShowCreate,initialCat,initialDiet,initialSort,initialMinDifficulty}){
   const CATS=["All","Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
   const DIETS=["All","Vegetarian","Vegan","Gluten-free","Keto","Dairy-free"];
   const SORTS=[["default","A–Z"],["easy","Easiest"],["hard","Hardest"],["cals","Lowest Cal"],["protein","Most Protein"],["xp","Most Heat 🔥"]];
@@ -2425,185 +2423,6 @@ function CreateRecipeSheet({onSave,onClose}){
   );
 }
 
-function URLImportSheet({onSave,onClose}){
-  const [text,setText]=useState("");
-  const [name,setName]=useState("");
-  const [result,setResult]=useState(null);
-  const [error,setError]=useState("");
-
-  const parseRecipe=()=>{
-    if(!text.trim()||text.trim().length<30){
-      setError("Paste at least the ingredients and steps.");
-      return;
-    }
-    if(!name.trim()){
-      setError("Please enter a recipe name.");
-      return;
-    }
-    setError("");
-
-    const lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>2);
-
-    // Detect ingredients - lines that look like measurements
-    const ingPattern=/^(\d+|\d+\/\d+|\d+\.\d+|a |an |some |handful|pinch|splash|bunch|to taste|salt|pepper)/i;
-    const stepPattern=/^(step|\d+\.|\d+\)|method|instructions|directions)/i;
-
-    let ingredients=[];
-    let steps=[];
-    let inIngredients=false;
-    let inSteps=false;
-    let stepNum=0;
-
-    for(const line of lines){
-      // Detect section headers
-      if(/^ingredient/i.test(line)){inIngredients=true;inSteps=false;continue;}
-      if(/^(method|instruction|direction|step|how to|preparation)/i.test(line)){inIngredients=false;inSteps=true;continue;}
-
-      if(inIngredients||ingPattern.test(line)){
-        if(!inSteps) ingredients.push(line);
-      } else if(inSteps||stepPattern.test(line)){
-        const body=line.replace(/^(step\s*\d+[:.]?|\d+[.)]\s*)/i,"").trim();
-        if(body.length>10){
-          stepNum++;
-          steps.push({title:`Step ${stepNum}`,body,timer:0});
-        }
-      }
-    }
-
-    // Fallback: if detection failed, split smartly
-    if(ingredients.length===0&&steps.length===0){
-      // Just split everything into steps
-      const chunks=lines.filter(l=>l.length>15);
-      chunks.forEach((body,i)=>steps.push({title:`Step ${i+1}`,body,timer:0}));
-    } else if(ingredients.length===0){
-      // First quarter of lines are probably ingredients
-      const quarter=Math.ceil(lines.length/4);
-      ingredients=lines.slice(0,quarter);
-      if(steps.length===0){
-        lines.slice(quarter).forEach((body,i)=>{
-          if(body.length>15) steps.push({title:`Step ${i+1}`,body,timer:0});
-        });
-      }
-    }
-
-    if(steps.length===0&&ingredients.length===0){
-      setError("Couldn't find a recipe in that text. Try copying just the ingredients and steps.");
-      return;
-    }
-
-    setResult({
-      name:name.trim(),
-      ingredients:ingredients.slice(0,30),
-      steps:steps.slice(0,15),
-    });
-  };
-
-  const handleSave=()=>{
-    if(!result)return;
-    onSave({
-      id:Date.now(),
-      name:result.name,
-      emoji:"",
-      photo:null,
-      xp:60,
-      difficulty:"Medium",
-      time:"30 min",
-      category:"Comfort",
-      diets:["No restrictions"],
-      macros:null,
-      done:false,
-      ingredients:result.ingredients,
-      steps:result.steps,
-      tip:null,
-      isImported:true,
-      isPersonal:true,
-      sourceUrl:null,
-      sourceName:null,
-    });
-    onClose();
-  };
-
-  return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Import Recipe</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Copy from any recipe website</div>
-          </div>
-          <CloseBtn onClose={onClose}/>
-        </div>
-
-        {!result&&(
-          <>
-            <div style={{background:`${C.sky}0E`,border:`1.5px solid ${C.sky}28`,borderRadius:14,padding:"11px 14px",marginBottom:16}}>
-              <div style={{fontSize:12,color:C.sky,fontWeight:700,lineHeight:1.7}}>
-                <div>1. Find a recipe on any website</div>
-                <div>2. Select the ingredients and steps text</div>
-                <div>3. Copy and paste it below</div>
-              </div>
-            </div>
-
-            <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Recipe name</div>
-            <input
-              value={name}
-              onChange={e=>setName(e.target.value)}
-              placeholder="e.g. Spaghetti Bolognese"
-              style={{width:"100%",padding:"11px 14px",borderRadius:14,border:`2px solid ${name?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:14,fontFamily:"inherit"}}
-            />
-
-            <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients + steps</div>
-            <textarea
-              value={text}
-              onChange={e=>setText(e.target.value)}
-              placeholder="Paste ingredients and steps here..."
-              style={{width:"100%",minHeight:200,padding:"12px 14px",borderRadius:14,border:`2px solid ${text?C.ember:C.border}`,background:C.cream,fontSize:13,color:C.bark,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box",marginBottom:8}}
-            />
-            <div style={{fontSize:11,color:C.muted,marginBottom:14}}>
-              {text.length>0?`${text.length} characters pasted`:"Tip: you can paste just the ingredients and steps — no need for the whole page"}
-            </div>
-
-            {error&&<div style={{background:`${C.flame}12`,border:`1.5px solid ${C.flame}30`,borderRadius:12,padding:"11px 14px",fontSize:13,color:C.flame,marginBottom:12,lineHeight:1.5}}>{error}</div>}
-
-            <Btn onClick={parseRecipe} disabled={!text.trim()||!name.trim()} full>
-              Extract Recipe
-            </Btn>
-          </>
-        )}
-
-        {result&&(
-          <div>
-            <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:14,color:"#fff"}}>
-              <div style={{fontWeight:900,fontSize:18,fontFamily:DF,marginBottom:4}}>{result.name}</div>
-              <div style={{fontSize:11,opacity:.7}}>{result.ingredients.length} ingredients · {result.steps.length} steps</div>
-            </div>
-
-            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:12,border:`1px solid ${C.border}`}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Ingredients</div>
-              {result.ingredients.slice(0,5).map((ing,i)=>(
-                <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(4,result.ingredients.length-1)?`1px solid ${C.border}`:"none"}}>{ing}</div>
-              ))}
-              {result.ingredients.length>5&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.ingredients.length-5} more</div>}
-            </div>
-
-            <div style={{background:C.cream,borderRadius:16,padding:"12px 14px",marginBottom:14,border:`1px solid ${C.border}`}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Steps</div>
-              {result.steps.slice(0,3).map((s,i)=>(
-                <div key={i} style={{fontSize:13,color:C.bark,padding:"4px 0",borderBottom:i<Math.min(2,result.steps.length-1)?`1px solid ${C.border}`:"none"}}>{s.body.slice(0,80)}{s.body.length>80?"…":""}</div>
-              ))}
-              {result.steps.length>3&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>+{result.steps.length-3} more steps</div>}
-            </div>
-
-            <div style={{display:"flex",gap:10}}>
-              <Btn onClick={()=>{setResult(null);setError("");}} outline color={C.muted} style={{flex:1}}>Edit</Btn>
-              <Btn onClick={handleSave} color={C.sage} style={{flex:2}}>Save to My Library</Btn>
-            </div>
-          </div>
-        )}
-      </div>
-    </Sheet>
-  );
-}
 
 
 /* ═══ NOTIFICATIONS TAB ════════════════════════════════════════════════════ */
@@ -4015,7 +3834,6 @@ export default function App(){
   const [cookLog,      setCookLog]      = useState([]);
   const [showCreate,   setShowCreate]   = useState(false);
   const [libraryInitTab, setLibraryInitTab] = useState(null);
-  const [showImport,   setShowImport]   = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
   const [showAddFriends,setShowAddFriends]=useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -4030,7 +3848,6 @@ export default function App(){
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showYearReview,  setShowYearReview]  = useState(false);
-  const [showCommunity,   setShowCommunity]   = useState(false);
   const [wantToCook,      setWantToCook]      = useState([]);
   const [hearts,          setHearts]          = useState(5);
   const [hasFreeze,       setHasFreeze]       = useState(true);
@@ -4060,7 +3877,6 @@ export default function App(){
   const prevLevel = useRef(null);
 
   useEffect(()=>{
-    console.log('[STORAGE] reading localStorage...');
     setTimeout(()=>setMounted(true),60);
     try{ if(localStorage.getItem("mep_onboarded")==="true") setOnboarded(true); }catch{}
     try{ const g=localStorage.getItem('mep_goal'); if(g){ const parsed=JSON.parse(g); if(parsed) setGoal(parsed); } }catch{}
@@ -4078,7 +3894,6 @@ export default function App(){
       const v=localStorage.getItem('mep_userRecipes');
       if(v){
         const saved=JSON.parse(v).filter(r=>!del.has(String(r.id)));
-        console.log('[RECIPES] userRecipes loaded from localStorage:', saved.length);
         if(saved.length>0) setAllRecipes(prev=>{
           const existingIds=new Set(prev.map(r=>r.id));
           const newOnes=saved.filter(r=>!existingIds.has(r.id));
@@ -4086,14 +3901,12 @@ export default function App(){
         });
       }
     }catch{}
-    console.log('[STORAGE] loaded xp:', xpVal, 'cookLog length:', cookLogVal ? JSON.parse(cookLogVal).length : 0);
     storageLoadedRef.current = true;
   },[]);
   useEffect(()=>{
-    console.log('[PROFILE] effect fired, storageLoaded:', storageLoadedRef.current, 'profile:', profile?.id);
     if(profile){
       // Only overwrite localStorage state with Supabase data if Supabase has more/better data
-      if(profile.xp>0) setXp(prev=>{if(profile.xp>prev){console.log('[PROFILE] xp upgrade',prev,'→',profile.xp);return profile.xp;}return prev;});
+      if(profile.xp>0) setXp(prev=>profile.xp>prev?profile.xp:prev);
       if(!onboarded){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
@@ -4133,7 +3946,6 @@ export default function App(){
           const filteredRows=rows.filter(r=>!del2.has(String(r.id))&&!del2.has('log-'+r.id));
           setCookLog(prev=>{
             if(filteredRows.length<=prev.length) return prev;
-            console.log('[PROFILE] cookLog upgrade from Supabase:', filteredRows.length, 'vs localStorage:', prev.length);
             const mapped=filteredRows.map(r=>({
               id:`log-${r.id}`,
               name:r.name||r.recipe_id||"",
@@ -4225,7 +4037,6 @@ export default function App(){
   },[earnedBadges]);
 
   const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends")=>{
-    console.log('[COMPLETE] handleComplete fired');
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
@@ -4240,7 +4051,6 @@ export default function App(){
       newDates=[...prev,todayIso];
       return newDates;
     });
-    console.log('[COMPLETE] cookedDatesAll after update:', newDates);
 
     // Update skills
     const cat=recipe.category;
@@ -4307,14 +4117,11 @@ export default function App(){
       localStorage.setItem('mep_cookedDays', JSON.stringify(days));
       // Save cook log with new entry prepended
       const newLog=[{id:`log-${Date.now()}`,name:recipe.name,emoji:recipe.emoji,category:recipe.category,xp:recipe.xp,difficulty:recipe.difficulty,rating,photo,caption,date:dateStr},...(JSON.parse(localStorage.getItem('mep_cookLog')||'[]'))];
-      console.log('[COMPLETE] writing to localStorage, newLog length:', newLog.length);
       localStorage.setItem('mep_cookLog', JSON.stringify(newLog));
-      console.log('[COMPLETE] localStorage write done');
     }catch(e){console.error('[COMPLETE] error:', e);}
 
     // Secondary: Supabase background sync (fire and forget)
     if(uid){
-      console.log('[SUPABASE] saving cooked_dates:', newDates);
       saveAllUserData(uid, {
         xp: newXp,
         completedRecipe: {...recipe, photo},
@@ -4431,7 +4238,7 @@ export default function App(){
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
-          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)} onShowImport={()=>setShowImport(true)} initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
+          {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
             onDeleteCookLog={(id)=>{
@@ -4502,12 +4309,6 @@ export default function App(){
           setToast({emoji:"",title:"Saved locally only",subtitle:"Couldn't sync to your account"});
         }
       }} onClose={()=>setShowCreate(false)}/>}
-      {showImport&&<URLImportSheet onSave={async r=>{
-        setAllRecipes(rs=>[r,...rs]);
-        setShowImport(false);
-        const saved=await saveUserRecipe(r);
-        if(saved) setAllRecipes(rs=>rs.map(x=>x.id===r.id?{...x,_supabaseId:saved.id}:x));
-      }} onClose={()=>setShowImport(false)}/>}
       {showQuickLog&&<QuickLogSheet onLog={handleQuickLog} onClose={()=>setShowQuickLog(false)} goal={goal} cookedDays={cookedDays}/>}
       {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)} searchUsers={searchUsers} sendFriendRequest={sendFriendRequest} loadFriends={loadFriends}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} cookLog={cookLog} onClose={()=>setShowCalendar(false)}/>}
