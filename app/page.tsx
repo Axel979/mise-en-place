@@ -958,6 +958,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
             <div style={{display:"flex",gap:10,marginBottom:12}}>
               <button onClick={()=>{
                 const newIngs=getRawIngredients(recipe);
+                console.log('[GROCERY] ingredients found:', newIngs.length, 'for recipe:', recipe.name);
                 if(!newIngs.length){setToast({emoji:"🛒",title:"No ingredients found",subtitle:"This recipe has no ingredients listed"});return;}
                 setGroceryList(prev=>{
                   const updated=[...prev];
@@ -4027,7 +4028,7 @@ export default function App(){
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showGroceryList, setShowGroceryList] = useState(false);
-  const [groceryList, setGroceryList] = useState(()=>{try{const v=localStorage.getItem('mep_groceryList');return v?JSON.parse(v):[];}catch{return [];}});
+  const [groceryList, setGroceryList] = useState([]);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [wantToCook,      setWantToCook]      = useState([]);
   const [hearts,          setHearts]          = useState(5);
@@ -4072,6 +4073,7 @@ export default function App(){
     try{ const v=localStorage.getItem('mep_cookedDays'); if(v) setCookedDays(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v).filter(id=>!del.has(String(id))))); }catch{}
     try{ const v=localStorage.getItem('mep_wantToCook'); if(v) setWantToCook(JSON.parse(v).filter(id=>!del.has(String(id)))); }catch{}
+    try{ const v=localStorage.getItem('mep_groceryList'); if(v) setGroceryList(JSON.parse(v)); }catch{}
     try{
       const v=localStorage.getItem('mep_userRecipes');
       if(v){
