@@ -957,23 +957,23 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username}){
             </div>
             <div style={{display:"flex",gap:10,marginBottom:12}}>
               <button onClick={()=>{
-                const ings=getRawIngredients(recipe);
-                if(!ings.length){setToast({emoji:"",title:"No ingredients",subtitle:"No ingredients found for this recipe"});return;}
-                try{
-                  const existing=JSON.parse(localStorage.getItem('mep_groceryList')||'[]');
-                  const updated=[...existing];
-                  ings.forEach(({name:ingName,amount})=>{
-                    const norm=ingName.toLowerCase().replace(/s$/,'').trim();
+                const newIngs=getRawIngredients(recipe);
+                if(!newIngs.length){setToast({emoji:"🛒",title:"No ingredients found",subtitle:"This recipe has no ingredients listed"});return;}
+                setGroceryList(prev=>{
+                  const updated=[...prev];
+                  newIngs.forEach(ing=>{
+                    const norm=ing.name.toLowerCase().replace(/s$/,'').trim();
                     const idx=updated.findIndex(i=>(i.name||'').toLowerCase().replace(/s$/,'').trim()===norm);
                     if(idx>=0){
-                      updated[idx]={...updated[idx],recipes:[...(updated[idx].recipes||[]),recipe.name],count:(updated[idx].count||1)+1};
+                      updated[idx]={...updated[idx],recipes:[...new Set([...(updated[idx].recipes||[]),recipe.name])],count:(updated[idx].count||1)+1};
                     }else{
-                      updated.push({id:`ing-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:ingName,amount:amount||'',unit:'',recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ingName)});
+                      updated.push({id:`ing-${Date.now()}-${Math.random()}`,name:ing.name,amount:ing.amount||'',unit:ing.unit||'',recipes:[recipe.name],count:1,checked:false,category:categoriseIngredient(ing.name)});
                     }
                   });
-                  localStorage.setItem('mep_groceryList',JSON.stringify(updated));
-                }catch{}
-                setToast({emoji:"🛒",title:`${ings.length} ingredients added`,subtitle:`from ${recipe.name}`});
+                  try{localStorage.setItem('mep_groceryList',JSON.stringify(updated));}catch{}
+                  return updated;
+                });
+                setToast({emoji:"🛒",title:`${newIngs.length} ingredients added`,subtitle:`From ${recipe.name}`});
               }} className="tap" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`2px solid ${C.border}`,background:C.cream,cursor:"pointer",fontWeight:700,fontSize:12,color:C.muted}}>
                 + Grocery List
               </button>
