@@ -233,7 +233,6 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
         </>
       ):(
         <div style={{textAlign:'center',padding:'40px 0'}}>
-          <div style={{fontSize:36,marginBottom:16}}>📬</div>
           <div style={{fontSize:16,color:'#9E8C7E',lineHeight:1.6}}>{info}</div>
         </div>
       )}
