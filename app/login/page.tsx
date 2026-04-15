@@ -207,29 +207,36 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
     e.preventDefault();
     setLoading(true); setError(''); setInfo('');
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) setError(error.message);
-    else setInfo('Check your email for a reset link.');
+    else setInfo('Check your inbox — a reset link is on its way.');
     setLoading(false);
   };
 
   return (
     <>
-      <div className="f2" style={{marginBottom:28}}>
-        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:'#F5E6D3',marginBottom:6}}>Reset password</div>
-        <div style={{fontSize:14,color:'rgba(245,230,211,.4)',lineHeight:1.6}}>Enter your email and we'll send you a reset link.</div>
-      </div>
-      <form onSubmit={handleSubmit} className="f3">
-        <input className="mep-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" required/>
-        <Err msg={error}/>
-        <InfoMsg msg={info}/>
-        <button type="submit" className="mep-btn-primary" disabled={loading||!email}>
-          {loading ? 'Sending…' : 'Send reset link'}
-        </button>
-      </form>
-      <Divider label="or"/>
-      <button className="mep-btn-ghost f4" onClick={onBack}>Back to sign in</button>
+      <button onClick={onBack} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:14,cursor:'pointer',padding:0,marginBottom:16,fontFamily:'inherit'}}>← Back</button>
+      {!info?(
+        <>
+          <div className="f2" style={{marginBottom:28}}>
+            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:'#F5E6D3',marginBottom:6}}>Forgot your password?</div>
+            <div style={{fontSize:14,color:'#9E8C7E',lineHeight:1.6}}>We'll send a reset link to your email.</div>
+          </div>
+          <form onSubmit={handleSubmit} className="f3">
+            <input className="mep-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" required/>
+            <Err msg={error}/>
+            <button type="submit" className="mep-btn-primary" disabled={loading||!email}>
+              {loading ? 'Sending…' : 'Send reset link'}
+            </button>
+          </form>
+        </>
+      ):(
+        <div style={{textAlign:'center',padding:'40px 0'}}>
+          <div style={{fontSize:36,marginBottom:16}}>📬</div>
+          <div style={{fontSize:16,color:'#9E8C7E',lineHeight:1.6}}>{info}</div>
+        </div>
+      )}
     </>
   );
 }
