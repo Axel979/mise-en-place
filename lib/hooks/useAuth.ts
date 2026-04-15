@@ -404,9 +404,9 @@ export function useAuth() {
     return { data, error };
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login';
+  const signOut = () => {
+    supabase.auth.signOut().catch(()=>{});
+    if(typeof window!=='undefined') window.location.href = '/login';
   };
 
   const refresh = async () => {
