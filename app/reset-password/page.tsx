@@ -14,10 +14,11 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setReady(true);
+      if (event === 'SIGNED_IN' && session) setReady(true);
     });
-    // Also check if already in recovery (hash params)
+    // Also check if already in recovery (user landed with valid token)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true);
     });
