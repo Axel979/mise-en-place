@@ -2914,6 +2914,42 @@ function categoriseIngredient(name){
   return 'Other';
 }
 
+function NotificationsListSheet({notifications,setNotifications,onClose}){
+  const markAllRead=()=>setNotifications(ns=>ns.map(n=>({...n,read:true})));
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Notifications</div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+        {notifications.filter(n=>!n.read).length>0&&(
+          <button onClick={markAllRead} style={{fontSize:12,color:C.flame,fontWeight:700,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",marginBottom:12}}>Mark all as read</button>
+        )}
+        {(!notifications||notifications.length===0)?(
+          <div style={{textAlign:"center",padding:"48px 20px"}}>
+            <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>Nothing new yet</div>
+            <div style={{fontSize:13,color:C.muted}}>Notifications will appear here when friends interact with your cooking.</div>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
+            {notifications.map(n=>(
+              <div key={n.id} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.border}`,opacity:n.read?.6:1}}>
+                <AvatarIcon username={n.avatar||n.name||"?"} size={38} fontSize={16}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,color:C.bark,lineHeight:1.4}}><span style={{fontWeight:700}}>{n.name}</span> {n.text}</div>
+                  <div style={{fontSize:11,color:C.muted,marginTop:3}}>{n.time}</div>
+                </div>
+                {!n.read&&<div style={{width:8,height:8,borderRadius:"50%",background:C.flame,flexShrink:0,marginTop:6}}/>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
 function GroceryListSheet({groceryList,setGroceryList,onClose}){
   const [newItem,setNewItem]=useState("");
   const [deleteId,setDeleteId]=useState(null);
@@ -3535,16 +3571,30 @@ function DataSettings({onBack, supabase}){
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount}){
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,notifications,onShowNotifications,setToast}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/(goal?.target||3)*100);
+  const unreadCount=(notifications||[]).filter(n=>!n.read).length;
 
-  const QuickBtn=({label,icon,onClick})=>(
-    <button onClick={onClick} style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${C.border}`,background:C.cream,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:7,fontFamily:"inherit",transition:"background .15s"}}>
-      {icon}
-      <span style={{fontSize:11,fontWeight:700,color:C.bark,textAlign:"center",lineHeight:1.2}}>{label}</span>
+  const MenuRow=({icon,label,onClick,badge})=>(
+    <button onClick={onClick} className="tap" style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontFamily:"inherit",marginBottom:8,position:"relative"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:34,height:34,borderRadius:10,background:`${C.flame}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>{icon}</div>
+        <div style={{fontWeight:700,fontSize:14,color:C.bark,paddingTop:2}}>{label}</div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        {badge>0&&<div style={{width:20,height:20,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:10,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge}</div>}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
     </button>
   );
+
+  const handleShare=async()=>{
+    onClose();
+    const shareData={title:'mise.en.place',text:'Track your cooking habits and level up in the kitchen',url:typeof window!=='undefined'?window.location.origin:'https://misenplace.app'};
+    if(typeof navigator!=='undefined'&&navigator.share){try{await navigator.share(shareData);return;}catch(e){if(e.name==='AbortError')return;}}
+    try{await navigator.clipboard.writeText(shareData.url);if(setToast)setToast({emoji:"📋",title:"Link copied",subtitle:"Share it with friends"});}catch{}
+  };
 
   return(
     <div>
@@ -3563,7 +3613,6 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
             <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:4}}>{xp} 🔥 Heat earned</div>
           </div>
         </div>
-        {/* Goal bar */}
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
           <span style={{fontSize:10,color:"rgba(255,255,255,.4)",fontWeight:600,textTransform:"uppercase",letterSpacing:".08em"}}>{goal?.label||"3× a week"}</span>
           <span style={{fontSize:10,color:"rgba(255,255,255,.6)",fontWeight:700}}>{weekDone}/{goal?.target||3} this week</span>
@@ -3573,34 +3622,24 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
-        <QuickBtn label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        }/>
-        <div style={{position:"relative"}}>
-          <QuickBtn label="Groceries" onClick={()=>{onShowGroceryList();onClose();}} icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-          }/>
-          {groceryCount>0&&<div style={{position:"absolute",top:-4,right:-4,width:18,height:18,borderRadius:"50%",background:C.flame,color:"#fff",fontSize:10,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center"}}>{groceryCount}</div>}
-        </div>
-      </div>
+      {/* Menu rows */}
+      <MenuRow label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      }/>
+      <MenuRow label="Groceries" badge={groceryCount} onClick={()=>{onShowGroceryList();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+      }/>
+      <MenuRow label="Notifications" badge={unreadCount} onClick={()=>{onShowNotifications();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      }/>
+      <MenuRow label="Share mise.en.place" onClick={handleShare} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      }/>
+      <MenuRow label="Settings" onClick={()=>{onShowSettings();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      }/>
 
-      {/* Settings button */}
-      <button onClick={onShowSettings} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",fontFamily:"inherit",marginBottom:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{width:34,height:34,borderRadius:10,background:`${C.flame}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          </div>
-          <div style={{textAlign:"left"}}>
-            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>Settings</div>
-            <div style={{fontSize:11,color:C.muted}}>Account, privacy, preferences</div>
-          </div>
-        </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-
-      {/* Sign out */}
+      <div style={{height:8}}/>
       <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",color:"#E05C7A",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
         Sign Out
       </button>
@@ -4009,6 +4048,7 @@ export default function App(){
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showGroceryList, setShowGroceryList] = useState(false);
+  const [showNotifSheet, setShowNotifSheet] = useState(false);
   const [groceryList, setGroceryList] = useState([]);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [wantToCook,      setWantToCook]      = useState([]);
@@ -4509,7 +4549,7 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} notifications={notifications} onShowNotifications={()=>{setShowNotifSheet(true);setShowDrawer(false);}} setToast={setToast}/>
           </div>
         </div>
       )}
@@ -4517,6 +4557,7 @@ export default function App(){
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}
+      {showNotifSheet&&<NotificationsListSheet notifications={notifications} setNotifications={setNotifications} onClose={()=>setShowNotifSheet(false)}/>}
     </AppErrorBoundary>
   );
 }
