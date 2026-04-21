@@ -875,7 +875,7 @@ async function shareToInstagramStory({cardEl,setToast}){
 }
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
-function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAddToGroceryList}){
+function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAddToGroceryList,currentChallenge,challengeJoined}){
   const [showEdit,setShowEdit]=useState(false);
   const [step,setStep]=useState(0);
   const [mode,setMode]=useState("overview");
@@ -885,14 +885,16 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
   const [rating,setRating]=useState(0);
   const [photoPreview,setPhotoPreview]=useState(null);
   const [visibility,setVisibility]=useState("friends");
+  const showChallengeToggle=currentChallenge&&(challengeJoined||[]).includes(currentChallenge?.id);
+  const [postToChallenge,setPostToChallenge]=useState(!!showChallengeToggle);
   const shareCardRef=useRef(null);
   const fileRef=useRef();
   const steps_=(recipe.steps||[]);
   const nSteps=steps_.length;
   const handleFile=(e)=>{const f=e.target.files[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));};
   const handleComplete=()=>{setDone(true);setPostOpen(true);};
-  const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating,visibility);};
-  const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0);};
+  const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating,visibility,postToChallenge&&currentChallenge?currentChallenge.id:null);};
+  const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0,"friends",null);};
 
   return(
     <div style={{background:C.paper,paddingBottom:30}}>
@@ -1052,6 +1054,17 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
             <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{display:"none"}}/>
             <textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder="What happened? What worked? What would you change?" style={{width:"100%",minHeight:80,borderRadius:16,border:`2px solid ${caption?C.ember:C.border}`,background:C.cream,padding:"12px 16px",fontSize:14,color:C.bark,resize:"none",outline:"none",lineHeight:1.55,boxSizing:"border-box",marginBottom:14,transition:"border-color .18s"}}/>
             <div style={{marginBottom:14}}>
+            {showChallengeToggle&&(
+              <div onClick={()=>setPostToChallenge(p=>!p)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:14,border:`1.5px solid ${postToChallenge?currentChallenge.color:C.border}`,background:postToChallenge?`${currentChallenge.color}10`:"transparent",cursor:"pointer",marginBottom:14,transition:"all .18s"}}>
+                <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${postToChallenge?currentChallenge.color:C.muted}`,background:postToChallenge?currentChallenge.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                  {postToChallenge&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                </div>
+                <div>
+                  <div style={{fontWeight:700,fontSize:13,color:C.bark}}>Post to {currentChallenge.theme}</div>
+                  <div style={{fontSize:11,color:C.muted,marginTop:1}}>Share your creation with the challenge</div>
+                </div>
+              </div>
+            )}
               <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".07em",marginBottom:8}}>Who can see this?</div>
               <div style={{display:"flex",gap:7}}>
                 {[["private","Only me"],["friends","Friends"],["community","Everyone"]].map(([v,lbl])=>(
@@ -1541,7 +1554,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
 }
 
 
-function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts,username}){
+function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts,username,currentChallenge,challengeJoined,onJoinChallenge,onSwitchToRecipes}){
   const [feedView,setFeedView]=useState("friends");
   const [activeTab,setActiveTab]=useState("feed");
   const [showComments,setShowComments]=useState(null);
@@ -1764,7 +1777,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
       {/* Feed / League toggle */}
       <div style={{padding:"8px 16px 0"}}>
         <div style={{display:"flex",background:C.pill,borderRadius:14,padding:3,gap:3,marginBottom:12}}>
-          {[["feed","Feed"],["league","League"]].map(([id,lbl])=>(
+          {[["feed","Feed"],["challenge",currentChallenge?.theme||"Challenge"],["league","League"]].map(([id,lbl])=>(
             <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 4px",fontWeight:800,fontSize:13,background:activeTab===id?C.cream:"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 8px rgba(0,0,0,.07)":"none",transition:"all .18s",fontFamily:"inherit"}}>
               {lbl}
             </button>
@@ -1805,6 +1818,36 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
       )}
 
       {/* ── LEAGUE ────────────────────────────────────────────── */}
+      {/* ── CHALLENGE FEED ────────────────────────────────────── */}
+      {activeTab==="challenge"&&currentChallenge&&(()=>{
+        const isJoined=(challengeJoined||[]).includes(currentChallenge.id);
+        const challengePosts=[...posts.filter(p=>p.challengeId===currentChallenge.id)].sort((a,b)=>(b.mwah||0)-(a.mwah||0));
+        const now=new Date();
+        const endOfMonth=new Date(now.getFullYear(),now.getMonth()+1,0);
+        const daysLeft=Math.max(0,Math.ceil((endOfMonth.getTime()-now.getTime())/(1000*60*60*24)));
+        return(
+          <div>
+            <div style={{margin:"8px 16px 16px",borderRadius:20,padding:"18px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:-16,right:-16,width:80,height:80,borderRadius:"50%",border:"16px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
+              <div style={{fontWeight:900,fontSize:20,color:currentChallenge.accent,fontFamily:DF,marginBottom:6}}>{currentChallenge.theme}</div>
+              <div style={{fontSize:12,color:currentChallenge.accent,opacity:.7,marginBottom:12}}>124 cooks · {daysLeft} day{daysLeft!==1?'s':''} left</div>
+              {!isJoined&&<button onClick={()=>onJoinChallenge&&onJoinChallenge(currentChallenge.id)} className="tap" style={{padding:"8px 20px",borderRadius:99,border:"none",background:currentChallenge.accent,color:currentChallenge.color,fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Join Challenge</button>}
+            </div>
+            {challengePosts.length===0?(
+              <div style={{textAlign:"center",padding:"40px 20px"}}>
+                <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:8}}>No creations yet</div>
+                <div style={{fontSize:13,color:C.muted,lineHeight:1.5,marginBottom:16}}>Be the first to cook and share</div>
+                <button onClick={()=>onSwitchToRecipes&&onSwitchToRecipes()} className="tap" style={{padding:"10px 24px",borderRadius:14,border:"none",background:currentChallenge.color,color:currentChallenge.accent,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cook something {currentChallenge.theme.split(' ')[0]}</button>
+              </div>
+            ):(
+              <div style={{padding:"0 0 16px"}}>
+                {challengePosts.map(post=><PostCard key={post.id} post={post}/>)}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {activeTab==="league"&&(
         <div style={{padding:"0 16px"}}>
           <div style={{background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden",marginBottom:14}}>
@@ -4279,7 +4322,7 @@ export default function App(){
     }
   },[earnedBadges]);
 
-  const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends")=>{
+  const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends",challengeId=null)=>{
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
@@ -4328,7 +4371,7 @@ export default function App(){
       recipe:recipe.name,emoji:recipe.emoji,photo,
       caption:postCaption,
       time:"just now",mwah:0,myMwah:false,comments:[],
-      visibility:visibility||'friends',isOwn:true,
+      visibility:visibility||'friends',isOwn:true,challengeId:challengeId||null,
     },...ps]);
     // Always post activity (even without photo)
     try{
@@ -4397,7 +4440,19 @@ export default function App(){
       const isJoined=prev.includes(challengeId);
       const next=isJoined?prev.filter(id=>id!==challengeId):[...prev,challengeId];
       try{localStorage.setItem('mep_challengeJoined',JSON.stringify(next));}catch{}
-      if(!isJoined) setToast({emoji:"",title:"Challenge joined!",subtitle:"Cook and share your creations"});
+      if(!isJoined){
+        setToast({emoji:"",title:"Challenge joined!",subtitle:"Cook and share your creations"});
+        // Award challenge badge
+        if(currentChallenge&&currentChallenge.badge){
+          setEarnedBadges(p=>{
+            if(p.includes(currentChallenge.badge)) return p;
+            const n=[...p,currentChallenge.badge];
+            try{localStorage.setItem('mep_earnedBadges',JSON.stringify(n));}catch{}
+            loadedBadgesRef.current.add(currentChallenge.badge);
+            return n;
+          });
+        }
+      }
       return next;
     });
   };
@@ -4489,7 +4544,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating)=>{handleComplete(r,p,c_,rating);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating,vis,chId)=>{handleComplete(r,p,c_,rating,vis,chId);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
               setGroceryList(prev=>{
@@ -4504,10 +4559,10 @@ export default function App(){
                 return updated;
               });
               setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
-            }}/>;})()}
+            }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
-                    {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
+                    {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
             onDeleteCookLog={(id)=>{
               addDeletedId(id);
