@@ -201,6 +201,14 @@ const SKILL_MAP = {
 };
 const calcSkillLevel = n => Math.min(5,Math.floor(n/2));
 
+/* ═══ MONTHLY CHALLENGES ═════════════════════════════════════════════════ */
+const MONTHLY_CHALLENGES = [
+  {id:'italian-april',month:4,year:2026,theme:'Italian April',description:'From handmade pasta to slow-cooked ragù — cook your best Italian this month and share it with the community.',color:'#C8A84B',accent:'#3B2A1A',badge:'italian_april',recipes:['pasta','pizza','risotto','tiramisu','lasagna','gnocchi','osso buco','panna cotta']},
+  {id:'bbq-may',month:5,year:2026,theme:'BBQ May',description:'Fire up the grill. Share your best BBQ creations with the community.',color:'#FF4D1C',accent:'#FFF8F0',badge:'bbq_may',recipes:['ribs','brisket','burger','chicken wings','corn','pulled pork']},
+  {id:'comfort-june',month:6,year:2026,theme:'Comfort Food June',description:'The dishes that feel like home. Cook something that warms the soul.',color:'#5C7A4E',accent:'#FFF8F0',badge:'comfort_june',recipes:['mac and cheese','beef stew','chicken soup','mashed potato','pot pie']},
+];
+const getCurrentChallenge=()=>{const now=new Date();return MONTHLY_CHALLENGES.find(c=>c.month===now.getMonth()+1&&c.year===now.getFullYear())||null;};
+
 /* ═══ BADGES ══════════════════════════════════════════════════════════════ */
 const BADGES = [
   {id:"first_cook",    label:"First Cook",       desc:"Complete your first recipe",            check:s=>s.total>=1},
@@ -214,6 +222,8 @@ const BADGES = [
   {id:"asian_3",       label:"Asian Kitchen",      desc:"Cook 3 Asian dishes",                   check:s=>(s.cats.Asian||0)>=3},
   {id:"italian_3",     label:"Pasta Pro",          desc:"Cook 3 Italian dishes",                 check:s=>(s.cats.Italian||0)>=3},
   {id:"mwah_10",       label:"Fan Favourite",      desc:"Receive 10 Mwah reactions",             check:s=>(s.mwah||0)>=10},
+  {id:"italian_april", label:"Italian April",      desc:"Joined the Italian April challenge",    check:s=>(s.challs||[]).includes("italian_april")},
+  {id:"challenge_post",label:"Challenge Cook",     desc:"Posted a creation to a monthly challenge",check:s=>(s.challengePosts||0)>=1},
 ];
 
 
@@ -1854,7 +1864,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   );
 }
 
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze,currentChallenge,challengeJoined,onJoinChallenge}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
   const goalDone=weekDone>=goal.target;
@@ -1933,6 +1943,31 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
           )}
         </div>
       </div>
+
+      {/* ── Monthly challenge banner ────────────────────────────── */}
+      {currentChallenge&&(()=>{
+        const isJoined=(challengeJoined||[]).includes(currentChallenge.id);
+        const now=new Date();
+        const endOfMonth=new Date(now.getFullYear(),now.getMonth()+1,0);
+        const daysLeft=Math.max(0,Math.ceil((endOfMonth.getTime()-now.getTime())/(1000*60*60*24)));
+        return(
+          <div style={{margin:"0 16px 16px",borderRadius:20,padding:"20px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",border:"20px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
+            <div style={{fontSize:10,fontWeight:700,color:currentChallenge.accent,textTransform:"uppercase",letterSpacing:".15em",opacity:.7,marginBottom:8}}>This month</div>
+            <div style={{fontWeight:900,fontSize:24,color:currentChallenge.accent,fontFamily:DF,lineHeight:1.2,marginBottom:8}}>{currentChallenge.theme}</div>
+            <div style={{fontSize:13,color:currentChallenge.accent,opacity:.85,lineHeight:1.5,marginBottom:16,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{currentChallenge.description}</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:12,color:currentChallenge.accent,opacity:.6}}>124 cooks joined</div>
+                <div style={{fontSize:11,color:currentChallenge.accent,opacity:.5,marginTop:2}}>{daysLeft} day{daysLeft!==1?'s':''} left</div>
+              </div>
+              <button onClick={()=>onJoinChallenge&&onJoinChallenge(currentChallenge.id)} className="tap" style={{padding:"9px 22px",borderRadius:99,border:isJoined?`2px solid ${currentChallenge.accent}`:"none",background:isJoined?"transparent":currentChallenge.accent,color:isJoined?currentChallenge.accent:currentChallenge.color,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",transition:"all .18s"}}>
+                {isJoined?"Joined ✓":"Join Challenge"}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Recipe cards ─────────────────────────────────────────── */}
       <div style={{padding:"0 16px"}}>
@@ -4044,6 +4079,8 @@ export default function App(){
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showGroceryList, setShowGroceryList] = useState(false);
+  const [challengeJoined, setChallengeJoined] = useState([]);
+  const currentChallenge = getCurrentChallenge();
   const [showNotifSheet, setShowNotifSheet] = useState(false);
   const [groceryList, setGroceryList] = useState([]);
   const [showYearReview,  setShowYearReview]  = useState(false);
@@ -4091,6 +4128,7 @@ export default function App(){
     try{ const v=localStorage.getItem('mep_savedPosts'); if(v) setSavedPosts(new Set(JSON.parse(v).filter(id=>!del.has(String(id))))); }catch{}
     try{ const v=localStorage.getItem('mep_wantToCook'); if(v) setWantToCook(JSON.parse(v).filter(id=>!del.has(String(id)))); }catch{}
     try{ const v=localStorage.getItem('mep_groceryList'); if(v) setGroceryList(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_challengeJoined'); if(v) setChallengeJoined(JSON.parse(v)); }catch{}
     try{
       const v=localStorage.getItem('mep_userRecipes');
       if(v){
@@ -4354,6 +4392,16 @@ export default function App(){
     return()=>window.removeEventListener('popstate',handlePop);
   },[detailRecipe]);
 
+  const handleJoinChallenge=(challengeId)=>{
+    setChallengeJoined(prev=>{
+      const isJoined=prev.includes(challengeId);
+      const next=isJoined?prev.filter(id=>id!==challengeId):[...prev,challengeId];
+      try{localStorage.setItem('mep_challengeJoined',JSON.stringify(next));}catch{}
+      if(!isJoined) setToast({emoji:"",title:"Challenge joined!",subtitle:"Cook and share your creations"});
+      return next;
+    });
+  };
+
   const toggleWantToCook=(recipeId)=>{
     setWantToCook(w=>{
       const next=w.includes(recipeId)?w.filter(id=>id!==recipeId):[...w,recipeId];
@@ -4457,7 +4505,7 @@ export default function App(){
               });
               setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
             }}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze}/>}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
