@@ -68,7 +68,7 @@ const CSS = `
 `;
 
 const page: React.CSSProperties = {
-  minHeight:'100dvh', background:'#1A0F08',
+  minHeight:'100vh', background:'#1A0F08',
   display:'flex', flexDirection:'column',
   alignItems:'center', justifyContent:'center',
   padding:'32px 24px', position:'relative', overflow:'hidden',

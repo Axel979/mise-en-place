@@ -38,7 +38,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div style={{ background: '#1A0F08', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BF }}>
+    <div style={{ background: '#1A0F08', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BF }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
