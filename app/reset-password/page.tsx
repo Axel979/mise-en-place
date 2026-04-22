@@ -6,6 +6,7 @@ const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
 
 export default function ResetPasswordPage() {
+  if(typeof window!=='undefined') console.log('[RESET] page loaded, URL:', window.location.href, 'search:', window.location.search, 'hash:', window.location.hash);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[RESET] auth event:', event, 'session:', session?.user?.id);
+      console.log('[RESET] auth event:', event, 'session user:', session?.user?.email);
       if (event === 'PASSWORD_RECOVERY') {
         setReady(true);
       }
@@ -25,8 +26,8 @@ export default function ResetPasswordPage() {
     });
 
     // Also check current session in case token was already exchanged
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[RESET] getSession:', session?.user?.id);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('[RESET] getSession result:', session?.user?.email, 'error:', error);
       if (session) setReady(true);
     });
 
@@ -40,6 +41,7 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[RESET] handleSubmit called, ready:', ready, 'password length:', password.length);
     setError('');
     if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
