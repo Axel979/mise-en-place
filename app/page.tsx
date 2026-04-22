@@ -27,6 +27,9 @@ const CSS = `
   @keyframes slideRight{from{transform:translateX(100%)}to{transform:none}}
   @keyframes levelUp{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
   @keyframes jiggle{0%,100%{transform:rotate(-1deg)}25%{transform:rotate(1deg)}50%{transform:rotate(-1deg)}75%{transform:rotate(1deg)}}
+  @keyframes bookOpen{0%{transform:perspective(1200px) rotateY(-25deg) scale(.92);opacity:0}40%{transform:perspective(1200px) rotateY(4deg) scale(1.01);opacity:1}70%{transform:perspective(1200px) rotateY(-2deg) scale(1)}100%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}}
+  @keyframes bookClose{0%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}30%{transform:perspective(1200px) rotateY(-4deg) scale(1.01)}70%{transform:perspective(1200px) rotateY(20deg) scale(.94);opacity:.7}100%{transform:perspective(1200px) rotateY(25deg) scale(.88) translateY(18px);opacity:0}}
+  @keyframes shelfDust{0%{opacity:0;transform:translateY(0) scale(.5)}40%{opacity:.6;transform:translateY(-8px) scale(1)}100%{opacity:0;transform:translateY(-20px) scale(1.3)}}
   .ch:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(0,0,0,.11)!important}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
 `;
@@ -4155,6 +4158,8 @@ export default function App(){
   const [showNotifSheet, setShowNotifSheet] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showChallengeSheet, setShowChallengeSheet] = useState(false);
+  const [recipeAnimState, setRecipeAnimState] = useState('idle');
+  const [showSparkle, setShowSparkle] = useState(false);
   const [groceryList, setGroceryList] = useState([]);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [wantToCook,      setWantToCook]      = useState([]);
@@ -4448,13 +4453,19 @@ export default function App(){
 
   const openRecipe=useCallback((recipe)=>{
     setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);
-    // Push history state so Android back button works within app
+    setRecipeAnimState('opening');
+    setTimeout(()=>setRecipeAnimState('open'),550);
     window.history.pushState({recipe:true},'','');
     setTimeout(()=>{
       const el=document.querySelector('[data-scroll-area]');
       if(el) el.scrollTop=0;
     },10);
   },[allRecipes]);
+
+  const closeRecipe=useCallback(()=>{
+    setRecipeAnimState('closing');
+    setTimeout(()=>{setDetailRecipe(null);setRecipeAnimState('idle');},480);
+  },[]);
 
   // Handle Android/browser back button
   useEffect(()=>{
@@ -4574,7 +4585,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating,vis,chId)=>{handleComplete(r,p,c_,rating,vis,chId);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <div style={{animation:recipeAnimState==='opening'?'bookOpen .55s cubic-bezier(.34,1.56,.64,1) forwards':recipeAnimState==='closing'?'bookClose .5s cubic-bezier(.4,0,.8,.4) forwards':'none',transformOrigin:'left center',willChange:'transform,opacity',position:'relative'}}><div style={{position:'absolute',left:0,top:0,bottom:0,width:6,background:'linear-gradient(to right,rgba(59,42,26,.18),transparent)',borderRadius:'3px 0 0 3px',pointerEvents:'none',zIndex:1}}/><RecipeDetail recipe={live} onBack={closeRecipe} onComplete={(r,p,c_,rating,vis,chId)=>{setShowSparkle(true);setTimeout(()=>setShowSparkle(false),700);handleComplete(r,p,c_,rating,vis,chId);closeRecipe();}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
               setGroceryList(prev=>{
@@ -4589,7 +4600,7 @@ export default function App(){
                 return updated;
               });
               setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
-            }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/>;})()}
+            }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/></div>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onOpenChallenge={()=>setShowChallengeSheet(true)}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}}/>}
@@ -4689,6 +4700,13 @@ export default function App(){
       {showNotifSheet&&<NotificationsListSheet notifications={notifications} setNotifications={setNotifications} onClose={()=>setShowNotifSheet(false)}/>}
       {showLeaderboard&&<LeaderboardSheet weeklyXp={weeklyXp} levelInfo={levelInfo} onClose={()=>setShowLeaderboard(false)}/>}
       {showChallengeSheet&&currentChallenge&&<ChallengeDetailSheet currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} allRecipes={allRecipes} posts={posts} onOpenRecipe={(r)=>{openRecipe(r);setShowChallengeSheet(false);}} onClose={()=>setShowChallengeSheet(false)}/>}
+      {showSparkle&&(
+        <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999}}>
+          {[{x:-30,y:-20,d:0},{x:20,y:-30,d:80},{x:-20,y:20,d:160},{x:30,y:10,d:240}].map((s,i)=>(
+            <div key={i} style={{position:'absolute',left:`calc(50% + ${s.x}px)`,top:`calc(50% + ${s.y}px)`,width:7,height:7,borderRadius:'50%',background:'#F5C842',animation:`shelfDust .6s ease-out ${s.d}ms forwards`}}/>
+          ))}
+        </div>
+      )}
     </AppErrorBoundary>
   );
 }
