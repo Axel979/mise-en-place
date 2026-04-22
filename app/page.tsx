@@ -4564,6 +4564,7 @@ export default function App(){
     if(user) return;
     if(typeof window==='undefined') return;
     if(window.location.pathname==='/login') return;
+    if(window.location.pathname==='/reset-password') return;
     window.location.href = '/login';
   },[loading,user]);
   if(loading) return <div style={{background:C.paper,minHeight:"100vh"}}/>;

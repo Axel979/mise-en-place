@@ -1,19 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: 'mep-auth-reset',
-    },
-  }
-);
+import { supabase } from '@/lib/supabase/client';
 
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
@@ -28,26 +15,23 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Listen for auth state changes
+    console.log('[RESET] URL:', window.location.href);
+    console.log('[RESET] hash:', window.location.hash);
+    console.log('[RESET] search:', window.location.search);
+
+    // Check if we have a valid session already (from callback redirect)
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('[RESET] session:', session?.user?.email, 'error:', error?.message);
+      if (session?.user) setReady(true);
+    });
+
+    // Also listen for PASSWORD_RECOVERY event as fallback
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[RESET] auth event:', event, 'session user:', session?.user?.email);
-      if (event === 'PASSWORD_RECOVERY') {
+      console.log('[RESET] event:', event, 'user:', session?.user?.email);
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setReady(true);
       }
-      // CRITICAL: Do NOT redirect on SIGNED_IN here — this page must stay put
-      // even when a session is established via recovery link
     });
-
-    // Also check current session in case token was already exchanged
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('[RESET] getSession result:', session?.user?.email, 'error:', error);
-      if (session) setReady(true);
-    });
-
-    // Prevent any navigation away from this page
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', window.location.href);
-    }
 
     return () => subscription.unsubscribe();
   }, []);
