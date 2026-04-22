@@ -14,14 +14,27 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true);
-      if (event === 'SIGNED_IN' && session) setReady(true);
+      console.log('[RESET] auth event:', event, 'session:', session?.user?.id);
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true);
+      }
+      // CRITICAL: Do NOT redirect on SIGNED_IN here — this page must stay put
+      // even when a session is established via recovery link
     });
-    // Also check if already in recovery (user landed with valid token)
+
+    // Also check current session in case token was already exchanged
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[RESET] getSession:', session?.user?.id);
       if (session) setReady(true);
     });
+
+    // Prevent any navigation away from this page
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', window.location.href);
+    }
+
     return () => subscription.unsubscribe();
   }, []);
 
