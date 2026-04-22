@@ -27,12 +27,11 @@ const CSS = `
   @keyframes slideRight{from{transform:translateX(100%)}to{transform:none}}
   @keyframes levelUp{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
   @keyframes jiggle{0%,100%{transform:rotate(-1deg)}25%{transform:rotate(1deg)}50%{transform:rotate(-1deg)}75%{transform:rotate(1deg)}}
-  @keyframes coverFlipOpen{0%{transform:perspective(1400px) rotateY(0);opacity:1}100%{transform:perspective(1400px) rotateY(-180deg);opacity:0}}
-  @keyframes coverFlipClose{0%{transform:perspective(1400px) rotateY(-180deg);opacity:0}100%{transform:perspective(1400px) rotateY(0);opacity:1}}
-  @keyframes contentReveal{0%{opacity:0;transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
-  @keyframes contentHide{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.97)}}
-  @keyframes bookSlideIn{0%{transform:translateY(100vh)}100%{transform:translateY(0)}}
-  @keyframes bookSlideOut{0%{transform:translateY(0)}100%{transform:translateY(100vh)}}
+  @keyframes bookExpand{0%{transform:translate(var(--ox),var(--oy)) scale(var(--sx),var(--sy));opacity:1;border-radius:20px}60%{transform:translate(0,0) scale(1);border-radius:8px}100%{transform:translate(0,0) scale(1);border-radius:0;opacity:1}}
+  @keyframes bookShrink{0%{transform:translate(0,0) scale(1);border-radius:0;opacity:1}40%{transform:translate(0,0) scale(1);border-radius:8px}100%{transform:translate(var(--ox),var(--oy)) scale(var(--sx),var(--sy));opacity:0;border-radius:20px}}
+  @keyframes coverFlipOpen{0%{transform:perspective(1200px) rotateY(0);opacity:1}50%{transform:perspective(1200px) rotateY(-90deg);opacity:.5}100%{transform:perspective(1200px) rotateY(-180deg);opacity:0}}
+  @keyframes coverFlipClose{0%{transform:perspective(1200px) rotateY(-180deg);opacity:0}50%{transform:perspective(1200px) rotateY(-90deg);opacity:.5}100%{transform:perspective(1200px) rotateY(0);opacity:1}}
+  @keyframes contentFadeIn{0%{opacity:0}100%{opacity:1}}
   @keyframes shelfDust{0%{opacity:0;transform:translateY(0) scale(.5)}40%{opacity:.8;transform:translateY(-12px) scale(1.1)}100%{opacity:0;transform:translateY(-28px) scale(1.4)}}
   .ch:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(0,0,0,.11)!important}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
@@ -882,18 +881,22 @@ async function shareToInstagramStory({cardEl,setToast}){
 }
 
 /* ═══ BOOK WRAPPER ═══════════════════════════════════════════════════════ */
-function BookWrapper({children,animState}){
+function BookWrapper({children,animState,origin}){
+  const vw=typeof window!=='undefined'?window.innerWidth:390;
+  const vh=typeof window!=='undefined'?window.innerHeight:844;
+  const ox=origin?((origin.x-vw/2)/(vw/2))*100:0;
+  const oy=origin?((origin.y-vh/2)/(vh/2))*100:0;
+  const sx=origin?origin.w/vw:0.3;
+  const sy=origin?origin.h/vh:0.2;
   return(
-    <div style={{position:'fixed',inset:0,zIndex:200,background:C.paper,animation:animState==='opening'?'bookSlideIn .45s cubic-bezier(.22,1,.36,1) forwards':animState==='closing'?'bookSlideOut .4s cubic-bezier(.4,0,.8,.4) forwards':'none',transformOrigin:'bottom center',overflow:'hidden'}}>
-      <div style={{position:'absolute',left:0,top:0,bottom:0,width:8,zIndex:10,background:'linear-gradient(to right,rgba(59,42,26,.22),transparent)',pointerEvents:'none'}}/>
-      <div style={{position:'absolute',top:0,left:0,right:0,height:4,zIndex:10,background:'linear-gradient(to bottom,rgba(59,42,26,.12),transparent)',pointerEvents:'none'}}/>
+    <div style={{position:'fixed',inset:0,zIndex:200,background:C.paper,'--ox':`${ox}%`,'--oy':`${oy}%`,'--sx':sx,'--sy':sy,animation:animState==='opening'?'bookExpand .55s cubic-bezier(.22,1,.36,1) forwards':animState==='closing'?'bookShrink .45s cubic-bezier(.4,0,.6,1) forwards':'none',transformOrigin:'center center',overflow:'hidden'}}>
+      <div style={{position:'absolute',left:0,top:0,bottom:0,width:10,zIndex:10,background:'linear-gradient(to right,rgba(59,42,26,.25),transparent)',pointerEvents:'none'}}/>
       {(animState==='opening'||animState==='closing')&&(
-        <div style={{position:'absolute',inset:0,zIndex:20,background:'linear-gradient(135deg,#3B2A1A 0%,#5C3D20 50%,#3B2A1A 100%)',animation:animState==='opening'?'coverFlipOpen .45s cubic-bezier(.4,0,.2,1) forwards':'coverFlipClose .35s cubic-bezier(.4,0,.2,1) forwards',transformOrigin:'left center',transformStyle:'preserve-3d',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:8}}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#FFF8F0" strokeWidth="1" opacity=".3"/><path d="M16 24 Q24 16 32 24 Q24 32 16 24Z" stroke="#FF4D1C" strokeWidth="1.5" fill="none" opacity=".8"/><circle cx="24" cy="24" r="3" fill="#FF4D1C" opacity=".8"/></svg>
-          <div style={{fontFamily:DF,fontSize:13,color:'#FFF8F0',opacity:.5,letterSpacing:'.2em',textTransform:'uppercase'}}>mise.en.place</div>
+        <div style={{position:'absolute',inset:0,zIndex:20,background:'#FFF8F0',transformOrigin:'left center',animation:animState==='opening'?'coverFlipOpen .55s cubic-bezier(.4,0,.2,1) .1s forwards':'coverFlipClose .35s cubic-bezier(.4,0,.2,1) forwards',boxShadow:'-4px 0 20px rgba(59,42,26,.15)'}}>
+          <div style={{position:'absolute',left:0,top:'10%',bottom:'10%',width:1,background:'rgba(59,42,26,.08)'}}/>
         </div>
       )}
-      <div style={{animation:animState==='opening'?'contentReveal .3s ease-out .3s both':animState==='closing'?'contentHide .2s ease-in forwards':'none',height:'100%',overflow:'auto'}}>
+      <div style={{height:'100%',overflow:'auto',animation:animState==='opening'?'contentFadeIn .3s ease-out .45s both':'none',opacity:animState==='opening'?0:1}}>
         {children}
       </div>
     </div>
@@ -1291,7 +1294,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               {hasPhotos?(
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,marginBottom:16}}>
                   {filtered.map((entry,i)=>(
-                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:jiggleMode?"visible":"hidden",position:"relative",aspectRatio:"1/1",background:C.pill,...jiggleStyle}}>
+                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m,e);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:jiggleMode?"visible":"hidden",position:"relative",aspectRatio:"1/1",background:C.pill,...jiggleStyle}}>
                       <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
                       {entry.photo
                         ?<img src={entry.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -1309,7 +1312,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {filtered.map((entry,i)=>(
-                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center",position:"relative",overflow:jiggleMode?"visible":"hidden",...jiggleStyle}}>
+                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m,e);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center",position:"relative",overflow:jiggleMode?"visible":"hidden",...jiggleStyle}}>
                       <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
                       <div style={{width:44,height:44,borderRadius:12,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".6"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
@@ -1345,7 +1348,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
           ):(
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {[...myRecipes,...savedRecipes].map(r=>(
-                <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
+                <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r,e);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
                   <DeleteBadge onDel={()=>{if(onDeleteRecipe)onDeleteRecipe(r);}}/>
                   <div style={{width:80,flexShrink:0,background:`linear-gradient(135deg,${C.sage}20,${C.sage}08)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5" opacity=".6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1375,7 +1378,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Want to cook</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {savedRecipes.map(r=>(
-                  <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
+                  <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r,e);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
                     <DeleteBadge onDel={()=>{if(onRemoveWantToCook)onRemoveWantToCook(r.id);}}/>
                     <div style={{width:72,flexShrink:0,background:`${C.flame}10`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".5"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
@@ -1400,7 +1403,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:10}}>Saved posts</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {savedList.map(p=>(
-                  <div key={p.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===p.recipe);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:14,overflow:jiggleMode?"visible":"hidden",border:`1px solid ${C.border}`,display:"flex",position:"relative",...jiggleStyle}}>
+                  <div key={p.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===p.recipe);if(m&&onOpen)onOpen(m,e);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:14,overflow:jiggleMode?"visible":"hidden",border:`1px solid ${C.border}`,display:"flex",position:"relative",...jiggleStyle}}>
                     <DeleteBadge onDel={()=>{if(onUnsavePost)onUnsavePost(p.id);}}/>
                     {p.photo
                       ?<img src={p.photo} alt="" style={{width:72,height:72,objectFit:"cover",flexShrink:0}}/>
@@ -1958,7 +1961,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {shown.map(r=>(
-            <div key={r.id} onClick={()=>onOpen(r)} className="tap ch" style={{background:C.cream,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",display:"flex",gap:0,boxShadow:"0 1px 4px rgba(0,0,0,.04)",transition:"box-shadow .15s"}}>
+            <div key={r.id} onClick={e=>onOpen(r,e)} className="tap ch" style={{background:C.cream,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",display:"flex",gap:0,boxShadow:"0 1px 4px rgba(0,0,0,.04)",transition:"box-shadow .15s"}}>
               {/* Photo */}
               <div style={{width:88,flexShrink:0,position:"relative"}}>
                 {r.photo
@@ -2088,7 +2091,7 @@ function RecipesTab({allRecipes,onOpen,onShowCreate,initialCat,initialDiet,initi
         )}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtered.map((r,idx)=>(
-            <div key={r.id} className="tap ch" onClick={()=>onOpen(r)} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden",display:"flex",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
+            <div key={r.id} className="tap ch" onClick={e=>onOpen(r,e)} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden",display:"flex",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
               {/* Photo */}
               <div style={{width:96,flexShrink:0,aspectRatio:"1/1"}}>
                 {r.photo
@@ -3007,7 +3010,7 @@ function ChallengeDetailSheet({currentChallenge,challengeJoined,onJoinChallenge,
               <div style={{textAlign:"center",padding:"40px 0",color:C.muted,fontSize:13}}>No recipes found for this theme</div>
             :<div style={{display:"flex",flexDirection:"column",gap:10}}>
               {matchingRecipes.map(r=>(
-                <div key={r.id} onClick={()=>{onOpenRecipe&&onOpenRecipe(r);onClose();}} className="tap" style={{display:"flex",gap:12,background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,overflow:"hidden",cursor:"pointer"}}>
+                <div key={r.id} onClick={e=>{onOpenRecipe&&onOpenRecipe(r,e);onClose();}} className="tap" style={{display:"flex",gap:12,background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,overflow:"hidden",cursor:"pointer"}}>
                   {r.photo?<img src={r.photo} alt="" style={{width:80,height:80,objectFit:"cover",flexShrink:0}}/>
                     :<div style={{width:80,height:80,background:`${currentChallenge.color}15`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:28}}>{r.emoji}</div>}
                   <div style={{padding:"10px 12px 10px 0",flex:1,minWidth:0}}>
@@ -4182,6 +4185,7 @@ export default function App(){
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showChallengeSheet, setShowChallengeSheet] = useState(false);
   const [recipeAnimState, setRecipeAnimState] = useState('idle');
+  const [recipeOrigin, setRecipeOrigin] = useState(null);
   const [showSparkle, setShowSparkle] = useState(false);
   const [groceryList, setGroceryList] = useState([]);
   const [showYearReview,  setShowYearReview]  = useState(false);
@@ -4474,20 +4478,21 @@ export default function App(){
     }
   },[xp,allRecipes,cookedDays,cookedDatesAll,skillData,levelInfo,checkBadges]);
 
-  const openRecipe=useCallback((recipe)=>{
+  const openRecipe=useCallback((recipe,event)=>{
+    if(event&&event.currentTarget){
+      const rect=event.currentTarget.getBoundingClientRect();
+      setRecipeOrigin({x:rect.left+rect.width/2,y:rect.top+rect.height/2,w:rect.width,h:rect.height});
+    }else{setRecipeOrigin(null);}
     setDetailRecipe(allRecipes.find(r=>r.id===recipe.id)||recipe);
     setRecipeAnimState('opening');
-    setTimeout(()=>setRecipeAnimState('open'),550);
+    setTimeout(()=>setRecipeAnimState('open'),650);
     window.history.pushState({recipe:true},'','');
-    setTimeout(()=>{
-      const el=document.querySelector('[data-scroll-area]');
-      if(el) el.scrollTop=0;
-    },10);
+    setTimeout(()=>{const el=document.querySelector('[data-scroll-area]');if(el)el.scrollTop=0;},10);
   },[allRecipes]);
 
   const closeRecipe=useCallback(()=>{
     setRecipeAnimState('closing');
-    setTimeout(()=>{setDetailRecipe(null);setRecipeAnimState('idle');},480);
+    setTimeout(()=>{setDetailRecipe(null);setRecipeAnimState('idle');setRecipeOrigin(null);},460);
   },[]);
 
   // Handle Android/browser back button
@@ -4608,7 +4613,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <BookWrapper animState={recipeAnimState}><RecipeDetail recipe={live} onBack={closeRecipe} onComplete={(r,p,c_,rating,vis,chId)=>{setShowSparkle(true);setTimeout(()=>setShowSparkle(false),700);handleComplete(r,p,c_,rating,vis,chId);closeRecipe();}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <BookWrapper animState={recipeAnimState} origin={recipeOrigin}><RecipeDetail recipe={live} onBack={closeRecipe} onComplete={(r,p,c_,rating,vis,chId)=>{setShowSparkle(true);setTimeout(()=>setShowSparkle(false),700);handleComplete(r,p,c_,rating,vis,chId);closeRecipe();}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
               setGroceryList(prev=>{
@@ -4717,12 +4722,12 @@ export default function App(){
         </div>
       )}
       {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
-      {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
+      {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r,e)=>{openRecipe(r,e);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}
       {showNotifSheet&&<NotificationsListSheet notifications={notifications} setNotifications={setNotifications} onClose={()=>setShowNotifSheet(false)}/>}
       {showLeaderboard&&<LeaderboardSheet weeklyXp={weeklyXp} levelInfo={levelInfo} onClose={()=>setShowLeaderboard(false)}/>}
-      {showChallengeSheet&&currentChallenge&&<ChallengeDetailSheet currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} allRecipes={allRecipes} posts={posts} onOpenRecipe={(r)=>{openRecipe(r);setShowChallengeSheet(false);}} onClose={()=>setShowChallengeSheet(false)}/>}
+      {showChallengeSheet&&currentChallenge&&<ChallengeDetailSheet currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} allRecipes={allRecipes} posts={posts} onOpenRecipe={(r,e)=>{openRecipe(r,e);setShowChallengeSheet(false);}} onClose={()=>setShowChallengeSheet(false)}/>}
       {showSparkle&&(
         <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999}}>
           {[{x:-30,y:-20,d:0},{x:20,y:-30,d:80},{x:-20,y:20,d:160},{x:30,y:10,d:240}].map((s,i)=>(
