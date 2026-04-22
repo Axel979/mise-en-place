@@ -27,9 +27,13 @@ const CSS = `
   @keyframes slideRight{from{transform:translateX(100%)}to{transform:none}}
   @keyframes levelUp{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
   @keyframes jiggle{0%,100%{transform:rotate(-1deg)}25%{transform:rotate(1deg)}50%{transform:rotate(-1deg)}75%{transform:rotate(1deg)}}
-  @keyframes bookOpen{0%{transform:perspective(1200px) rotateY(-25deg) scale(.92);opacity:0}40%{transform:perspective(1200px) rotateY(4deg) scale(1.01);opacity:1}70%{transform:perspective(1200px) rotateY(-2deg) scale(1)}100%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}}
-  @keyframes bookClose{0%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}30%{transform:perspective(1200px) rotateY(-4deg) scale(1.01)}70%{transform:perspective(1200px) rotateY(20deg) scale(.94);opacity:.7}100%{transform:perspective(1200px) rotateY(25deg) scale(.88) translateY(18px);opacity:0}}
-  @keyframes shelfDust{0%{opacity:0;transform:translateY(0) scale(.5)}40%{opacity:.6;transform:translateY(-8px) scale(1)}100%{opacity:0;transform:translateY(-20px) scale(1.3)}}
+  @keyframes coverFlipOpen{0%{transform:perspective(1400px) rotateY(0);opacity:1}100%{transform:perspective(1400px) rotateY(-180deg);opacity:0}}
+  @keyframes coverFlipClose{0%{transform:perspective(1400px) rotateY(-180deg);opacity:0}100%{transform:perspective(1400px) rotateY(0);opacity:1}}
+  @keyframes contentReveal{0%{opacity:0;transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
+  @keyframes contentHide{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.97)}}
+  @keyframes bookSlideIn{0%{transform:translateY(100vh)}100%{transform:translateY(0)}}
+  @keyframes bookSlideOut{0%{transform:translateY(0)}100%{transform:translateY(100vh)}}
+  @keyframes shelfDust{0%{opacity:0;transform:translateY(0) scale(.5)}40%{opacity:.8;transform:translateY(-12px) scale(1.1)}100%{opacity:0;transform:translateY(-28px) scale(1.4)}}
   .ch:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(0,0,0,.11)!important}
   .tap:active{transform:scale(.94)!important} input,textarea,button{font-family:inherit}
 `;
@@ -875,6 +879,25 @@ async function shareToInstagramStory({cardEl,setToast}){
       if(setToast) setToast({emoji:"📸",title:"Image ready",subtitle:"Screenshot or save to share on Instagram"});
     }
   }
+}
+
+/* ═══ BOOK WRAPPER ═══════════════════════════════════════════════════════ */
+function BookWrapper({children,animState}){
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:200,background:C.paper,animation:animState==='opening'?'bookSlideIn .45s cubic-bezier(.22,1,.36,1) forwards':animState==='closing'?'bookSlideOut .4s cubic-bezier(.4,0,.8,.4) forwards':'none',transformOrigin:'bottom center',overflow:'hidden'}}>
+      <div style={{position:'absolute',left:0,top:0,bottom:0,width:8,zIndex:10,background:'linear-gradient(to right,rgba(59,42,26,.22),transparent)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',top:0,left:0,right:0,height:4,zIndex:10,background:'linear-gradient(to bottom,rgba(59,42,26,.12),transparent)',pointerEvents:'none'}}/>
+      {(animState==='opening'||animState==='closing')&&(
+        <div style={{position:'absolute',inset:0,zIndex:20,background:'linear-gradient(135deg,#3B2A1A 0%,#5C3D20 50%,#3B2A1A 100%)',animation:animState==='opening'?'coverFlipOpen .45s cubic-bezier(.4,0,.2,1) forwards':'coverFlipClose .35s cubic-bezier(.4,0,.2,1) forwards',transformOrigin:'left center',transformStyle:'preserve-3d',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:8}}>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#FFF8F0" strokeWidth="1" opacity=".3"/><path d="M16 24 Q24 16 32 24 Q24 32 16 24Z" stroke="#FF4D1C" strokeWidth="1.5" fill="none" opacity=".8"/><circle cx="24" cy="24" r="3" fill="#FF4D1C" opacity=".8"/></svg>
+          <div style={{fontFamily:DF,fontSize:13,color:'#FFF8F0',opacity:.5,letterSpacing:'.2em',textTransform:'uppercase'}}>mise.en.place</div>
+        </div>
+      )}
+      <div style={{animation:animState==='opening'?'contentReveal .3s ease-out .3s both':animState==='closing'?'contentHide .2s ease-in forwards':'none',height:'100%',overflow:'auto'}}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
@@ -4585,7 +4608,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <div style={{animation:recipeAnimState==='opening'?'bookOpen .55s cubic-bezier(.34,1.56,.64,1) forwards':recipeAnimState==='closing'?'bookClose .5s cubic-bezier(.4,0,.8,.4) forwards':'none',transformOrigin:'left center',willChange:'transform,opacity',position:'relative'}}><div style={{position:'absolute',left:0,top:0,bottom:0,width:6,background:'linear-gradient(to right,rgba(59,42,26,.18),transparent)',borderRadius:'3px 0 0 3px',pointerEvents:'none',zIndex:1}}/><RecipeDetail recipe={live} onBack={closeRecipe} onComplete={(r,p,c_,rating,vis,chId)=>{setShowSparkle(true);setTimeout(()=>setShowSparkle(false),700);handleComplete(r,p,c_,rating,vis,chId);closeRecipe();}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <BookWrapper animState={recipeAnimState}><RecipeDetail recipe={live} onBack={closeRecipe} onComplete={(r,p,c_,rating,vis,chId)=>{setShowSparkle(true);setTimeout(()=>setShowSparkle(false),700);handleComplete(r,p,c_,rating,vis,chId);closeRecipe();}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
               setGroceryList(prev=>{
@@ -4600,7 +4623,7 @@ export default function App(){
                 return updated;
               });
               setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
-            }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/></div>;})()}
+            }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/></BookWrapper>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onOpenChallenge={()=>setShowChallengeSheet(true)}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}}/>}
