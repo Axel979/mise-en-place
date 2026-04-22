@@ -1556,7 +1556,6 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
 
 function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts,username,currentChallenge,challengeJoined,onJoinChallenge,onSwitchToRecipes}){
   const [feedView,setFeedView]=useState("friends");
-  const [activeTab,setActiveTab]=useState("feed");
   const [showComments,setShowComments]=useState(null);
   const [newComment,setNewComment]=useState("");
   const [hidden,setHidden]=useState(new Set());
@@ -1774,33 +1773,13 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   return(
     <div style={{paddingBottom:24}}>
 
-      {/* Feed / League toggle */}
-      <div style={{padding:"8px 16px 0"}}>
-        <div style={{display:"flex",background:C.pill,borderRadius:14,padding:3,gap:3,marginBottom:12}}>
-          {[["feed","Feed"],["challenge",currentChallenge?.theme||"Challenge"],["league","League"]].map(([id,lbl])=>(
-            <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 4px",fontWeight:800,fontSize:13,background:activeTab===id?C.cream:"transparent",color:activeTab===id?C.bark:C.muted,boxShadow:activeTab===id?"0 2px 8px rgba(0,0,0,.07)":"none",transition:"all .18s",fontFamily:"inherit"}}>
-              {lbl}
-            </button>
-          ))}
-        </div>
+      {/* Friends / Community selector */}
+      <div style={{display:"flex",gap:24,padding:"12px 16px 0"}}>
+        <span onClick={()=>setFeedView("friends")} style={{fontSize:16,fontWeight:700,color:feedView==="friends"?C.bark:C.muted,cursor:"pointer",transition:"color .15s",paddingBottom:8}}>Friends</span>
+        <span onClick={()=>setFeedView("community")} style={{fontSize:16,fontWeight:700,color:feedView==="community"?C.bark:C.muted,cursor:"pointer",transition:"color .15s",paddingBottom:8}}>Community</span>
       </div>
 
-      {/* ── FEED ──────────────────────────────────────────────── */}
-      {activeTab==="feed"&&(
-        <div>
-          {/* Friends / Community + Add friends */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px 12px"}}>
-            <div style={{display:"flex",background:C.pill,borderRadius:99,padding:3,gap:2}}>
-              {[["friends","Friends"],["community","Community"]].map(([id,lbl])=>(
-                <button key={id} onClick={()=>setFeedView(id)} style={{border:"none",cursor:"pointer",borderRadius:99,padding:"6px 16px",fontWeight:700,fontSize:12,background:feedView===id?C.cream:"transparent",color:feedView===id?C.bark:C.muted,boxShadow:feedView===id?"0 1px 4px rgba(0,0,0,.08)":"none",transition:"all .15s",fontFamily:"inherit"}}>
-                  {lbl}
-                </button>
-              ))}
-            </div>
-            <button onClick={onAddFriends} style={{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",padding:0}}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-            </button>
-          </div>
+      <div>
 
           {/* Posts */}
           {visiblePosts.length===0
@@ -1815,73 +1794,6 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
             :<div>{visiblePosts.map(post=><PostCard key={post.id} post={post}/>)}</div>
           }
         </div>
-      )}
-
-      {/* ── LEAGUE ────────────────────────────────────────────── */}
-      {/* ── CHALLENGE FEED ────────────────────────────────────── */}
-      {activeTab==="challenge"&&currentChallenge&&(()=>{
-        const isJoined=(challengeJoined||[]).includes(currentChallenge.id);
-        const challengePosts=[...posts.filter(p=>p.challengeId===currentChallenge.id)].sort((a,b)=>(b.mwah||0)-(a.mwah||0));
-        const now=new Date();
-        const endOfMonth=new Date(now.getFullYear(),now.getMonth()+1,0);
-        const daysLeft=Math.max(0,Math.ceil((endOfMonth.getTime()-now.getTime())/(1000*60*60*24)));
-        return(
-          <div>
-            <div style={{margin:"8px 16px 16px",borderRadius:20,padding:"18px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:-16,right:-16,width:80,height:80,borderRadius:"50%",border:"16px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
-              <div style={{fontWeight:900,fontSize:20,color:currentChallenge.accent,fontFamily:DF,marginBottom:6}}>{currentChallenge.theme}</div>
-              <div style={{fontSize:12,color:currentChallenge.accent,opacity:.7,marginBottom:12}}>124 cooks · {daysLeft} day{daysLeft!==1?'s':''} left</div>
-              {!isJoined&&<button onClick={()=>onJoinChallenge&&onJoinChallenge(currentChallenge.id)} className="tap" style={{padding:"8px 20px",borderRadius:99,border:"none",background:currentChallenge.accent,color:currentChallenge.color,fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Join Challenge</button>}
-            </div>
-            {challengePosts.length===0?(
-              <div style={{textAlign:"center",padding:"40px 20px"}}>
-                <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:8}}>No creations yet</div>
-                <div style={{fontSize:13,color:C.muted,lineHeight:1.5,marginBottom:16}}>Be the first to cook and share</div>
-                <button onClick={()=>onSwitchToRecipes&&onSwitchToRecipes()} className="tap" style={{padding:"10px 24px",borderRadius:14,border:"none",background:currentChallenge.color,color:currentChallenge.accent,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cook something {currentChallenge.theme.split(' ')[0]}</button>
-              </div>
-            ):(
-              <div style={{padding:"0 0 16px"}}>
-                {challengePosts.map(post=><PostCard key={post.id} post={post}/>)}
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {activeTab==="league"&&(
-        <div style={{padding:"0 16px"}}>
-          <div style={{background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden",marginBottom:14}}>
-            <div style={{background:`linear-gradient(135deg,${league.color}20,${league.color}08)`,padding:"16px 18px 14px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:12}}>
-                <div style={{fontSize:34}}>{league.icon}</div>
-                <div>
-                  <div style={{fontWeight:900,fontSize:17,color:C.bark,fontFamily:DF}}>{league.name}</div>
-                  <div style={{fontSize:11,color:C.muted,marginTop:2}}>Top 5 promote next week · <span style={{color:league.color,fontWeight:700}}>{weeklyXp} 🔥</span></div>
-                </div>
-              </div>
-            </div>
-            <div style={{padding:"10px 18px 16px"}}>
-              {LEADERBOARD.map((u,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}10`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"5px 10px",marginBottom:3,border:u.isMe?`1.5px solid ${league.color}25`:"none"}}>
-                  <div style={{width:22,height:22,borderRadius:"50%",background:i<3?["#F5C842","#A8A9AD","#CD7F32"][i]:C.pill,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,color:i<3?"#fff":C.muted,flexShrink:0}}>{u.rank}</div>
-                  <AvatarIcon username={u.name} size={28} fontSize={11}/>
-                  <span style={{flex:1,fontWeight:u.isMe?800:500,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
-                  <span style={{fontSize:11,color:C.muted}}>🔥{u.streak}</span>
-                  <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp} 🔥</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{background:C.cream,borderRadius:16,padding:"14px 16px",border:`1px solid ${C.border}`}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-              <span style={{fontWeight:700,fontSize:13,color:C.bark}}>{levelInfo?.current?.title||"Prep Hand"}</span>
-              {levelInfo?.next&&<span style={{fontSize:11,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥</span>}
-            </div>
-            <XPBar pct={levelInfo?.pct||0} color={levelInfo?.current?.color||C.flame} h={5}/>
-            {levelInfo?.next&&<div style={{fontSize:11,color:C.muted,marginTop:5}}>Next: {levelInfo.next.title}</div>}
-          </div>
-        </div>
-      )}
 
       {/* Report sheet */}
       {showReport&&(
@@ -1907,7 +1819,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   );
 }
 
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze,currentChallenge,challengeJoined,onJoinChallenge}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze,currentChallenge,challengeJoined,onJoinChallenge,onOpenChallenge}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
   const goalDone=weekDone>=goal.target;
@@ -1994,7 +1906,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         const endOfMonth=new Date(now.getFullYear(),now.getMonth()+1,0);
         const daysLeft=Math.max(0,Math.ceil((endOfMonth.getTime()-now.getTime())/(1000*60*60*24)));
         return(
-          <div style={{margin:"0 16px 16px",borderRadius:20,padding:"20px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden"}}>
+          <div onClick={()=>onOpenChallenge&&onOpenChallenge()} className="tap" style={{margin:"0 16px 16px",borderRadius:20,padding:"20px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden",cursor:"pointer"}}>
             <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",border:"20px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
             <div style={{fontSize:10,fontWeight:700,color:currentChallenge.accent,textTransform:"uppercase",letterSpacing:".15em",opacity:.7,marginBottom:8}}>This month</div>
             <div style={{fontWeight:900,fontSize:24,color:currentChallenge.accent,fontFamily:DF,lineHeight:1.2,marginBottom:8}}>{currentChallenge.theme}</div>
@@ -2004,7 +1916,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
                 <div style={{fontSize:12,color:currentChallenge.accent,opacity:.6}}>124 cooks joined</div>
                 <div style={{fontSize:11,color:currentChallenge.accent,opacity:.5,marginTop:2}}>{daysLeft} day{daysLeft!==1?'s':''} left</div>
               </div>
-              <button onClick={()=>onJoinChallenge&&onJoinChallenge(currentChallenge.id)} className="tap" style={{padding:"9px 22px",borderRadius:99,border:isJoined?`2px solid ${currentChallenge.accent}`:"none",background:isJoined?"transparent":currentChallenge.accent,color:isJoined?currentChallenge.accent:currentChallenge.color,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",transition:"all .18s"}}>
+              <button onClick={e=>{e.stopPropagation();onJoinChallenge&&onJoinChallenge(currentChallenge.id);}} className="tap" style={{padding:"9px 22px",borderRadius:99,border:isJoined?`2px solid ${currentChallenge.accent}`:"none",background:isJoined?"transparent":currentChallenge.accent,color:isJoined?currentChallenge.accent:currentChallenge.color,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",transition:"all .18s"}}>
                 {isJoined?"Joined ✓":"Join Challenge"}
               </button>
             </div>
@@ -2992,6 +2904,119 @@ function categoriseIngredient(name){
   return 'Other';
 }
 
+function LeaderboardSheet({weeklyXp,levelInfo,onClose}){
+  const league=getLeague(5);
+  return(
+    <Sheet onClose={onClose}>
+      <div style={{padding:"24px 20px 44px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Leaderboard</div>
+          <CloseBtn onClose={onClose}/>
+        </div>
+        <div style={{background:C.cream,borderRadius:20,border:`2px solid ${league.color}44`,overflow:"hidden",marginBottom:14}}>
+          <div style={{background:`linear-gradient(135deg,${league.color}20,${league.color}08)`,padding:"16px 18px 14px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{fontSize:34}}>{league.icon}</div>
+              <div>
+                <div style={{fontWeight:900,fontSize:17,color:C.bark,fontFamily:DF}}>{league.name}</div>
+                <div style={{fontSize:11,color:C.muted,marginTop:2}}>Top 5 promote next week · <span style={{color:league.color,fontWeight:700}}>{weeklyXp} 🔥</span></div>
+              </div>
+            </div>
+          </div>
+          <div style={{padding:"10px 18px 16px"}}>
+            {LEADERBOARD.map((u,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:u.isMe?`${league.color}10`:"transparent",borderRadius:10,padding:u.isMe?"8px 10px":"5px 10px",marginBottom:3,border:u.isMe?`1.5px solid ${league.color}25`:"none"}}>
+                <div style={{width:22,height:22,borderRadius:"50%",background:i<3?["#F5C842","#A8A9AD","#CD7F32"][i]:C.pill,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,color:i<3?"#fff":C.muted,flexShrink:0}}>{u.rank}</div>
+                <AvatarIcon username={u.name} size={28} fontSize={11}/>
+                <span style={{flex:1,fontWeight:u.isMe?800:500,fontSize:13,color:C.bark}}>{u.name}{u.isMe?" (you)":""}</span>
+                <span style={{fontWeight:800,fontSize:13,color:u.isMe?league.color:C.muted}}>{u.weeklyXp} 🔥</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+function ChallengeDetailSheet({currentChallenge,challengeJoined,onJoinChallenge,allRecipes,posts,onOpenRecipe,onClose}){
+  const [chTab,setChTab]=useState("recipes");
+  if(!currentChallenge) return null;
+  const isJoined=(challengeJoined||[]).includes(currentChallenge.id);
+  const now=new Date();
+  const endOfMonth=new Date(now.getFullYear(),now.getMonth()+1,0);
+  const daysLeft=Math.max(0,Math.ceil((endOfMonth.getTime()-now.getTime())/(1000*60*60*24)));
+  const keywords=currentChallenge.recipes||[];
+  const matchingRecipes=(allRecipes||[]).filter(r=>keywords.some(k=>r.name.toLowerCase().includes(k)));
+  const challengePosts=[...(posts||[]).filter(p=>p.challengeId===currentChallenge.id)].sort((a,b)=>(b.mwah||0)-(a.mwah||0));
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,height:"95vh",display:"flex",flexDirection:"column",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>
+        {/* Header */}
+        <div style={{borderRadius:"24px 24px 0 0",padding:"20px 20px 16px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden",flexShrink:0}}>
+          <div style={{position:"absolute",top:-16,right:-16,width:80,height:80,borderRadius:"50%",border:"16px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+            <button onClick={onClose} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={currentChallenge.accent} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <button onClick={e=>{e.stopPropagation();onJoinChallenge&&onJoinChallenge(currentChallenge.id);}} className="tap" style={{padding:"8px 20px",borderRadius:99,border:isJoined?`2px solid ${currentChallenge.accent}`:"none",background:isJoined?"transparent":currentChallenge.accent,color:isJoined?currentChallenge.accent:currentChallenge.color,fontWeight:800,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              {isJoined?"Joined ✓":"Join"}
+            </button>
+          </div>
+          <div style={{fontWeight:900,fontSize:26,color:currentChallenge.accent,fontFamily:DF,lineHeight:1.2,marginBottom:6}}>{currentChallenge.theme}</div>
+          <div style={{fontSize:12,color:currentChallenge.accent,opacity:.7}}>124 cooks · {daysLeft} day{daysLeft!==1?'s':''} left</div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{display:"flex",gap:24,padding:"14px 20px 0",flexShrink:0}}>
+          <span onClick={()=>setChTab("recipes")} style={{fontSize:15,fontWeight:700,color:chTab==="recipes"?C.bark:C.muted,cursor:"pointer",paddingBottom:8}}>Recipes</span>
+          <span onClick={()=>setChTab("community")} style={{fontSize:15,fontWeight:700,color:chTab==="community"?C.bark:C.muted,cursor:"pointer",paddingBottom:8}}>Community</span>
+        </div>
+
+        {/* Content */}
+        <div style={{flex:1,overflowY:"auto",padding:"12px 20px 40px",WebkitOverflowScrolling:"touch"}}>
+          {chTab==="recipes"&&(
+            matchingRecipes.length===0?
+              <div style={{textAlign:"center",padding:"40px 0",color:C.muted,fontSize:13}}>No recipes found for this theme</div>
+            :<div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {matchingRecipes.map(r=>(
+                <div key={r.id} onClick={()=>{onOpenRecipe&&onOpenRecipe(r);onClose();}} className="tap" style={{display:"flex",gap:12,background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,overflow:"hidden",cursor:"pointer"}}>
+                  {r.photo?<img src={r.photo} alt="" style={{width:80,height:80,objectFit:"cover",flexShrink:0}}/>
+                    :<div style={{width:80,height:80,background:`${currentChallenge.color}15`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:28}}>{r.emoji}</div>}
+                  <div style={{padding:"10px 12px 10px 0",flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:14,color:C.bark,marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.name}</div>
+                    <div style={{fontSize:11,color:C.muted}}>{r.difficulty} · {r.time} · {r.xp} 🔥</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {chTab==="community"&&(
+            challengePosts.length===0?
+              <div style={{textAlign:"center",padding:"40px 0"}}>
+                <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>No creations yet</div>
+                <div style={{fontSize:13,color:C.muted}}>Cook something and share it here</div>
+              </div>
+            :<div style={{display:"flex",flexDirection:"column",gap:12}}>
+              {challengePosts.map(p=>(
+                <div key={p.id} style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"12px",display:"flex",gap:12,alignItems:"center"}}>
+                  <AvatarIcon username={p.user?.name||"?"} size={36} fontSize={14}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:13,color:C.bark}}>{p.user?.name}</div>
+                    <div style={{fontSize:12,color:C.muted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.caption||p.recipe}</div>
+                  </div>
+                  <div style={{fontSize:12,fontWeight:700,color:C.flame,flexShrink:0}}>{p.mwah||0} <span style={{display:"inline-block",transform:"rotate(-20deg)"}}>🤌</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NotificationsListSheet({notifications,setNotifications,onClose}){
   const markAllRead=()=>setNotifications(ns=>ns.map(n=>({...n,read:true})));
   return(
@@ -3649,7 +3674,7 @@ function DataSettings({onBack, supabase}){
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast}){
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/(goal?.target||3)*100);
 
@@ -3705,6 +3730,9 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
       }/>
       <MenuRow label="Groceries" badge={groceryCount} onClick={()=>{onShowGroceryList();onClose();}} icon={
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+      }/>
+      <MenuRow label="Leaderboard" onClick={()=>{onShowLeaderboard&&onShowLeaderboard();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7"/><path d="M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/><path d="M4 22h16"/><path d="M10 22V12M14 22V12"/><rect x="6" y="7" width="12" height="5" rx="1"/></svg>
       }/>
       <MenuRow label="Share mise.en.place" onClick={handleShare} icon={
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -4125,6 +4153,8 @@ export default function App(){
   const [challengeJoined, setChallengeJoined] = useState([]);
   const currentChallenge = getCurrentChallenge();
   const [showNotifSheet, setShowNotifSheet] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showChallengeSheet, setShowChallengeSheet] = useState(false);
   const [groceryList, setGroceryList] = useState([]);
   const [showYearReview,  setShowYearReview]  = useState(false);
   const [wantToCook,      setWantToCook]      = useState([]);
@@ -4560,7 +4590,7 @@ export default function App(){
               });
               setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
             }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge}/>}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onOpenChallenge={()=>setShowChallengeSheet(true)}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
@@ -4648,7 +4678,7 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}}/>
           </div>
         </div>
       )}
@@ -4657,6 +4687,8 @@ export default function App(){
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}
       {showNotifSheet&&<NotificationsListSheet notifications={notifications} setNotifications={setNotifications} onClose={()=>setShowNotifSheet(false)}/>}
+      {showLeaderboard&&<LeaderboardSheet weeklyXp={weeklyXp} levelInfo={levelInfo} onClose={()=>setShowLeaderboard(false)}/>}
+      {showChallengeSheet&&currentChallenge&&<ChallengeDetailSheet currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} allRecipes={allRecipes} posts={posts} onOpenRecipe={(r)=>{openRecipe(r);setShowChallengeSheet(false);}} onClose={()=>setShowChallengeSheet(false)}/>}
     </AppErrorBoundary>
   );
 }
