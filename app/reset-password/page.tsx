@@ -16,20 +16,39 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     console.log('[RESET] URL:', window.location.href);
-    console.log('[RESET] hash:', window.location.hash);
-    console.log('[RESET] search:', window.location.search);
 
-    // Check if we have a valid session already (from callback redirect)
+    // Check for tokens in URL hash (passed from auth/callback)
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+
+    console.log('[RESET] tokens in hash:', !!accessToken, !!refreshToken);
+
+    if (accessToken && refreshToken) {
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      }).then(({ data, error }) => {
+        console.log('[RESET] setSession result:', data?.session?.user?.email, 'error:', error?.message);
+        if (data?.session) {
+          setReady(true);
+          window.history.replaceState(null, '', '/reset-password');
+        }
+      });
+      return;
+    }
+
+    // Fallback: check existing session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('[RESET] session:', session?.user?.email, 'error:', error?.message);
+      console.log('[RESET] getSession:', session?.user?.email, 'error:', error?.message);
       if (session?.user) setReady(true);
     });
 
-    // Also listen for PASSWORD_RECOVERY event as fallback
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[RESET] event:', event, 'user:', session?.user?.email);
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        setReady(true);
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (session) setReady(true);
       }
     });
 
