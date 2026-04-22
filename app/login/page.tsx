@@ -9,7 +9,8 @@ const AVATAR_LABELS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:#1A0F08;font-family:'Source Serif 4',Georgia,serif;}
+  :root{--bg-page:#1A0F08;--bg-card:#2A1A0E;--text-primary:#F5E6D3;--text-muted:#9E8C7E;--accent:#FF4D1C}
+  body{background:var(--bg-page);font-family:'Source Serif 4',Georgia,serif;}
   input,button{font-family:inherit;}
   .mep-input{
     width:100%;padding:16px 18px;border-radius:16px;
@@ -68,7 +69,7 @@ const CSS = `
 `;
 
 const page: React.CSSProperties = {
-  minHeight:'100vh', background:'#1A0F08',
+  minHeight:'100dvh', background:'var(--bg-page, #1A0F08)',
   display:'flex', flexDirection:'column',
   alignItems:'center', justifyContent:'center',
   padding:'32px 24px', position:'relative', overflow:'hidden',

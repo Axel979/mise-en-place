@@ -15,9 +15,13 @@ const BF = "'Source Serif 4',Georgia,serif";
 const CSS = `
   html, body { width: 100%; overflow-x: hidden; }
   #__next { width: 100%; }
+  :root{--bg-page:#FAF4EE;--bg-card:#FFF8F0;--bg-pill:#F0EBE6;--bg-border:#EEE5DC;--text-primary:#3B2A1A;--text-muted:#9E8C7E;--accent:#FF4D1C}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg-page:#1A0F08;--bg-card:#2A1A0E;--bg-pill:#2A1E15;--bg-border:#3A2A1A;--text-primary:#FFF8F0;--text-muted:#9E8C7E;--accent:#FF4D1C}}
+  [data-theme="dark"]{--bg-page:#1A0F08;--bg-card:#2A1A0E;--bg-pill:#2A1E15;--bg-border:#3A2A1A;--text-primary:#FFF8F0;--text-muted:#9E8C7E;--accent:#FF4D1C}
+  [data-theme="light"]{--bg-page:#FAF4EE;--bg-card:#FFF8F0;--bg-pill:#F0EBE6;--bg-border:#EEE5DC;--text-primary:#3B2A1A;--text-muted:#9E8C7E;--accent:#FF4D1C}
 
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600;700&display=swap');
-  *,*::before,*::after{box-sizing:border-box} body{margin:0;background:${C.paper};font-family:${BF}}
+  *,*::before,*::after{box-sizing:border-box} body{margin:0;background:var(--bg-page,${C.paper});font-family:${BF}}
   ::-webkit-scrollbar{display:none}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes pop{0%,100%{transform:scale(1)}45%{transform:scale(1.42)}}
@@ -4002,7 +4006,7 @@ class AppErrorBoundary extends React.Component {
 }
 
 /* ═══ SETTINGS SHEET ══════════════════════════════════════════════════════ */
-function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose}){
+function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose, appTheme, setAppTheme}){
   const [section, setSection] = useState(null);
 
   // Section components rendered inline
@@ -4088,6 +4092,17 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
           <Row icon={ic(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></>,C.sage)} label="Cooking Preferences" sub="Diet, skill level, goal" onClick={()=>setSection("cooking")} last/>
         </div>
 
+        <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Appearance</div>
+        <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"12px 14px",marginBottom:18}}>
+          <div style={{display:"flex",background:C.pill,borderRadius:10,padding:3,gap:3}}>
+            {[["light","Light"],["dark","Dark"],["auto","Auto"]].map(([id,lbl])=>(
+              <button key={id} onClick={()=>setAppTheme&&setAppTheme(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:8,padding:"8px 4px",fontWeight:700,fontSize:12,background:appTheme===id?"#fff":"transparent",color:appTheme===id?C.bark:C.muted,boxShadow:appTheme===id?"0 1px 4px rgba(0,0,0,.08)":"none",transition:"all .15s",fontFamily:"inherit"}}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Data & Legal</div>
         <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"0 14px",marginBottom:18}}>
           <Row icon={ic(<><polyline points="21 15 15 15 15 21"/><path d="M3 9l9-9 9 9"/></>,C.muted)} label="Your Data" sub="Export or delete your data" onClick={()=>setSection("data")}/>
@@ -4150,6 +4165,7 @@ export default function App(){
   const [userDiet,       setUserDiet]         = useState("None");
   const [showWantToCook,  setShowWantToCook]  = useState(false);
   const [showGroceryList, setShowGroceryList] = useState(false);
+  const [appTheme, setAppTheme] = useState('auto');
   const [challengeJoined, setChallengeJoined] = useState([]);
   const currentChallenge = getCurrentChallenge();
   const [showNotifSheet, setShowNotifSheet] = useState(false);
@@ -4202,6 +4218,7 @@ export default function App(){
     try{ const v=localStorage.getItem('mep_wantToCook'); if(v) setWantToCook(JSON.parse(v).filter(id=>!del.has(String(id)))); }catch{}
     try{ const v=localStorage.getItem('mep_groceryList'); if(v) setGroceryList(JSON.parse(v)); }catch{}
     try{ const v=localStorage.getItem('mep_challengeJoined'); if(v) setChallengeJoined(JSON.parse(v)); }catch{}
+    try{ const v=localStorage.getItem('mep_theme'); if(v) setAppTheme(v); }catch{}
     try{
       const v=localStorage.getItem('mep_userRecipes');
       if(v){
@@ -4215,6 +4232,13 @@ export default function App(){
     }catch{}
     storageLoadedRef.current = true;
   },[]);
+  useEffect(()=>{
+    const root=document.documentElement;
+    if(appTheme==='dark') root.setAttribute('data-theme','dark');
+    else if(appTheme==='light') root.setAttribute('data-theme','light');
+    else root.removeAttribute('data-theme');
+    try{localStorage.setItem('mep_theme',appTheme);}catch{}
+  },[appTheme]);
   useEffect(()=>{
     if(profile){
       // Only overwrite localStorage state with Supabase data if Supabase has more/better data
@@ -4682,7 +4706,7 @@ export default function App(){
           </div>
         </div>
       )}
-      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}

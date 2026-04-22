@@ -38,11 +38,12 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div style={{ background: '#1A0F08', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BF }}>
+    <div style={{ background: 'var(--bg-page, #1A0F08)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BF }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        body{background:#1A0F08;}
+        :root{--bg-page:#1A0F08;--bg-card:#2A1A0E;--text-primary:#F5E6D3;--text-muted:#9E8C7E;--accent:#FF4D1C}
+        body{background:var(--bg-page);}
       `}</style>
       <div style={{ width: '100%', maxWidth: 400, padding: '0 24px' }}>
         {/* Wordmark */}
