@@ -775,7 +775,7 @@ function Onboarding({onComplete}){
   const S=screens[step];
   const pct=(step+1)/4;
   return(
-    <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto"}}>
+    <div style={{fontFamily:BF,background:C.paper,minHeight:"100dvh",maxWidth:420,margin:"0 auto"}}>
       {step>0&&<div style={{padding:"20px 24px 0"}}><div style={{background:"#E8DDD4",borderRadius:99,height:4,overflow:"hidden"}}><div style={{width:`${pct*100}%`,height:"100%",background:C.flame,borderRadius:99,transition:"width .4s ease"}}/></div></div>}
       <S/>
     </div>
@@ -889,7 +889,7 @@ function BookWrapper({children,animState,origin}){
   const sx=origin?origin.w/vw:0.3;
   const sy=origin?origin.h/vh:0.2;
   return(
-    <div style={{position:'fixed',inset:0,zIndex:200,background:C.paper,'--ox':`${ox}%`,'--oy':`${oy}%`,'--sx':sx,'--sy':sy,animation:animState==='opening'?'bookExpand .55s cubic-bezier(.22,1,.36,1) forwards':animState==='closing'?'bookShrink .45s cubic-bezier(.4,0,.6,1) forwards':'none',transformOrigin:'center center',overflow:'hidden'}}>
+    <div style={{position:'absolute',inset:0,zIndex:200,background:C.paper,maxWidth:420,margin:'0 auto','--ox':`${ox}%`,'--oy':`${oy}%`,'--sx':sx,'--sy':sy,animation:animState==='opening'?'bookExpand .55s cubic-bezier(.22,1,.36,1) forwards':animState==='closing'?'bookShrink .45s cubic-bezier(.4,0,.6,1) forwards':'none',transformOrigin:'center center',overflow:'hidden'}}>
       <div style={{position:'absolute',left:0,top:0,bottom:0,width:10,zIndex:10,background:'linear-gradient(to right,rgba(59,42,26,.25),transparent)',pointerEvents:'none'}}/>
       {(animState==='opening'||animState==='closing')&&(
         <div style={{position:'absolute',inset:0,zIndex:20,background:'#FFF8F0',transformOrigin:'left center',animation:animState==='opening'?'coverFlipOpen .55s cubic-bezier(.4,0,.2,1) .1s forwards':'coverFlipClose .35s cubic-bezier(.4,0,.2,1) forwards',boxShadow:'-4px 0 20px rgba(59,42,26,.15)'}}>
@@ -4015,7 +4015,7 @@ class AppErrorBoundary extends React.Component {
   render(){
     if(this.state.hasError){
       return(
-        <div style={{minHeight:"100vh",background:"#FAF6F1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,fontFamily:"system-ui,sans-serif"}}>
+        <div style={{minHeight:"100dvh",background:"#FAF6F1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,fontFamily:"system-ui,sans-serif"}}>
           <div style={{width:64,height:64,borderRadius:20,background:"#E05C7A15",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20}}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
@@ -4581,8 +4581,8 @@ export default function App(){
     if(window.location.pathname==='/login') return;
     window.location.href = '/login';
   },[loading,user]);
-  if(loading) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
-  if(!user)   return <div style={{background:C.paper,minHeight:"100vh"}}/>;
+  if(loading) return <div style={{background:C.paper,minHeight:"100dvh"}}/>;
+  if(!user)   return <div style={{background:C.paper,minHeight:"100dvh"}}/>;
 
   if(!onboarded)return(
     <>
@@ -4597,7 +4597,7 @@ export default function App(){
     <AppErrorBoundary>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",width:"100%",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
+      <div style={{fontFamily:BF,background:C.paper,minHeight:"100dvh",width:"100%",maxWidth:420,margin:"0 auto",position:"relative",overflow:"hidden",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
         {/* Header */}
         <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,zIndex:50,borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
@@ -4612,7 +4612,7 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
+        <div style={{minHeight:"calc(100dvh - 118px)",paddingTop:84,paddingBottom:80}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <BookWrapper animState={recipeAnimState} origin={recipeOrigin}><RecipeDetail recipe={live} onBack={closeRecipe} onComplete={(r,p,c_,rating,vis,chId)=>{setShowSparkle(true);setTimeout(()=>setShowSparkle(false),700);handleComplete(r,p,c_,rating,vis,chId);closeRecipe();}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
