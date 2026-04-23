@@ -244,10 +244,17 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
     const token=code||otp.join('');
     if(token.length!==6){setError('Enter all 6 digits.');return;}
     setVerifying(true); setError('');
-    const { error } = await supabase.auth.verifyOtp({ email, token, type:'email' });
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type:'email' });
     setVerifying(false);
-    if(error) setError('Invalid or expired code. Try again.');
-    else window.location.href='/reset-password';
+    if(error){setError('Invalid or expired code. Try again.');return;}
+    if(data.session){
+      window.location.href='/reset-password';
+    }else{
+      const { data:{ subscription } }=supabase.auth.onAuthStateChange((event,session)=>{
+        if(event==='SIGNED_IN'&&session){subscription.unsubscribe();window.location.href='/reset-password';}
+      });
+      setTimeout(()=>{window.location.href='/reset-password';},2000);
+    }
   };
 
   const handleResend = async () => {

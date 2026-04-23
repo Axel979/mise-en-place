@@ -27,14 +27,16 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setReady(true);
-      } else {
-        window.location.href = '/login';
-      }
-      setChecking(false);
-    });
+    setTimeout(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setReady(true);
+        } else {
+          window.location.href = '/login';
+        }
+        setChecking(false);
+      });
+    }, 500);
   }, []);
 
   const handleSubmit = async () => {
