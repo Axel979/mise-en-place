@@ -208,7 +208,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
     e.preventDefault();
     setLoading(true); setError(''); setInfo('');
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://mise-en-place-5qor.vercel.app/auth/callback?type=recovery',
+      redirectTo: 'https://yourmiseenplace.app/auth/callback?type=recovery',
     });
     if (error) setError(error.message);
     else setInfo('Check your inbox — a reset link is on its way.');
