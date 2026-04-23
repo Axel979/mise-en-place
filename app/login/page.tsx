@@ -71,8 +71,8 @@ const CSS = `
 const page: React.CSSProperties = {
   minHeight:'100dvh', background:'var(--bg-page, #1A0F08)',
   display:'flex', flexDirection:'column',
-  alignItems:'center', justifyContent:'center',
-  padding:'32px 24px', position:'relative', overflow:'hidden',
+  alignItems:'center', justifyContent:'flex-start',
+  paddingTop:'15dvh', padding:'15dvh 24px 32px', position:'relative', overflow:'hidden',
 };
 
 const bg: React.CSSProperties = {
@@ -271,8 +271,10 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   };
 
   return (
-    <div style={{position:'relative'}}>
-      <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{position:'absolute',top:-60,left:0,cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit'}}>← Back</div>
+    <>
+      <div style={{height:32,display:'flex',alignItems:'center',marginBottom:16}}>
+        <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit'}}>← Back</div>
+      </div>
       {step==='email'?(
         <>
           <div className="f2" style={{marginBottom:28}}>
@@ -316,7 +318,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

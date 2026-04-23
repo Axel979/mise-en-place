@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
   };
 
   const pageStyle = {
-    minHeight:'100dvh',background:'#1A0F08',display:'flex',alignItems:'center',justifyContent:'center',padding:20,position:'relative' as const,overflow:'hidden' as const,
+    minHeight:'100dvh',background:'#1A0F08',display:'flex',flexDirection:'column' as const,alignItems:'center',justifyContent:'flex-start' as const,paddingTop:'15dvh',padding:'15dvh 24px 32px',position:'relative' as const,overflow:'hidden' as const,
   };
   const bgStyle = {
     position:'absolute' as const,inset:0,
