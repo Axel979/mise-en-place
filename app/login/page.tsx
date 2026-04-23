@@ -271,8 +271,8 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   };
 
   return (
-    <>
-      <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit',marginBottom:20,alignSelf:'flex-start'}}>← Back</div>
+    <div style={{position:'relative'}}>
+      <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{position:'absolute',top:-60,left:0,cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit'}}>← Back</div>
       {step==='email'?(
         <>
           <div className="f2" style={{marginBottom:28}}>
@@ -316,7 +316,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
