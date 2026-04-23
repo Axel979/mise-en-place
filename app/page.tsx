@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import html2canvas from "html2canvas";
 import { useAuth } from "@/lib/hooks/useAuth";
+import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
@@ -4129,6 +4130,7 @@ export default function App(){
     if(user?.id) userIdRef.current = user.id;
   },[user]);
   const [onboarded,  setOnboarded]  = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useState<'checking'|'needed'|'complete'>('checking');
   const [tab,        setTab]        = useState("home");
   const [mounted,    setMounted]    = useState(false);
   const [xp,         setXp]         = useState(0);
@@ -4239,6 +4241,24 @@ export default function App(){
     else root.removeAttribute('data-theme');
     try{localStorage.setItem('mep_theme',appTheme);}catch{}
   },[appTheme]);
+  // Check onboarding status when profile loads
+  useEffect(()=>{
+    if(!user) return;
+    if(profile){
+      if(profile.onboarded_at){
+        setOnboardingStatus('complete');
+        setOnboarded(true);
+        try{localStorage.setItem('mep_onboarded','true');}catch{}
+      }else{
+        // Profile exists but not onboarded
+        setOnboardingStatus('needed');
+      }
+    }else if(!loading){
+      // No profile row — needs onboarding
+      setOnboardingStatus('needed');
+    }
+  },[profile,user,loading]);
+
   useEffect(()=>{
     if(profile){
       // Only overwrite localStorage state with Supabase data if Supabase has more/better data
@@ -4569,6 +4589,15 @@ export default function App(){
   },[loading,user]);
   if(loading) return <div style={{background:C.paper,minHeight:"100vh"}}/>;
   if(!user)   return <div style={{background:C.paper,minHeight:"100vh"}}/>;
+
+  // New onboarding flow — shows when profile has no onboarded_at
+  if(onboardingStatus==='checking') return <div style={{background:C.paper,minHeight:"100vh"}}/>;
+  if(onboardingStatus==='needed' && user?.id) return(
+    <>
+      <style>{CSS}</style>
+      <OnboardingFlow userId={user.id} onComplete={()=>{setOnboardingStatus('complete');setOnboarded(true);try{localStorage.setItem('mep_onboarded','true');}catch{};}}/>
+    </>
+  );
 
   if(!onboarded)return(
     <>
