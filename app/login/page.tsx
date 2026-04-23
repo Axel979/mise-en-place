@@ -174,7 +174,7 @@ function SignupScreen({onLogin}:{onLogin:()=>void}) {
     if (password.length < 6) { setError('Password must be at least 6 characters'); setLoading(false); return; }
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) { setError(error.message); setLoading(false); return; }
-    if (data.user) window.location.href = '/onboard?uid=' + data.user.id;
+    if (data.user) window.location.href = '/';
     setLoading(false);
   };
 
