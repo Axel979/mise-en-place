@@ -271,8 +271,8 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   };
 
   return (
-    <div style={{position:'relative'}}>
-      <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{position:'absolute',top:-48,left:0,cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit'}}>← Back</div>
+    <>
+      <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit',marginBottom:20,alignSelf:'flex-start'}}>← Back</div>
       {step==='email'?(
         <>
           <div className="f2" style={{marginBottom:28}}>
@@ -282,7 +282,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           <form onSubmit={handleSendCode} className="f3">
             <input className="mep-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" required/>
             <Err msg={error}/>
-            <button type="submit" className="mep-btn-primary" disabled={loading||!email} style={{background:'#FF4D1C',boxShadow:'0 4px 20px rgba(255,77,28,.3)'}}>
+            <button type="submit" className="mep-btn-primary" disabled={loading||!email}>
               {loading ? 'Sending…' : 'Send code'}
             </button>
           </form>
@@ -301,7 +301,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
             ))}
           </div>
           <Err msg={error}/>
-          <button onClick={()=>handleVerify()} className="mep-btn-primary" disabled={verifying||otp.some(d=>!d)} style={{marginBottom:14,background:'#FF4D1C',boxShadow:'0 4px 20px rgba(255,77,28,.3)'}}>
+          <button onClick={()=>handleVerify()} className="mep-btn-primary" disabled={verifying||otp.some(d=>!d)} style={{marginBottom:14}}>
             {verifying ? 'Verifying…' : 'Verify code'}
           </button>
           {resendSuccess&&<div style={{textAlign:'center',fontSize:13,color:'#92B383',marginBottom:8}}>Code sent!</div>}
@@ -316,7 +316,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
