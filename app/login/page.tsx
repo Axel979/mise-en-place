@@ -271,8 +271,8 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   };
 
   return (
-    <>
-      <button onClick={step==='otp'?()=>setStep('email'):onBack} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:14,cursor:'pointer',padding:0,marginBottom:16,fontFamily:'inherit'}}>← Back</button>
+    <div style={{position:'relative'}}>
+      <div onClick={step==='otp'?()=>setStep('email'):onBack} style={{position:'absolute',top:-48,left:0,cursor:'pointer',color:'#9E8C7E',fontSize:14,fontFamily:'inherit'}}>← Back</div>
       {step==='email'?(
         <>
           <div className="f2" style={{marginBottom:28}}>
@@ -282,7 +282,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           <form onSubmit={handleSendCode} className="f3">
             <input className="mep-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" required/>
             <Err msg={error}/>
-            <button type="submit" className="mep-btn-primary" disabled={loading||!email}>
+            <button type="submit" className="mep-btn-primary" disabled={loading||!email} style={{background:'#FF4D1C',boxShadow:'0 4px 20px rgba(255,77,28,.3)'}}>
               {loading ? 'Sending…' : 'Send code'}
             </button>
           </form>
@@ -297,11 +297,11 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
             {otp.map((d,i)=>(
               <input key={i} ref={el=>{inputRefs[i].current=el;}} type="text" inputMode="numeric" maxLength={6} value={d}
                 onChange={e=>handleOtpChange(i,e.target.value)} onKeyDown={e=>handleOtpKeyDown(i,e)}
-                style={{width:48,height:56,borderRadius:12,border:`1.5px solid ${d?'#FF4D1C':'rgba(255,255,255,.15)'}`,background:'rgba(255,255,255,.04)',fontSize:24,fontFamily:"'Playfair Display',Georgia,serif",color:'#F5E6D3',textAlign:'center',outline:'none',caretColor:'#FF4D1C'}}/>
+                style={{width:48,height:56,borderRadius:12,border:`1.5px solid ${d?'#FF4D1C':'rgba(255,255,255,.15)'}`,background:'rgba(255,255,255,.06)',fontSize:24,fontFamily:"'Playfair Display',Georgia,serif",color:'#F5E6D3',textAlign:'center',outline:'none',caretColor:'#FF4D1C'}}/>
             ))}
           </div>
           <Err msg={error}/>
-          <button onClick={()=>handleVerify()} className="mep-btn-primary" disabled={verifying||otp.some(d=>!d)} style={{marginBottom:14}}>
+          <button onClick={()=>handleVerify()} className="mep-btn-primary" disabled={verifying||otp.some(d=>!d)} style={{marginBottom:14,background:'#FF4D1C',boxShadow:'0 4px 20px rgba(255,77,28,.3)'}}>
             {verifying ? 'Verifying…' : 'Verify code'}
           </button>
           {resendSuccess&&<div style={{textAlign:'center',fontSize:13,color:'#92B383',marginBottom:8}}>Code sent!</div>}
@@ -316,7 +316,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
