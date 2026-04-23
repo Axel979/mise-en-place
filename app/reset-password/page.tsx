@@ -27,28 +27,14 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const type = params.get('type');
-
-    if (accessToken && refreshToken && type === 'recovery') {
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      }).then(({ data, error }) => {
-        if (!error && data.session) {
-          setReady(true);
-          window.history.replaceState(null, '', '/reset-password');
-        } else {
-          setError('Reset link is invalid or expired.');
-        }
-        setChecking(false);
-      });
-    } else {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setReady(true);
+      } else {
+        window.location.href = '/login';
+      }
       setChecking(false);
-    }
+    });
   }, []);
 
   const handleSubmit = async () => {
@@ -90,15 +76,8 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           {checking ? (
-            <p style={{color:'var(--muted)',fontSize:14,textAlign:'center'}}>Verifying your reset link...</p>
-          ) : !ready ? (
-            <div style={{textAlign:'center'}}>
-              <p style={{color:'var(--muted)',fontSize:14,marginBottom:16}}>This link has expired or is invalid. Please request a new one.</p>
-              <button onClick={()=>router.push('/login')} style={{padding:'12px 24px',borderRadius:50,background:'#FF4D1C',color:'#FFF8F0',border:'none',fontFamily:DF,fontSize:15,fontWeight:700,cursor:'pointer'}}>
-                Back to sign in
-              </button>
-            </div>
-          ) : (
+            <p style={{color:'var(--muted)',fontSize:14,textAlign:'center'}}>Loading...</p>
+          ) : ready ? (
             <>
               <h1 style={{fontFamily:DF,fontSize:24,color:'var(--text)',marginBottom:8,textAlign:'center'}}>Choose a new password</h1>
               <p style={{color:'var(--muted)',fontSize:14,textAlign:'center',marginBottom:24}}>Must be at least 8 characters.</p>
@@ -125,7 +104,7 @@ export default function ResetPasswordPage() {
                 {loading ? 'Updating...' : 'Update password'}
               </button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </>

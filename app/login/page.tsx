@@ -202,39 +202,99 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
+  const [step, setStep] = useState<'email'|'otp'>('email');
+  const [otp, setOtp] = useState(['','','','','','']);
+  const [verifying, setVerifying] = useState(false);
+  const inputRefs = Array.from({length:6},()=>({current:null as HTMLInputElement|null}));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setError(''); setInfo('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://yourmiseenplace.app/auth/callback?type=recovery',
-    });
-    if (error) setError(error.message);
-    else setInfo('Check your inbox — a reset link is on its way.');
+    setLoading(true); setError('');
+    const { error } = await supabase.auth.signInWithOtp({ email, options:{ shouldCreateUser:false } });
     setLoading(false);
+    if (error) setError(error.message);
+    else setStep('otp');
+  };
+
+  const handleOtpChange = (idx:number, val:string) => {
+    if(val.length>1){
+      // Paste support
+      const digits=val.replace(/\D/g,'').slice(0,6).split('');
+      const next=[...otp];
+      digits.forEach((d,i)=>{if(idx+i<6)next[idx+i]=d;});
+      setOtp(next);
+      const focusIdx=Math.min(idx+digits.length,5);
+      inputRefs[focusIdx]?.current?.focus();
+      if(next.every(d=>d)) handleVerify(next.join(''));
+      return;
+    }
+    const digit=val.replace(/\D/g,'');
+    const next=[...otp];
+    next[idx]=digit;
+    setOtp(next);
+    if(digit && idx<5) inputRefs[idx+1]?.current?.focus();
+    if(next.every(d=>d)) handleVerify(next.join(''));
+  };
+
+  const handleOtpKeyDown = (idx:number, e:React.KeyboardEvent) => {
+    if(e.key==='Backspace'&&!otp[idx]&&idx>0) inputRefs[idx-1]?.current?.focus();
+  };
+
+  const handleVerify = async (code?:string) => {
+    const token=code||otp.join('');
+    if(token.length!==6){setError('Enter all 6 digits.');return;}
+    setVerifying(true); setError('');
+    const { error } = await supabase.auth.verifyOtp({ email, token, type:'email' });
+    setVerifying(false);
+    if(error) setError('Invalid or expired code. Try again.');
+    else window.location.href='/reset-password';
+  };
+
+  const handleResend = async () => {
+    setError(''); setOtp(['','','','','','']);
+    const { error } = await supabase.auth.signInWithOtp({ email, options:{ shouldCreateUser:false } });
+    if(error) setError(error.message);
   };
 
   return (
     <>
-      <button onClick={onBack} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:14,cursor:'pointer',padding:0,marginBottom:16,fontFamily:'inherit'}}>← Back</button>
-      {!info?(
+      <button onClick={step==='otp'?()=>setStep('email'):onBack} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:14,cursor:'pointer',padding:0,marginBottom:16,fontFamily:'inherit'}}>← Back</button>
+      {step==='email'?(
         <>
           <div className="f2" style={{marginBottom:28}}>
             <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:'#F5E6D3',marginBottom:6}}>Forgot your password?</div>
-            <div style={{fontSize:14,color:'#9E8C7E',lineHeight:1.6}}>We'll send a reset link to your email.</div>
+            <div style={{fontSize:14,color:'#9E8C7E',lineHeight:1.6}}>We'll send a 6-digit code to your email.</div>
           </div>
-          <form onSubmit={handleSubmit} className="f3">
+          <form onSubmit={handleSendCode} className="f3">
             <input className="mep-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" required/>
             <Err msg={error}/>
             <button type="submit" className="mep-btn-primary" disabled={loading||!email}>
-              {loading ? 'Sending…' : 'Send reset link'}
+              {loading ? 'Sending…' : 'Send code'}
             </button>
           </form>
         </>
       ):(
-        <div style={{textAlign:'center',padding:'40px 0'}}>
-          <div style={{fontSize:16,color:'#9E8C7E',lineHeight:1.6}}>{info}</div>
+        <div>
+          <div style={{marginBottom:28}}>
+            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:'#F5E6D3',marginBottom:6}}>Enter your code</div>
+            <div style={{fontSize:14,color:'#9E8C7E',lineHeight:1.6}}>We sent a 6-digit code to {email}</div>
+          </div>
+          <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:20}}>
+            {otp.map((d,i)=>(
+              <input key={i} ref={el=>{inputRefs[i].current=el;}} type="text" inputMode="numeric" maxLength={6} value={d}
+                onChange={e=>handleOtpChange(i,e.target.value)} onKeyDown={e=>handleOtpKeyDown(i,e)}
+                style={{width:48,height:56,borderRadius:12,border:`1.5px solid ${d?'#FF4D1C':'rgba(255,255,255,.15)'}`,background:'rgba(255,255,255,.04)',fontSize:24,fontFamily:"'Playfair Display',Georgia,serif",color:'#F5E6D3',textAlign:'center',outline:'none',caretColor:'#FF4D1C'}}/>
+            ))}
+          </div>
+          <Err msg={error}/>
+          <button onClick={()=>handleVerify()} className="mep-btn-primary" disabled={verifying||otp.some(d=>!d)} style={{marginBottom:14}}>
+            {verifying ? 'Verifying…' : 'Verify code'}
+          </button>
+          <div style={{textAlign:'center'}}>
+            <button onClick={handleResend} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+              Didn't get a code? Resend
+            </button>
+          </div>
         </div>
       )}
     </>
