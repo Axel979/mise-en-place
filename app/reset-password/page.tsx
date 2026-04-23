@@ -1,136 +1,133 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1A0F08; --card: #2A1A0E; --text: #FFF8F0; --muted: #9E8C7E; }
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #FAF4EE; --card: #FFF8F0; --text: #3B2A1A; --muted: #9E8C7E; }
+  }
+`;
 
 export default function ResetPasswordPage() {
-  if(typeof window!=='undefined') console.log('[RESET] page loaded, URL:', window.location.href, 'search:', window.location.search, 'hash:', window.location.hash);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    console.log('[RESET] URL:', window.location.href);
-
-    // Check for tokens in URL hash (passed from auth/callback)
-    const hash = window.location.hash.substring(1);
+    const hash = window.location.hash.slice(1);
     const params = new URLSearchParams(hash);
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
+    const type = params.get('type');
 
-    console.log('[RESET] tokens in hash:', !!accessToken, !!refreshToken);
-
-    if (accessToken && refreshToken) {
+    if (accessToken && refreshToken && type === 'recovery') {
       supabase.auth.setSession({
         access_token: accessToken,
-        refresh_token: refreshToken
+        refresh_token: refreshToken,
       }).then(({ data, error }) => {
-        console.log('[RESET] setSession result:', data?.session?.user?.email, 'error:', error?.message);
-        if (data?.session) {
+        if (!error && data.session) {
           setReady(true);
           window.history.replaceState(null, '', '/reset-password');
+        } else {
+          setError('Reset link is invalid or expired.');
         }
+        setChecking(false);
       });
-      return;
+    } else {
+      setChecking(false);
     }
-
-    // Fallback: check existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('[RESET] getSession:', session?.user?.email, 'error:', error?.message);
-      if (session?.user) setReady(true);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[RESET] event:', event, 'user:', session?.user?.email);
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        if (session) setReady(true);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('[RESET] handleSubmit called, ready:', ready, 'password length:', password.length);
+  const handleSubmit = async () => {
     setError('');
-    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
-    if (password !== confirm) { setError('Passwords do not match'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (password !== confirm) { setError('Passwords do not match.'); return; }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) { setError(error.message); setLoading(false); return; }
+    setLoading(false);
+    if (error) { setError(error.message); return; }
     setSuccess(true);
-    setTimeout(() => { window.location.href = '/login'; }, 2000);
+    setTimeout(() => router.push('/login'), 2000);
   };
 
-  return (
-    <div style={{ background: 'var(--bg-page, #1A0F08)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: BF }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
-        :root{--bg-page:#1A0F08;--bg-card:#2A1A0E;--text-primary:#F5E6D3;--text-muted:#9E8C7E;--accent:#FF4D1C}
-        body{background:var(--bg-page);}
-      `}</style>
-      <div style={{ width: '100%', maxWidth: 400, padding: '0 24px' }}>
-        {/* Wordmark */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ fontFamily: DF, fontWeight: 900, fontSize: 28, color: '#F5E6D3', letterSpacing: '-0.03em' }}>
-            mise<span style={{ color: '#FF4D1C' }}>.</span>en<span style={{ color: '#FF4D1C' }}>.</span>place
-          </div>
+  if (success) return (
+    <>
+      <style>{styles}</style>
+      <div style={{minHeight:'100dvh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+        <div style={{background:'var(--card)',borderRadius:24,padding:40,maxWidth:400,width:'100%',textAlign:'center'}}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{margin:'0 auto 16px',display:'block'}}>
+            <path d="M12 3C7.03 3 3 7.03 3 12s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9z" stroke="#FF4D1C" strokeWidth="1.8"/>
+            <path d="M8 12l3 3 5-5" stroke="#FF4D1C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <h1 style={{fontFamily:DF,fontSize:24,color:'var(--text)',marginBottom:8}}>Password updated.</h1>
+          <p style={{color:'var(--muted)',fontSize:14}}>Taking you back to sign in...</p>
         </div>
-
-        {!ready && !success && (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 14, color: '#9E8C7E', lineHeight: 1.6 }}>Loading reset session...</div>
-          </div>
-        )}
-
-        {ready && !success && (
-          <div style={{ background: '#FFF8F0', borderRadius: 24, padding: '32px 24px' }}>
-            <div style={{ fontFamily: DF, fontSize: 22, fontWeight: 700, color: '#3B2A1A', marginBottom: 6 }}>Choose a new password</div>
-            <div style={{ fontSize: 14, color: '#9E8C7E', marginBottom: 24, lineHeight: 1.5 }}>Must be at least 8 characters.</div>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="New password"
-                required
-                style={{ width: '100%', padding: '13px 16px', borderRadius: 14, border: '1.5px solid #E8DDD4', background: '#FAF4EE', fontSize: 14, color: '#3B2A1A', outline: 'none', marginBottom: 12, fontFamily: 'inherit', boxSizing: 'border-box' }}
-              />
-              <input
-                type="password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                placeholder="Confirm password"
-                required
-                style={{ width: '100%', padding: '13px 16px', borderRadius: 14, border: '1.5px solid #E8DDD4', background: '#FAF4EE', fontSize: 14, color: '#3B2A1A', outline: 'none', marginBottom: 16, fontFamily: 'inherit', boxSizing: 'border-box' }}
-              />
-              {error && <div style={{ color: '#FF4D1C', fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>{error}</div>}
-              <button
-                type="submit"
-                disabled={loading || !password || !confirm}
-                style={{ width: '100%', padding: '14px', borderRadius: 14, border: 'none', background: loading ? '#D8D0C8' : '#FF4D1C', color: '#fff', fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer', fontFamily: 'inherit' }}
-              >
-                {loading ? 'Updating…' : 'Update password'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {success && (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 36, marginBottom: 16 }}>✓</div>
-            <div style={{ fontFamily: DF, fontSize: 20, fontWeight: 700, color: '#F5E6D3', marginBottom: 8 }}>Password updated</div>
-            <div style={{ fontSize: 14, color: '#9E8C7E' }}>Redirecting to login...</div>
-          </div>
-        )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      <style>{styles}</style>
+      <div style={{minHeight:'100dvh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+        <div style={{background:'var(--card)',borderRadius:24,padding:40,maxWidth:400,width:'100%'}}>
+          <div style={{textAlign:'center',marginBottom:32}}>
+            <div style={{fontFamily:DF,fontSize:22,color:'var(--text)',letterSpacing:'0.05em'}}>
+              mise<span style={{color:'#FF4D1C'}}>.</span>en<span style={{color:'#FF4D1C'}}>.</span>place
+            </div>
+          </div>
+          {checking ? (
+            <p style={{color:'var(--muted)',fontSize:14,textAlign:'center'}}>Verifying your reset link...</p>
+          ) : !ready ? (
+            <div style={{textAlign:'center'}}>
+              <p style={{color:'var(--muted)',fontSize:14,marginBottom:16}}>This link has expired or is invalid. Please request a new one.</p>
+              <button onClick={()=>router.push('/login')} style={{padding:'12px 24px',borderRadius:50,background:'#FF4D1C',color:'#FFF8F0',border:'none',fontFamily:DF,fontSize:15,fontWeight:700,cursor:'pointer'}}>
+                Back to sign in
+              </button>
+            </div>
+          ) : (
+            <>
+              <h1 style={{fontFamily:DF,fontSize:24,color:'var(--text)',marginBottom:8,textAlign:'center'}}>Choose a new password</h1>
+              <p style={{color:'var(--muted)',fontSize:14,textAlign:'center',marginBottom:24}}>Must be at least 8 characters.</p>
+              <input
+                type="password"
+                placeholder="New password"
+                value={password}
+                onChange={e=>setPassword(e.target.value)}
+                style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1.5px solid #E8DDD4',background:'var(--bg)',fontSize:15,color:'var(--text)',marginBottom:12,outline:'none',fontFamily:BF,boxSizing:'border-box'}}
+              />
+              <input
+                type="password"
+                placeholder="Confirm password"
+                value={confirm}
+                onChange={e=>setConfirm(e.target.value)}
+                style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1.5px solid #E8DDD4',background:'var(--bg)',fontSize:15,color:'var(--text)',marginBottom:16,outline:'none',fontFamily:BF,boxSizing:'border-box'}}
+              />
+              {error && <p style={{color:'#FF4D1C',fontSize:13,textAlign:'center',marginBottom:12}}>{error}</p>}
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{width:'100%',padding:'16px',borderRadius:50,background:'#FF4D1C',color:'#FFF8F0',border:'none',fontFamily:DF,fontSize:16,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.7:1}}
+              >
+                {loading ? 'Updating...' : 'Update password'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

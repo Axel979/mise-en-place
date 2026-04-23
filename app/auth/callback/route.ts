@@ -24,19 +24,12 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error && data.session) {
       if (type === 'recovery') {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const params = new URLSearchParams({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-            type: 'recovery'
-          })
-          return NextResponse.redirect(`${origin}/reset-password#${params.toString()}`)
-        }
-        return NextResponse.redirect(`${origin}/reset-password`)
+        const fragment = `access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&type=recovery`
+        return NextResponse.redirect(`${origin}/reset-password#${fragment}`)
       }
       return NextResponse.redirect(`${origin}/`)
     }

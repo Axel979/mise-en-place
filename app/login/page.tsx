@@ -208,7 +208,7 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
     e.preventDefault();
     setLoading(true); setError(''); setInfo('');
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     });
     if (error) setError(error.message);
     else setInfo('Check your inbox — a reset link is on its way.');
