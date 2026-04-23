@@ -205,6 +205,8 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   const [step, setStep] = useState<'email'|'otp'>('email');
   const [otp, setOtp] = useState(['','','','','','']);
   const [verifying, setVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const inputRefs = Array.from({length:6},()=>({current:null as HTMLInputElement|null}));
 
   const handleSendCode = async (e: React.FormEvent) => {
@@ -258,9 +260,14 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
   };
 
   const handleResend = async () => {
-    setError(''); setOtp(['','','','','','']);
+    if(resendCooldown>0) return;
+    setError(''); setOtp(['','','','','','']); setResendSuccess(false);
     const { error } = await supabase.auth.signInWithOtp({ email, options:{ shouldCreateUser:false } });
-    if(error) setError(error.message);
+    if(error){setError(error.message);return;}
+    setResendSuccess(true);
+    setTimeout(()=>setResendSuccess(false),3000);
+    setResendCooldown(30);
+    const iv=setInterval(()=>{setResendCooldown(c=>{if(c<=1){clearInterval(iv);return 0;}return c-1;});},1000);
   };
 
   return (
@@ -297,10 +304,15 @@ function ResetScreen({onBack}:{onBack:()=>void}) {
           <button onClick={()=>handleVerify()} className="mep-btn-primary" disabled={verifying||otp.some(d=>!d)} style={{marginBottom:14}}>
             {verifying ? 'Verifying…' : 'Verify code'}
           </button>
+          {resendSuccess&&<div style={{textAlign:'center',fontSize:13,color:'#92B383',marginBottom:8}}>Code sent!</div>}
           <div style={{textAlign:'center'}}>
-            <button onClick={handleResend} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
-              Didn't get a code? Resend
-            </button>
+            {resendCooldown>0?(
+              <span style={{fontSize:13,color:'rgba(158,140,126,.5)'}}>Resend in {resendCooldown}s</span>
+            ):(
+              <button onClick={handleResend} style={{background:'none',border:'none',color:'#9E8C7E',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+                Didn't get a code? Resend
+              </button>
+            )}
           </div>
         </div>
       )}
