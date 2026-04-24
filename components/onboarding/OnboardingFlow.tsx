@@ -119,6 +119,7 @@ export default function OnboardingFlow({ userId, onComplete }: OnboardingFlowPro
   const [showOptions, setShowOptions] = useState(false);
   const [answers, setAnswers] = useState<OnboardingAnswers>({});
   const [completing, setCompleting] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const skipAckIdx = useRef(0);
@@ -244,6 +245,7 @@ export default function OnboardingFlow({ userId, onComplete }: OnboardingFlowPro
   async function finishOnboarding() {
     setShowOptions(false);
     setCompleting(true);
+    setFinalizeError(null);
     const username = answers.username || usernameInput;
 
     // Final app bubble
@@ -254,14 +256,19 @@ export default function OnboardingFlow({ userId, onComplete }: OnboardingFlowPro
 
     // Update profile in Supabase
     try {
-      await supabase.from('profiles').update({
+      const { error } = await supabase.from('profiles').update({
         goal: answers.goal || null,
         dietary: answers.dietary || [],
         skill_level: answers.skill_level || null,
         onboarded_at: new Date().toISOString(),
       }).eq('id', userId);
+
+      if (error) throw error;
     } catch (e) {
-      console.error('Failed to update profile:', e);
+      console.error('[Onboarding] Failed to finalize:', e);
+      setFinalizeError('Something went wrong saving your profile. Please try again.');
+      setCompleting(false);
+      return;
     }
 
     // Clean up localStorage
@@ -308,16 +315,24 @@ export default function OnboardingFlow({ userId, onComplete }: OnboardingFlowPro
     setShowOptions(false);
 
     // Insert profile row with username
-    const { error } = await supabase.from('profiles').upsert({
-      id: userId,
-      username: usernameInput.toLowerCase().trim(),
-      xp: 0,
-      level: 1,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
+    try {
+      const { error } = await supabase.from('profiles').upsert({
+        id: userId,
+        username: usernameInput.toLowerCase().trim(),
+        xp: 0,
+        level: 1,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
 
-    if (error) {
-      setUsernameError(error.message.includes('username') ? "That username isn't available" : error.message);
+      if (error) {
+        console.error('[Onboarding] Username insert failed:', error);
+        setUsernameError(error.message.includes('username') ? "That username isn't available" : 'Failed to save username. Please try again.');
+        setShowOptions(true);
+        return;
+      }
+    } catch (e) {
+      console.error('[Onboarding] Username insert threw:', e);
+      setUsernameError('Failed to save username. Please try again.');
       setShowOptions(true);
       return;
     }
@@ -359,6 +374,16 @@ export default function OnboardingFlow({ userId, onComplete }: OnboardingFlowPro
       </div>
 
       {/* Bottom input/options area */}
+      {/* Error state with retry */}
+      {finalizeError && (
+        <div style={{flexShrink:0,borderTop:`1px solid ${C.border}`,background:'#fff',padding:'16px',maxWidth:480,width:'100%',margin:'0 auto',textAlign:'center'}}>
+          <div style={{color:C.flame,fontSize:14,fontFamily:BF,marginBottom:12}}>{finalizeError}</div>
+          <button onClick={()=>finishOnboarding()} style={{padding:'14px 32px',borderRadius:14,border:'none',background:C.flame,color:'#fff',fontWeight:700,fontSize:15,fontFamily:DF,cursor:'pointer'}}>
+            Try Again
+          </button>
+        </div>
+      )}
+
       {showOptions && !completing && (
         <div style={{flexShrink:0,borderTop:`1px solid ${C.border}`,background:'#fff',padding:'16px',maxWidth:480,width:'100%',margin:'0 auto'}}>
 

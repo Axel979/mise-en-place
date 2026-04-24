@@ -4124,7 +4124,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
+  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4595,7 +4595,7 @@ export default function App(){
   if(onboardingStatus==='needed' && user?.id) return(
     <>
       <style>{CSS}</style>
-      <OnboardingFlow userId={user.id} onComplete={()=>{setOnboardingStatus('complete');setOnboarded(true);try{localStorage.setItem('mep_onboarded','true');}catch{};}}/>
+      <OnboardingFlow userId={user.id} onComplete={async()=>{await refreshProfile();setOnboardingStatus('complete');setOnboarded(true);try{localStorage.setItem('mep_onboarded','true');}catch{};}}/>
     </>
   );
 

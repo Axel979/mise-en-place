@@ -418,8 +418,13 @@ export function useAuth() {
     }
   };
 
+  const refreshProfile = async () => {
+    const uid = userIdRef.current;
+    if (uid) await loadProfile(uid);
+  };
+
   return {
-    user, session, profile, loading, supabase,
+    user, session, profile, loading, supabase, refreshProfile,
     signIn, signOut, refresh,
     saveAllUserData,
     saveXp, logCompletedRecipe, loadCompletedRecipes,
