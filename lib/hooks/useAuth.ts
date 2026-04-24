@@ -1,6 +1,50 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
+function getAuthToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.split(';').find(c => c.trim().match(/^sb-[^=]+-auth-token=/));
+  if (!match) return null;
+  try {
+    let raw = match.split('=').slice(1).join('=');
+    if (raw.startsWith('base64-')) raw = atob(raw.slice(7));
+    const parsed = JSON.parse(decodeURIComponent(raw));
+    return parsed?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
+async function patchProfile(userId: string, payload: Record<string, any>): Promise<{ error: Error | null }> {
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
+  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const token = getAuthToken() || SUPABASE_ANON;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${token}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return { error: new Error(`PATCH profiles failed ${res.status}: ${body}`) };
+    }
+    return { error: null };
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    return { error: e.name === 'AbortError' ? new Error('Request timed out') : e };
+  }
+}
+
 export function useAuth() {
   const [user, setUser]       = useState<any>(null);
   const [session, setSession] = useState<any>(null);
@@ -71,10 +115,7 @@ export function useAuth() {
     if (data.goalId) profileUpdates.goal_id = data.goalId;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(profileUpdates)
-        .eq('id', userId);
+      const { error } = await patchProfile(userId, profileUpdates);
       if (error) console.error('saveAllUserData profiles error:', error);
     } catch (e) {
       console.error('saveAllUserData profiles threw:', e);
@@ -110,10 +151,7 @@ export function useAuth() {
   const saveProfileField = async (userId: string, fields: Record<string, any>) => {
     if (!userId) return;
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ ...fields, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const { error } = await patchProfile(userId, { ...fields, updated_at: new Date().toISOString() });
       if (error) console.error('saveProfileField error:', error);
     } catch (e) {
       console.error('saveProfileField threw:', e);
