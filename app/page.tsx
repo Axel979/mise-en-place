@@ -4244,17 +4244,19 @@ export default function App(){
   // Check onboarding status when profile loads
   useEffect(()=>{
     if(!user) return;
+    const isDev = process.env.NODE_ENV === 'development';
     if(profile){
       if(profile.onboarded_at){
+        if(isDev) console.log('[Gate] profile complete → app');
         setOnboardingStatus('complete');
         setOnboarded(true);
         try{localStorage.setItem('mep_onboarded','true');}catch{}
       }else{
-        // Profile exists but not onboarded
+        if(isDev) console.log('[Gate] onboarded_at null → onboarding');
         setOnboardingStatus('needed');
       }
     }else if(!loading){
-      // No profile row — needs onboarding
+      if(isDev) console.log('[Gate] no profile → onboarding');
       setOnboardingStatus('needed');
     }
   },[profile,user,loading]);

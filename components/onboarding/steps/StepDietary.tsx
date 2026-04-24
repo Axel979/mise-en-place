@@ -1,0 +1,133 @@
+'use client';
+import React, { useState } from 'react';
+
+const C = {
+  flame: '#FF4D1C', bark: '#3B2A1A', cream: '#FFF8F0',
+  muted: '#9E8C7E', border: '#EEE5DC',
+};
+const DF = "'Playfair Display',Georgia,serif";
+const BF = "'Source Serif 4',Georgia,serif";
+
+const DIETARY_OPTIONS = [
+  'No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian',
+  'Gluten-free', 'Dairy-free', 'Nut-free',
+];
+
+const DIETARY_VALUES: Record<string, string> = {
+  'Vegetarian': 'vegetarian',
+  'Vegan': 'vegan',
+  'Pescatarian': 'pescatarian',
+  'Gluten-free': 'gluten_free',
+  'Dairy-free': 'dairy_free',
+  'Nut-free': 'nut_free',
+};
+
+interface StepDietaryProps {
+  onAnswer: (label: string, values: string[]) => void;
+  onSkip: () => void;
+}
+
+export default function StepDietary({ onAnswer, onSkip }: StepDietaryProps) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const handleToggle = (opt: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const isNoRestrictions = opt === 'No restrictions';
+
+      if (isNoRestrictions) {
+        return next.has('none') ? new Set() : new Set(['none']);
+      }
+
+      next.delete('none');
+      if (next.has(opt)) {
+        next.delete(opt);
+      } else {
+        next.add(opt);
+      }
+      return next;
+    });
+  };
+
+  const handleContinue = () => {
+    const values = selected.has('none')
+      ? []
+      : Array.from(selected).map((d) => DIETARY_VALUES[d] || d);
+    const label = selected.has('none')
+      ? 'No restrictions'
+      : Array.from(selected).join(', ');
+    onAnswer(label, values);
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+        {DIETARY_OPTIONS.map((opt) => {
+          const isNoRestrictions = opt === 'No restrictions';
+          const isSelected = isNoRestrictions
+            ? selected.size === 0 || selected.has('none')
+            : selected.has(opt);
+
+          return (
+            <button
+              key={opt}
+              aria-label={opt}
+              aria-pressed={isSelected}
+              onClick={() => handleToggle(opt)}
+              style={{
+                padding: '9px 16px',
+                borderRadius: 99,
+                border: `1.5px solid ${isSelected ? 'transparent' : C.muted}`,
+                background: isSelected ? C.flame : C.cream,
+                color: isSelected ? '#fff' : C.bark,
+                fontWeight: 600,
+                fontSize: 14,
+                fontFamily: BF,
+                cursor: 'pointer',
+                transition: 'all .15s',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+              }}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected.size > 0 && (
+        <button
+          onClick={handleContinue}
+          aria-label="Continue with dietary selections"
+          style={{
+            width: '100%',
+            padding: '14px',
+            borderRadius: 14,
+            border: 'none',
+            background: C.flame,
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 15,
+            fontFamily: DF,
+            cursor: 'pointer',
+            marginBottom: 8,
+          }}
+        >
+          Continue
+        </button>
+      )}
+
+      <div
+        onClick={onSkip}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSkip(); }}
+        aria-label="Skip this step"
+        style={{ textAlign: 'center', fontSize: 13, color: C.muted, cursor: 'pointer', padding: 4 }}
+      >
+        Skip for now
+      </div>
+    </div>
+  );
+}
+
+export { DIETARY_OPTIONS, DIETARY_VALUES };
