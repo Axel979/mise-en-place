@@ -6,6 +6,21 @@ import StepGoal, { GOAL_OPTIONS } from './steps/StepGoal';
 import StepDietary, { DIETARY_OPTIONS, DIETARY_VALUES } from './steps/StepDietary';
 import StepSkill, { SKILL_OPTIONS } from './steps/StepSkill';
 
+// ── Auth token helper (raw fetch needs the JWT from cookie) ───
+function getAuthToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.split(';').find(c => c.trim().match(/^sb-[^=]+-auth-token=/));
+  if (!match) return null;
+  try {
+    let raw = match.split('=').slice(1).join('=');
+    if (raw.startsWith('base64-')) raw = atob(raw.slice(7));
+    const parsed = JSON.parse(decodeURIComponent(raw));
+    return parsed?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Design tokens ─────────────────────────────────────────────
 const C = {
   flame: '#FF4D1C', bark: '#3B2A1A', cream: '#FFF8F0', paper: '#FAF4EE',
@@ -129,7 +144,11 @@ function reducer(state: OnboardingState, action: OnboardingAction): OnboardingSt
       return { ...state, finalizeLoading: false, completing: false, finalizeError: action.error };
 
     case 'FINALIZE_RETRY':
-      return { ...state, finalizeError: null };
+      return {
+        ...state,
+        finalizeError: null,
+        messages: state.messages.filter(m => m.id !== 'done'),
+      };
 
     case 'RESTORE_PROGRESS':
       return {
@@ -516,41 +535,47 @@ function OnboardingFlowInner({ userId, onComplete }: OnboardingFlowProps) {
       onboarded_at: new Date().toISOString(),
     };
 
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
+    const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const token = getAuthToken() || SUPABASE_ANON;
+
     console.log('[Onboarding] About to finalize UPDATE:', payload);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    let res: Response;
     try {
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Finalize timeout')), 10000)
-      );
-      const updatePromise = supabase
-        .from('profiles')
-        .update(payload)
-        .eq('id', userId)
-        .select()
-        .single();
-
-      const { data, error } = await Promise.race([updatePromise, timeoutPromise]) as Awaited<typeof updatePromise>;
-      console.log('[Onboarding] Finalize UPDATE returned, error:', error);
-
-      if (error) {
-        console.error('[OnboardingFlow] Finalize update error:', error);
-        throw error;
-      }
-
-      if (isDev) console.log('[OnboardingFlow] Finalize update success:', data);
-    } catch (e) {
-      const isTimeout = e instanceof Error && e.message === 'Finalize timeout';
-      if (isTimeout) {
-        console.error('[Onboarding] Finalize UPDATE TIMEOUT after 10s');
-      } else {
-        console.error('[OnboardingFlow] Failed to finalize:', e);
-      }
+      res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.error('[Onboarding] Finalize via raw fetch FAILED:', err);
       dispatch({
         type: 'FINALIZE_ERROR',
-        error: isTimeout
+        error: err.name === 'AbortError'
           ? 'Request timed out. Please try again.'
-          : 'Something went wrong saving your profile. Please try again.',
+          : 'Something went wrong. Please try again.',
       });
+      return;
+    }
+
+    clearTimeout(timeoutId);
+    console.log('[Onboarding] Finalize via raw fetch, status:', res.status);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error('[Onboarding] Finalize non-OK response:', res.status, body);
+      dispatch({ type: 'FINALIZE_ERROR', error: 'Could not save your profile. Please try again.' });
       return;
     }
 
