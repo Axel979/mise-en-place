@@ -3691,14 +3691,29 @@ function DrawerSectionHeader({title, onBack}){
 }
 
 function PrivacySettings({onBack}){
+  // TODO: Enforcement of these settings (filtering feed by postVis, blocking
+  // follow requests when allowFollowers is false, restricting profile visibility)
+  // needs to be wired into FeedTab, FollowersSheet, and UserProfileSheet.
   const [postVis, setPostVis] = useState('everyone');
   const [profileVis, setProfileVis] = useState('everyone');
   const [followers, setFollowers] = useState(true);
+
+  useEffect(()=>{
+    if(typeof window==='undefined') return;
+    try{ const v=localStorage.getItem('mep_privacy_postVisibility'); if(v) setPostVis(v); }catch{}
+    try{ const v=localStorage.getItem('mep_privacy_profileVisibility'); if(v) setProfileVis(v); }catch{}
+    try{ const v=localStorage.getItem('mep_privacy_allowFollowers'); if(v!==null) setFollowers(v==='true'); }catch{}
+  },[]);
+
+  const handlePostVis=(v)=>{ setPostVis(v); try{localStorage.setItem('mep_privacy_postVisibility',v);}catch{} };
+  const handleProfileVis=(v)=>{ setProfileVis(v); try{localStorage.setItem('mep_privacy_profileVisibility',v);}catch{} };
+  const handleFollowers=(v)=>{ setFollowers(v); try{localStorage.setItem('mep_privacy_allowFollowers',String(v));}catch{} };
+
   const opts = ["everyone","friends","only me"];
   return(
     <div>
       <DrawerSectionHeader title="Privacy" onBack={onBack}/>
-      {[["Who can see your posts",postVis,setPostVis],["Who can see your profile",profileVis,setProfileVis]].map(([label,val,set])=>(
+      {[["Who can see your posts",postVis,handlePostVis],["Who can see your profile",profileVis,handleProfileVis]].map(([label,val,set])=>(
         <div key={label} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>{label}</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -3713,11 +3728,11 @@ function PrivacySettings({onBack}){
           <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Allow followers</div>
           <div style={{fontSize:11,color:C.muted}}>Let others follow your cooking activity</div>
         </div>
-        <button onClick={()=>setFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+        <button onClick={()=>handleFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
           <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:followers?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
         </button>
       </div>
-      <div style={{marginTop:16}}><Btn onClick={onBack} full outline color={C.muted}>Save</Btn></div>
+      <div style={{marginTop:16}}><Btn onClick={onBack} full outline color={C.muted}>Done</Btn></div>
     </div>
   );
 }
