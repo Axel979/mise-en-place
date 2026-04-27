@@ -10,7 +10,9 @@
       "Bash(npm install:*)",
       "Bash(sed:*)",
       "Bash(npm run:*)",
-      "Bash(curl -s \"https://mise-en-place-5qor.vercel.app/auth/callback?code=test&type=recovery\" -I)"
+      "Bash(curl -s \"https://mise-en-place-5qor.vercel.app/auth/callback?code=test&type=recovery\" -I)",
+      "Bash(git tag:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
