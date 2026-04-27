@@ -236,11 +236,15 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('activity_feed')
-        .select('*')
+        .select('*, profiles:user_id(username, avatar_url)')
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((r: any) => ({
+        ...r,
+        username: r.profiles?.username || null,
+        avatar_url: r.profiles?.avatar_url || null,
+      }));
     } catch (e) {
       console.error('loadFeed error:', e);
       return [];
@@ -461,14 +465,147 @@ export function useAuth() {
     if (uid) await loadProfile(uid);
   };
 
+  // ── Follows system ────────────────────────────────────────
+  const followUser = async (targetUserId: string) => {
+    const uid = userIdRef.current;
+    if (!uid || uid === targetUserId) return { error: 'invalid' };
+    try {
+      const { error } = await supabase
+        .from('follows')
+        .insert({ follower_id: uid, following_id: targetUserId });
+      if (error && error.code !== '23505') throw error;
+      return { success: true };
+    } catch (e: any) {
+      console.error('followUser error:', e);
+      return { error: e.message };
+    }
+  };
+
+  const unfollowUser = async (targetUserId: string) => {
+    const uid = userIdRef.current;
+    if (!uid) return { error: 'no auth' };
+    try {
+      const { error } = await supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', uid)
+        .eq('following_id', targetUserId);
+      if (error) throw error;
+      return { success: true };
+    } catch (e: any) {
+      console.error('unfollowUser error:', e);
+      return { error: e.message };
+    }
+  };
+
+  const isFollowing = async (targetUserId: string): Promise<boolean> => {
+    const uid = userIdRef.current;
+    if (!uid) return false;
+    try {
+      const { data, error } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', uid)
+        .eq('following_id', targetUserId)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data;
+    } catch {
+      return false;
+    }
+  };
+
+  const loadFollowing = async (userId?: string) => {
+    const uid = userId || userIdRef.current;
+    if (!uid) return [];
+    try {
+      const { data: rows, error } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', uid);
+      if (error) throw error;
+      const ids = (rows || []).map((r: any) => r.following_id).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, xp')
+        .in('id', ids);
+      if (pErr) throw pErr;
+      return profiles || [];
+    } catch (e) {
+      console.error('loadFollowing error:', e);
+      return [];
+    }
+  };
+
+  const loadFollowers = async (userId?: string) => {
+    const uid = userId || userIdRef.current;
+    if (!uid) return [];
+    try {
+      const { data: rows, error } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('following_id', uid);
+      if (error) throw error;
+      const ids = (rows || []).map((r: any) => r.follower_id).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, xp')
+        .in('id', ids);
+      if (pErr) throw pErr;
+      return profiles || [];
+    } catch (e) {
+      console.error('loadFollowers error:', e);
+      return [];
+    }
+  };
+
+  const loadProfileById = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, xp, level, created_at')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.error('loadProfileById error:', e);
+      return null;
+    }
+  };
+
+  const uploadAvatar = async (file: File): Promise<string | null> => {
+    const uid = userIdRef.current;
+    if (!uid) return null;
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${uid}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      const publicUrl = urlData.publicUrl + '?v=' + Date.now();
+      const result = await patchProfile(uid, { avatar_url: publicUrl });
+      if (result.error) throw result.error;
+      return publicUrl;
+    } catch (e) {
+      console.error('uploadAvatar error:', e);
+      return null;
+    }
+  };
+
   return {
     user, session, profile, loading, supabase, refreshProfile,
     signIn, signOut, refresh,
     saveAllUserData,
-    saveXp, logCompletedRecipe, loadCompletedRecipes,
+    saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes,
     saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal,
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
     searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends,
+    followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById, uploadAvatar,
   };
 }

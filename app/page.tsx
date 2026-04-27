@@ -51,13 +51,25 @@ const BASE_RANKS = [
   {title:"Legend",        icon:"", color:"#1A237E", minDishes:2000},
 ];
 
-function AccountSettings({onBack, user, profile, supabase, onProfileUpdate}){
+function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uploadAvatar}){
   const [username, setUsername] = React.useState(profile?.username||"");
   const [checking, setChecking] = React.useState(false);
   const [available, setAvailable] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [resetSent, setResetSent] = React.useState(false);
+  const fileInputRef = React.useRef(null);
+  const [uploading, setUploading] = React.useState(false);
+
+  const handleAvatarChange = async(e) => {
+    const file = e.target.files?.[0];
+    if(!file) return;
+    if(file.size > 5 * 1024 * 1024){ alert('Image must be under 5MB'); return; }
+    setUploading(true);
+    const url = await uploadAvatar(file);
+    setUploading(false);
+    if(url && onProfileUpdate) onProfileUpdate({...profile, avatar_url: url});
+  };
 
   const checkUsername = async(val) => {
     setUsername(val); setAvailable(null);
@@ -93,6 +105,21 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate}){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>Account</div>
+      </div>
+
+      {/* Avatar upload */}
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'24px 0',borderBottom:`1px solid ${C.border}`,marginBottom:24}}>
+        <div style={{position:'relative',marginBottom:16}}>
+          <AvatarIcon username={profile?.username||'You'} avatarUrl={profile?.avatar_url} size={96} fontSize={36}/>
+          <button onClick={()=>fileInputRef.current?.click()} disabled={uploading}
+            style={{position:'absolute',bottom:-4,right:-4,width:32,height:32,borderRadius:'50%',background:C.flame,border:'3px solid #fff',cursor:uploading?'wait':'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
+        </div>
+        <input ref={fileInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleAvatarChange}/>
+        {uploading&&<div style={{fontSize:12,color:C.muted,marginTop:8}}>Uploading…</div>}
       </div>
 
       {/* Email - read only */}
@@ -152,7 +179,17 @@ function StarRating({value, onChange, size=28}){
 
 const AVATAR_COLORS=['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#2EC4B6','#E71D36','#3D405B','#F4A261','#264653','#A8DADC'];
 
-function AvatarIcon({username, size=36, fontSize=14}){
+function AvatarIcon({username, avatarUrl=null, size=36, fontSize=14}){
+  if(avatarUrl){
+    return(
+      <img
+        src={avatarUrl}
+        alt={username||'avatar'}
+        style={{width:size,height:size,borderRadius:'50%',objectFit:'cover',flexShrink:0}}
+        onError={(e)=>{(e.currentTarget as HTMLImageElement).style.display='none';}}
+      />
+    );
+  }
   const name = username || '?';
   const initial = name[0].toUpperCase();
   const colorIdx = name.charCodeAt(0) % AVATAR_COLORS.length;
@@ -1559,7 +1596,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
 }
 
 
-function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts,username,currentChallenge,challengeJoined,onJoinChallenge,onSwitchToRecipes}){
+function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta,currentUser,allRecipes,saveUserRecipe,setToast,savedPosts,setSavedPosts,username,currentChallenge,challengeJoined,onJoinChallenge,onSwitchToRecipes,onOpenProfile}){
   const [feedView,setFeedView]=useState("friends");
   const [showComments,setShowComments]=useState(null);
   const [newComment,setNewComment]=useState("");
@@ -1647,8 +1684,10 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px"}}>
-          <AvatarIcon username={post.user?.name||"?"} size={36} fontSize={14}/>
-          <div style={{flex:1,minWidth:0}}>
+          <div onClick={()=>post.userId&&onOpenProfile&&onOpenProfile(post.userId)} style={{cursor:post.userId?'pointer':'default'}}>
+            <AvatarIcon username={post.user?.name||"?"} avatarUrl={post.user?.avatarUrl||null} size={36} fontSize={14}/>
+          </div>
+          <div style={{flex:1,minWidth:0,cursor:post.userId?'pointer':'default'}} onClick={()=>post.userId&&onOpenProfile&&onOpenProfile(post.userId)}>
             <div style={{fontWeight:800,fontSize:13,color:C.bark,lineHeight:1.2}}>{post.user?.name}</div>
             <div style={{fontSize:11,color:C.muted}}>{post.time}</div>
           </div>
@@ -2750,18 +2789,28 @@ function CookTogetherSheet({recipe, onClose}){
   );
 }
 
-/* ═══ ADD FRIENDS SHEET ════════════════════════════════════════════════════ */
-function AddFriendsSheet({onClose, searchUsers, sendFriendRequest, loadFriends}){
+/* ═══ FOLLOWERS SHEET (full-screen) ══════════════════════════════════════ */
+function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollowing:isFollowingFn, loadFollowers:loadFollowersFn, loadFollowing:loadFollowingFn, currentUserId, onOpenProfile}){
+  const [tab,setTab]=useState("following");
   const [query,setQuery]=useState("");
   const [results,setResults]=useState([]);
-  const [sent,setSent]=useState(new Set());
   const [loading,setLoading]=useState(false);
-  const [friends,setFriends]=useState({friends:[],pending:[],requests:[]});
+  const [followingList,setFollowingList]=useState([]);
+  const [followersList,setFollowersList]=useState([]);
+  const [followStates,setFollowStates]=useState({});
+  const [busy,setBusy]=useState({});
   const debounceRef=useRef(null);
 
-  useEffect(()=>{
-    if(loadFriends) loadFriends().then(setFriends).catch(()=>{});
-  },[]);
+  const refetchLists=async()=>{
+    const [fwing,fwers]=await Promise.all([loadFollowingFn(),loadFollowersFn()]);
+    setFollowingList(fwing||[]);
+    setFollowersList(fwers||[]);
+    const states={};
+    (fwing||[]).forEach(u=>{states[u.id]=true;});
+    setFollowStates(prev=>({...prev,...states}));
+  };
+
+  useEffect(()=>{refetchLists();},[]);
 
   const handleSearch=(val)=>{
     setQuery(val);
@@ -2771,110 +2820,214 @@ function AddFriendsSheet({onClose, searchUsers, sendFriendRequest, loadFriends})
     debounceRef.current=setTimeout(async()=>{
       const r=await searchUsers(val.trim());
       setResults(r||[]);
+      const states={...followStates};
+      for(const u of(r||[])){
+        if(states[u.id]===undefined){
+          states[u.id]=await isFollowingFn(u.id);
+        }
+      }
+      setFollowStates(states);
       setLoading(false);
     },400);
   };
 
-  const handleSend=async(userId,username)=>{
-    setSent(s=>new Set([...s,userId]));
-    const res=await sendFriendRequest(userId);
-    if(res?.error){
-      setSent(s=>{const n=new Set(s);n.delete(userId);return n;});
+  const handleFollow=async(userId)=>{
+    setBusy(b=>({...b,[userId]:true}));
+    if(followStates[userId]){
+      const res=await unfollowUser(userId);
+      if(!res.error){
+        setFollowStates(s=>({...s,[userId]:false}));
+        setFollowingList(l=>l.filter(u=>u.id!==userId));
+      }else{
+        console.error('[FollowersSheet] unfollow failed:', res.error);
+      }
+    }else{
+      const res=await followUser(userId);
+      if(!res.error){
+        setFollowStates(s=>({...s,[userId]:true}));
+        // Add to followingList from search results or followers list
+        const userObj=results.find(u=>u.id===userId)||followersList.find(u=>u.id===userId);
+        if(userObj){
+          setFollowingList(l=>[...l.filter(u=>u.id!==userId),userObj]);
+        }
+      }else{
+        console.error('[FollowersSheet] follow failed:', res.error);
+      }
     }
+    setBusy(b=>({...b,[userId]:false}));
   };
 
-  const handleAccept=async(friendshipId)=>{
-    if(!loadFriends) return;
-    // acceptFriendRequest not passed as prop but can reload
-    setFriends(f=>({...f,requests:f.requests.filter(r=>r.friendshipId!==friendshipId)}));
-  };
-
-  const S=({icon,children})=>(
-    <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",margin:"16px 0 8px",display:"flex",alignItems:"center",gap:6}}>
-      {icon}{children}
+  const S=({children})=>(
+    <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".1em",margin:"16px 0 8px"}}>
+      {children}
     </div>
   );
 
+  const UserRow=({u,actionLabel,onAction})=>(
+    <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
+      <div onClick={()=>onOpenProfile&&onOpenProfile(u.id)} style={{cursor:'pointer'}}>
+        <AvatarIcon username={u.username||"?"} avatarUrl={u.avatar_url||null} size={40} fontSize={16}/>
+      </div>
+      <div style={{flex:1,minWidth:0,cursor:'pointer'}} onClick={()=>onOpenProfile&&onOpenProfile(u.id)}>
+        <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{u.username}</div>
+        <div style={{fontSize:11,color:C.muted}}>{u.xp||0} Heat</div>
+      </div>
+      {onAction&&(
+        <button onClick={()=>onAction(u.id)} disabled={busy[u.id]}
+          style={{padding:"7px 14px",borderRadius:10,border:"none",background:actionLabel==='Following'||actionLabel==='Unfollow'?`${C.muted}18`:C.flame,color:actionLabel==='Following'||actionLabel==='Unfollow'?C.bark:"#fff",fontWeight:700,fontSize:12,cursor:busy[u.id]?"wait":"pointer",fontFamily:"inherit"}}>
+          {busy[u.id]?"…":actionLabel}
+        </button>
+      )}
+    </div>
+  );
+
+  const tabStyle=(t)=>({padding:"8px 0",fontSize:13,fontWeight:tab===t?800:600,color:tab===t?C.flame:C.muted,background:"none",border:"none",borderBottom:tab===t?`2px solid ${C.flame}`:"2px solid transparent",cursor:"pointer",fontFamily:"inherit",flex:1,textAlign:"center"});
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(30,18,8,.72)",display:"flex",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:C.paper,width:"100%",maxWidth:480,height:"100%",display:"flex",flexDirection:"column",position:"relative"}}>
+      {/* Header */}
+      <div style={{flexShrink:0,padding:"14px 20px 0",borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",padding:4,display:"flex",alignItems:"center",gap:8}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>People</div>
+          <div style={{width:26}}/>
+        </div>
+        <div style={{display:"flex",gap:0}}>
+          <button onClick={()=>setTab("following")} style={tabStyle("following")}>Following</button>
+          <button onClick={()=>setTab("followers")} style={tabStyle("followers")}>Followers</button>
+          <button onClick={()=>setTab("find")} style={tabStyle("find")}>Find</button>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div style={{flex:1,overflowY:"auto",padding:"0 20px 44px"}}>
+        {/* Find tab */}
+        {tab==="find"&&(
+          <>
+            <div style={{position:"relative",marginTop:16,marginBottom:16}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input value={query} onChange={e=>handleSearch(e.target.value)} placeholder="Search by username…"
+                style={{width:"100%",padding:"11px 14px 11px 38px",borderRadius:14,border:`1.5px solid ${query?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+            </div>
+            {loading&&<div style={{textAlign:"center",padding:"20px",fontSize:13,color:C.muted}}>Searching…</div>}
+            {results.map(u=>(
+              <UserRow key={u.id} u={u} actionLabel={followStates[u.id]?"Following":"Follow"} onAction={()=>handleFollow(u.id)}/>
+            ))}
+            {!loading&&results.length===0&&query.length<2&&(
+              <div style={{textAlign:"center",padding:"32px 0"}}>
+                <div style={{fontWeight:700,fontSize:15,color:C.bark,marginBottom:6}}>Find your cooking crew</div>
+                <div style={{fontSize:13,color:C.muted}}>Search by username to follow other cooks</div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Following tab */}
+        {tab==="following"&&(
+          <>
+            <S>{followingList.length} Following</S>
+            {followingList.map(u=>(
+              <UserRow key={u.id} u={u} actionLabel="Unfollow" onAction={()=>handleFollow(u.id)}/>
+            ))}
+            {followingList.length===0&&(
+              <div style={{textAlign:"center",padding:"32px 0",fontSize:13,color:C.muted}}>You're not following anyone yet</div>
+            )}
+          </>
+        )}
+
+        {/* Followers tab */}
+        {tab==="followers"&&(
+          <>
+            <S>{followersList.length} Followers</S>
+            {followersList.map(u=>(
+              <UserRow key={u.id} u={u} actionLabel={followStates[u.id]?"Following":"Follow back"} onAction={()=>handleFollow(u.id)}/>
+            ))}
+            {followersList.length===0&&(
+              <div style={{textAlign:"center",padding:"32px 0",fontSize:13,color:C.muted}}>No followers yet</div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+    </div>
+  );
+}
+
+/* ═══ USER PROFILE SHEET ═════════════════════════════════════════════════ */
+function UserProfileSheet({userId,currentUserId,loadProfileById,isFollowing:isFollowingFn,followUser,unfollowUser,loadFollowers:loadFollowersFn,loadFollowing:loadFollowingFn,onClose}){
+  const [prof,setProf]=useState(null);
+  const [following,setFollowing]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [followerCount,setFollowerCount]=useState(0);
+  const [followingCount,setFollowingCount]=useState(0);
+  const [busy,setBusy]=useState(false);
+
+  useEffect(()=>{
+    let cancelled=false;
+    (async()=>{
+      const [p,f,followers,fwing]=await Promise.all([
+        loadProfileById(userId),
+        userId!==currentUserId?isFollowingFn(userId):Promise.resolve(false),
+        loadFollowersFn(userId),
+        loadFollowingFn(userId),
+      ]);
+      if(cancelled) return;
+      setProf(p);
+      setFollowing(f);
+      setFollowerCount(followers.length);
+      setFollowingCount(fwing.length);
+      setLoading(false);
+    })();
+    return()=>{cancelled=true;};
+  },[userId]);
+
+  const handleFollow=async()=>{
+    if(busy) return;
+    setBusy(true);
+    if(following){
+      const r=await unfollowUser(userId);
+      if(!r.error){setFollowing(false);setFollowerCount(c=>Math.max(0,c-1));}
+    }else{
+      const r=await followUser(userId);
+      if(!r.error){setFollowing(true);setFollowerCount(c=>c+1);}
+    }
+    setBusy(false);
+  };
+
+  if(loading) return(<Sheet onClose={onClose}><div style={{padding:40,textAlign:'center',color:C.muted}}>Loading…</div></Sheet>);
+  if(!prof) return(<Sheet onClose={onClose}><div style={{padding:40,textAlign:'center',color:C.muted}}>Profile not found</div></Sheet>);
+
+  const isSelf=userId===currentUserId;
+
   return(
     <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-          <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Find Friends</div>
+      <div style={{padding:'24px 20px 44px'}}>
+        <div style={{display:'flex',justifyContent:'flex-end',marginBottom:8}}>
           <CloseBtn onClose={onClose}/>
         </div>
-
-        {/* Search */}
-        <div style={{position:"relative",marginBottom:16}}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input value={query} onChange={e=>handleSearch(e.target.value)} placeholder="Search by username…"
-            style={{width:"100%",padding:"11px 14px 11px 38px",borderRadius:14,border:`1.5px solid ${query?C.ember:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginBottom:24}}>
+          <AvatarIcon username={prof.username} avatarUrl={prof.avatar_url} size={96} fontSize={36}/>
+          <div style={{fontWeight:900,fontSize:22,color:C.bark,fontFamily:DF,marginTop:12}}>{prof.username||'Chef'}</div>
+          <div style={{fontSize:13,color:C.muted,marginTop:4}}>{prof.xp||0} Heat</div>
         </div>
-
-        {/* Search results */}
-        {loading&&<div style={{textAlign:"center",padding:"20px",fontSize:13,color:C.muted}}>Searching…</div>}
-
-        {results.length>0&&(
-          <>
-            <S>Results</S>
-            {results.map(u=>(
-              <div key={u.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
-                <AvatarIcon username={u.username||"?"} size={40} fontSize={16}/>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{u.username}</div>
-                  <div style={{fontSize:11,color:C.muted}}>{u.xp||0} 🔥 Heat</div>
-                </div>
-                <button onClick={()=>handleSend(u.id,u.username)} disabled={sent.has(u.id)}
-                  style={{padding:"7px 14px",borderRadius:10,border:"none",background:sent.has(u.id)?`${C.sage}20`:C.flame,color:sent.has(u.id)?C.sage:"#fff",fontWeight:700,fontSize:12,cursor:sent.has(u.id)?"default":"pointer",fontFamily:"inherit"}}>
-                  {sent.has(u.id)?"Sent":"Add"}
-                </button>
-              </div>
-            ))}
-          </>
-        )}
-
-        {/* Incoming requests */}
-        {friends.requests.length>0&&(
-          <>
-            <S icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}>Friend Requests</S>
-            {friends.requests.map(r=>(
-              <div key={r.friendshipId} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
-                <AvatarIcon username={r.username||"?"} size={40} fontSize={16}/>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{r.username}</div>
-                  <div style={{fontSize:11,color:C.muted}}>wants to be friends</div>
-                </div>
-                <button onClick={()=>handleAccept(r.friendshipId)}
-                  style={{padding:"7px 14px",borderRadius:10,border:"none",background:C.sage,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
-                  Accept
-                </button>
-              </div>
-            ))}
-          </>
-        )}
-
-        {/* Friends list */}
-        {friends.friends.length>0&&(
-          <>
-            <S icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>}>{friends.friends.length} Friends</S>
-            {friends.friends.map(f=>(
-              <div key={f.friendshipId} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
-                <AvatarIcon username={f.username||"?"} size={40} fontSize={16}/>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{f.username}</div>
-                  <div style={{fontSize:11,color:C.muted}}>{f.xp||0} 🔥 Heat</div>
-                </div>
-                <span style={{fontSize:11,color:C.sage,fontWeight:600}}>Friends</span>
-              </div>
-            ))}
-          </>
-        )}
-
-        {!loading&&results.length===0&&query.length<2&&friends.friends.length===0&&friends.requests.length===0&&(
-          <div style={{textAlign:"center",padding:"32px 0"}}>
-            <div style={{fontSize:40,marginBottom:12,opacity:.3}}>👥</div>
-            <div style={{fontWeight:700,fontSize:15,color:C.bark,marginBottom:6}}>Find your cooking crew</div>
-            <div style={{fontSize:13,color:C.muted}}>Search by username to connect with friends</div>
+        <div style={{display:'flex',gap:8,marginBottom:24}}>
+          <div style={{flex:1,padding:'14px 12px',borderRadius:14,background:C.cream,textAlign:'center'}}>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>{followerCount}</div>
+            <div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em'}}>Followers</div>
           </div>
+          <div style={{flex:1,padding:'14px 12px',borderRadius:14,background:C.cream,textAlign:'center'}}>
+            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>{followingCount}</div>
+            <div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em'}}>Following</div>
+          </div>
+        </div>
+        {!isSelf&&(
+          <button onClick={handleFollow} disabled={busy}
+            style={{width:'100%',padding:'12px',borderRadius:14,border:'none',background:following?C.cream:C.flame,color:following?C.bark:'#fff',fontWeight:800,fontSize:14,cursor:busy?'wait':'pointer',fontFamily:'inherit'}}>
+            {following?'Following':'Follow'}
+          </button>
         )}
       </div>
     </Sheet>
@@ -3538,14 +3691,29 @@ function DrawerSectionHeader({title, onBack}){
 }
 
 function PrivacySettings({onBack}){
+  // TODO: Enforcement of these settings (filtering feed by postVis, blocking
+  // follow requests when allowFollowers is false, restricting profile visibility)
+  // needs to be wired into FeedTab, FollowersSheet, and UserProfileSheet.
   const [postVis, setPostVis] = useState('everyone');
   const [profileVis, setProfileVis] = useState('everyone');
   const [followers, setFollowers] = useState(true);
+
+  useEffect(()=>{
+    if(typeof window==='undefined') return;
+    try{ const v=localStorage.getItem('mep_privacy_postVisibility'); if(v) setPostVis(v); }catch{}
+    try{ const v=localStorage.getItem('mep_privacy_profileVisibility'); if(v) setProfileVis(v); }catch{}
+    try{ const v=localStorage.getItem('mep_privacy_allowFollowers'); if(v!==null) setFollowers(v==='true'); }catch{}
+  },[]);
+
+  const handlePostVis=(v)=>{ setPostVis(v); try{localStorage.setItem('mep_privacy_postVisibility',v);}catch{} };
+  const handleProfileVis=(v)=>{ setProfileVis(v); try{localStorage.setItem('mep_privacy_profileVisibility',v);}catch{} };
+  const handleFollowers=(v)=>{ setFollowers(v); try{localStorage.setItem('mep_privacy_allowFollowers',String(v));}catch{} };
+
   const opts = ["everyone","friends","only me"];
   return(
     <div>
       <DrawerSectionHeader title="Privacy" onBack={onBack}/>
-      {[["Who can see your posts",postVis,setPostVis],["Who can see your profile",profileVis,setProfileVis]].map(([label,val,set])=>(
+      {[["Who can see your posts",postVis,handlePostVis],["Who can see your profile",profileVis,handleProfileVis]].map(([label,val,set])=>(
         <div key={label} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontWeight:600,fontSize:13,color:C.bark,marginBottom:8}}>{label}</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -3560,11 +3728,11 @@ function PrivacySettings({onBack}){
           <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Allow followers</div>
           <div style={{fontSize:11,color:C.muted}}>Let others follow your cooking activity</div>
         </div>
-        <button onClick={()=>setFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+        <button onClick={()=>handleFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
           <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:followers?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
         </button>
       </div>
-      <div style={{marginTop:16}}><Btn onClick={onBack} full outline color={C.muted}>Save</Btn></div>
+      <div style={{marginTop:16}}><Btn onClick={onBack} full outline color={C.muted}>Done</Btn></div>
     </div>
   );
 }
@@ -3591,32 +3759,70 @@ function NotificationSettings({onBack}){
           </button>
         </div>
       ))}
-      <div style={{marginTop:16}}><Btn onClick={onBack} full>Save</Btn></div>
+      <div style={{marginTop:16}}><Btn onClick={onBack} full>Done</Btn></div>
     </div>
   );
 }
 
-function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
+function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange, saveProfileField, userId, setToast}){
+  const DIET_TO_DB={"None":[],"Vegetarian":["vegetarian"],"Vegan":["vegan"],"Gluten-free":["gluten_free"],"Dairy-free":["dairy_free"],"Keto":["keto"]};
+  const SKILL_TO_DB={"Beginner":"just_starting","Intermediate":"few_dishes","Advanced":"comfortable","Chef":"cook_most_days"};
   const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
   const skills = ["Beginner","Intermediate","Advanced","Chef"];
   const [selectedDiet, setSelectedDiet] = useState("None");
   const [selectedSkill, setSelectedSkill] = useState("Beginner");
+  const [savedIndicator, setSavedIndicator] = useState(null);
+  const savedTimerRef = useRef(null);
+
   useEffect(()=>{
+    if(typeof window==='undefined') return;
     try{ const v=localStorage.getItem("mep_diet"); if(v) setSelectedDiet(v); }catch{}
     try{ const v=localStorage.getItem("mep_skill"); if(v) setSelectedSkill(v); }catch{}
   },[]);
 
-  const handleDiet=(d)=>{
+  const showSaved=(label)=>{
+    setSavedIndicator(label);
+    clearTimeout(savedTimerRef.current);
+    savedTimerRef.current=setTimeout(()=>setSavedIndicator(null),1500);
+  };
+
+  const handleDiet=async(d)=>{
     setSelectedDiet(d);
     try{ localStorage.setItem("mep_diet",d); }catch{}
     if(onDietChange) onDietChange(d);
+    if(saveProfileField&&userId){
+      try{
+        await saveProfileField(userId,{dietary:DIET_TO_DB[d]||[]});
+        showSaved('diet');
+      }catch(e){
+        console.error('Sync dietary failed:',e);
+        if(setToast) setToast({emoji:'',title:"Couldn't save to cloud",subtitle:'Saved locally'});
+      }
+    }
+  };
+
+  const handleSkill=async(s)=>{
+    setSelectedSkill(s);
+    try{ localStorage.setItem("mep_skill",s); }catch{}
+    if(saveProfileField&&userId){
+      try{
+        await saveProfileField(userId,{skill_level:SKILL_TO_DB[s]||s.toLowerCase()});
+        showSaved('skill');
+      }catch(e){
+        console.error('Sync skill_level failed:',e);
+        if(setToast) setToast({emoji:'',title:"Couldn't save to cloud",subtitle:'Saved locally'});
+      }
+    }
   };
 
   return(
     <div>
       <DrawerSectionHeader title="Cooking Preferences" onBack={onBack}/>
       <div style={{marginBottom:20}}>
-        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
+        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
+          Dietary preference
+          {savedIndicator==='diet'&&<span style={{fontSize:11,color:C.muted,fontWeight:600,opacity:.8,transition:"opacity .3s"}}>Saved</span>}
+        </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
           {diets.map(d=>(
             <button key={d} onClick={()=>handleDiet(d)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.flame:C.border}`,background:selectedDiet===d?`${C.flame}12`:"transparent",color:selectedDiet===d?C.flame:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
@@ -3627,10 +3833,13 @@ function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
         {selectedDiet!=="None"&&<div style={{fontSize:11,color:C.muted,marginTop:8}}>Recipe suggestions will respect your preference.</div>}
       </div>
       <div style={{marginBottom:20}}>
-        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
+        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
+          Skill level
+          {savedIndicator==='skill'&&<span style={{fontSize:11,color:C.muted,fontWeight:600,opacity:.8,transition:"opacity .3s"}}>Saved</span>}
+        </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
           {skills.map(s=>(
-            <button key={s} onClick={()=>{setSelectedSkill(s);try{localStorage.setItem("mep_skill",s);}catch{}}} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.sky:C.border}`,background:selectedSkill===s?`${C.sky}12`:"transparent",color:selectedSkill===s?C.sky:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+            <button key={s} onClick={()=>handleSkill(s)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.sky:C.border}`,background:selectedSkill===s?`${C.sky}12`:"transparent",color:selectedSkill===s?C.sky:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
               {s}
             </button>
           ))}
@@ -3647,39 +3856,164 @@ function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
   );
 }
 
-function DataSettings({onBack, supabase}){
-  const handleDeleteAccount=async()=>{
-    if(!confirm('Are you sure? This cannot be undone.')) return;
-    // TODO: call delete-user edge function to remove Supabase account
+function DataSettings({onBack, supabase, user, setToast, signOut}){
+  const [exporting, setExporting] = useState(null);
+  const [deleteStep, setDeleteStep] = useState(0); // 0=idle, 1=confirm, 2=type DELETE
+  const [deleteInput, setDeleteInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const triggerDownload=(content,filename,mime)=>{
+    const blob=new Blob([content],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCSV=async()=>{
+    setExporting('csv');
     try{
+      const uid=user?.id;
+      if(!uid) throw new Error('Not signed in');
+      const {data,error}=await supabase.from('completed_recipes').select('name,recipe_id,cooked_at,xp_earned').eq('user_id',uid).order('cooked_at',{ascending:false});
+      if(error) throw error;
+      const rows=data||[];
+      const header='recipe_name,recipe_id,cooked_at,heat_earned';
+      const csv=[header,...rows.map(r=>[
+        '"'+(r.name||'').replace(/"/g,'""')+'"',
+        r.recipe_id||'',
+        r.cooked_at||'',
+        r.xp_earned||0
+      ].join(','))].join('\n');
+      const date=new Date().toISOString().slice(0,10);
+      triggerDownload(csv,`mise-en-place-cook-history-${date}.csv`,'text/csv');
+      if(setToast) setToast({emoji:'',title:'Exported',subtitle:'Cook history downloaded'});
+    }catch(e){
+      console.error('Export CSV error:',e);
+      if(setToast) setToast({emoji:'',title:'Export failed',subtitle:'Could not download cook history'});
+    }finally{setExporting(null);}
+  };
+
+  const handleExportJSON=async()=>{
+    setExporting('json');
+    try{
+      const uid=user?.id;
+      if(!uid) throw new Error('Not signed in');
+      const [profileRes,recipesRes,userRecipesRes,feedRes,followingRes,followersRes]=await Promise.all([
+        supabase.from('profiles').select('*').eq('id',uid).single(),
+        supabase.from('completed_recipes').select('*').eq('user_id',uid),
+        supabase.from('user_recipes').select('*').eq('user_id',uid),
+        supabase.from('activity_feed').select('*').eq('user_id',uid),
+        supabase.from('follows').select('following_id').eq('follower_id',uid),
+        supabase.from('follows').select('follower_id').eq('following_id',uid),
+      ]);
+      const dump={
+        exported_at:new Date().toISOString(),
+        profile:profileRes.data||null,
+        completed_recipes:recipesRes.data||[],
+        user_recipes:userRecipesRes.data||[],
+        activity_feed:feedRes.data||[],
+        following:(followingRes.data||[]).map(r=>r.following_id),
+        followers:(followersRes.data||[]).map(r=>r.follower_id),
+      };
+      const date=new Date().toISOString().slice(0,10);
+      triggerDownload(JSON.stringify(dump,null,2),`mise-en-place-data-${date}.json`,'application/json');
+      if(setToast) setToast({emoji:'',title:'Exported',subtitle:'Your data has been downloaded'});
+    }catch(e){
+      console.error('Export JSON error:',e);
+      if(setToast) setToast({emoji:'',title:'Export failed',subtitle:'Could not download your data'});
+    }finally{setExporting(null);}
+  };
+
+  const handleDeleteAccount=async()=>{
+    if(deleteInput!=='DELETE') return;
+    setDeleting(true);
+    try{
+      // Soft delete: set deleted_at on profile via raw fetch
+      const token=(()=>{
+        if(typeof document==='undefined') return null;
+        const match=document.cookie.split(';').find(c=>c.trim().match(/^sb-[^=]+-auth-token=/));
+        if(!match) return null;
+        try{let raw=match.split('=').slice(1).join('=');if(raw.startsWith('base64-'))raw=atob(raw.slice(7));return JSON.parse(decodeURIComponent(raw))?.access_token||null;}catch{return null;}
+      })();
+      const SUPABASE_URL=process.env.NEXT_PUBLIC_SUPABASE_URL||'https://tqjkxmrhalrlbfackydv.supabase.co';
+      const SUPABASE_ANON=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||'';
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${token||SUPABASE_ANON}`,'Prefer':'return=minimal'},
+        body:JSON.stringify({deleted_at:new Date().toISOString()}),
+      });
+      if(!res.ok) console.error('Soft delete PATCH failed:',res.status);
       await supabase.auth.signOut();
       localStorage.clear();
       window.location.href='/login';
     }catch(e){
       console.error('Delete account error:',e);
+      if(setToast) setToast({emoji:'',title:'Delete failed',subtitle:'Please try again or contact support'});
+      setDeleting(false);
     }
   };
+
+  const btnStyle={padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontFamily:"inherit",width:"100%"};
+
   return(
     <div>
       <DrawerSectionHeader title="Your Data" onBack={onBack}/>
       <div style={{display:"flex",flexDirection:"column",gap:12}}>
-        {[["Export cook history","Download all your recipes and notes as CSV"],["Download my data","Get a copy of everything we store about you"]].map(([title,sub])=>(
-          <button key={title} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
-            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{title}</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{sub}</div>
-          </button>
-        ))}
-        <div style={{height:1,background:C.border}}/>
-        <button onClick={handleDeleteAccount} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
-          <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
-          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently remove your account and all data</div>
+        <button onClick={handleExportCSV} disabled={!!exporting} style={btnStyle}>
+          <div style={{fontWeight:700,fontSize:14,color:C.bark,display:"flex",alignItems:"center",gap:8}}>
+            {exporting==='csv'&&<svg width="14" height="14" viewBox="0 0 20 20" style={{animation:'spin 0.8s linear infinite'}}><circle cx="10" cy="10" r="8" fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="40 20" strokeLinecap="round"/></svg>}
+            Export cook history
+          </div>
+          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Download all your recipes and notes as CSV</div>
         </button>
+        <button onClick={handleExportJSON} disabled={!!exporting} style={btnStyle}>
+          <div style={{fontWeight:700,fontSize:14,color:C.bark,display:"flex",alignItems:"center",gap:8}}>
+            {exporting==='json'&&<svg width="14" height="14" viewBox="0 0 20 20" style={{animation:'spin 0.8s linear infinite'}}><circle cx="10" cy="10" r="8" fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="40 20" strokeLinecap="round"/></svg>}
+            Download my data
+          </div>
+          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Get a copy of everything we store about you</div>
+        </button>
+        <div style={{height:1,background:C.border}}/>
+
+        {/* Delete account — multi-step */}
+        {deleteStep===0&&(
+          <button onClick={()=>setDeleteStep(1)} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit",width:"100%"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently remove your account and all data</div>
+          </button>
+        )}
+        {deleteStep===1&&(
+          <div style={{padding:"16px",borderRadius:14,border:"1.5px solid #E05C7A33",background:"#E05C7A08"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A",marginBottom:8}}>Are you sure?</div>
+            <div style={{fontSize:12,color:C.muted,lineHeight:1.5,marginBottom:12}}>
+              Your account will be deleted and you'll be signed out. Your data will be removed from public view immediately and permanently deleted within 30 days. Email hello@yourmiseenplace.app within that window to restore.
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setDeleteStep(0)} style={{flex:1,padding:"10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.bark,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={()=>setDeleteStep(2)} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:"#E05C7A",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Continue</button>
+            </div>
+          </div>
+        )}
+        {deleteStep===2&&(
+          <div style={{padding:"16px",borderRadius:14,border:"1.5px solid #E05C7A33",background:"#E05C7A08"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A",marginBottom:8}}>Type DELETE to confirm</div>
+            <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder="DELETE"
+              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${deleteInput==='DELETE'?"#E05C7A":C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:12,fontFamily:"inherit"}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{setDeleteStep(0);setDeleteInput('');}} style={{flex:1,padding:"10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.bark,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={handleDeleteAccount} disabled={deleteInput!=='DELETE'||deleting} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:deleteInput==='DELETE'?"#E05C7A":"#D8D0C8",color:"#fff",fontWeight:700,fontSize:13,cursor:deleteInput==='DELETE'&&!deleting?"pointer":"not-allowed",fontFamily:"inherit"}}>
+                {deleting?'Deleting...':'Delete my account'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard}){
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard,onShowFollowers}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/(goal?.target||3)*100);
 
@@ -3709,7 +4043,7 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
       <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px",marginBottom:20,position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",border:"24px solid rgba(255,255,255,.04)",pointerEvents:"none"}}/>
         <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} size={54} fontSize={22}/>
+          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={54} fontSize={22}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
@@ -3730,6 +4064,9 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
       </div>
 
       {/* Menu rows */}
+      <MenuRow label="People" onClick={()=>{onShowFollowers&&onShowFollowers();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      }/>
       <MenuRow label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       }/>
@@ -3790,7 +4127,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
 
         {/* Avatar + name */}
         <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} size={68} fontSize={28}/>
+          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={68} fontSize={28}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:900,fontSize:22,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
@@ -4007,14 +4344,14 @@ class AppErrorBoundary extends React.Component {
 }
 
 /* ═══ SETTINGS SHEET ══════════════════════════════════════════════════════ */
-function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose, appTheme, setAppTheme}){
+function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose, appTheme, setAppTheme, uploadAvatar, setToast, signOut, saveProfileField}){
   const [section, setSection] = useState(null);
 
   // Section components rendered inline
   if(section==="account") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate}/>
+        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate} uploadAvatar={uploadAvatar}/>
       </div>
     </Sheet>
   );
@@ -4035,14 +4372,14 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="cooking") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}} onDietChange={(d)=>{ try{localStorage.setItem("mep_diet",d);}catch{} }}/>
+        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}} onDietChange={(d)=>{ try{localStorage.setItem("mep_diet",d);}catch{} }} saveProfileField={saveProfileField} userId={user?.id} setToast={setToast}/>
       </div>
     </Sheet>
   );
   if(section==="data") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <DataSettings onBack={()=>setSection(null)} supabase={supabase}/>
+        <DataSettings onBack={()=>setSection(null)} supabase={supabase} user={user} setToast={setToast} signOut={signOut}/>
       </div>
     </Sheet>
   );
@@ -4072,7 +4409,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 
         {/* Account info card */}
         <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:16,padding:"14px 16px",marginBottom:22,display:"flex",alignItems:"center",gap:12}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} size={42} fontSize={17}/>
+          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={42} fontSize={17}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:800,fontSize:15,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.username||user?.email?.split("@")[0]||"Chef"}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginTop:2}}>{user?.email||""}</div>
@@ -4124,7 +4461,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends } = useAuth();
+  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends, followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById, uploadAvatar } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4154,7 +4491,8 @@ export default function App(){
   const [showCreate,   setShowCreate]   = useState(false);
   const [libraryInitTab, setLibraryInitTab] = useState(null);
   const [showQuickLog, setShowQuickLog] = useState(false);
-  const [showAddFriends,setShowAddFriends]=useState(false);
+  const [showFollowers,setShowFollowers]=useState(false);
+  const [profileSheetUserId,setProfileSheetUserId]=useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showRecap,    setShowRecap]    = useState(false);
 
@@ -4246,6 +4584,16 @@ export default function App(){
     if(!user) return;
     const isDev = process.env.NODE_ENV === 'development';
     if(profile){
+      // Block soft-deleted accounts
+      if(profile.deleted_at){
+        if(isDev) console.log('[Gate] profile soft-deleted → signing out');
+        (async()=>{
+          try{ await supabase.auth.signOut(); }catch{}
+          try{ localStorage.clear(); }catch{}
+          window.location.href='/login';
+        })();
+        return;
+      }
       if(profile.onboarded_at){
         if(isDev) console.log('[Gate] profile complete → app');
         setOnboardingStatus('complete');
@@ -4350,7 +4698,8 @@ export default function App(){
         if(feedItems.length>0){
           setPosts(feedItems.map(f=>({
             id:f.id,
-            user:{name:f.username||'Chef',avatar:f.username||'?',level:''},
+            userId:f.user_id||null,
+            user:{name:f.username||'Chef',avatar:f.username||'?',level:'',avatarUrl:f.avatar_url||null},
             recipe:f.recipe_name||'',
             photo:f.photo_url||null,
             caption:f.caption||'',
@@ -4458,7 +4807,8 @@ export default function App(){
     const postCaption=caption||`Just cooked ${recipe.name}!`;
     setPosts(ps=>[{
       id:`p-${Date.now()}`,
-      user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo?.current?.title||""},
+      userId:uid||null,
+      user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo?.current?.title||"",avatarUrl:effectiveProfile?.avatar_url||null},
       recipe:recipe.name,emoji:recipe.emoji,photo,
       caption:postCaption,
       time:"just now",mwah:0,myMwah:false,comments:[],
@@ -4664,7 +5014,7 @@ export default function App(){
             }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/>;})()}
           {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onOpenChallenge={()=>setShowChallengeSheet(true)}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
-                    {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowAddFriends(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}}/>}
+                    {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowFollowers(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}} onOpenProfile={(id)=>setProfileSheetUserId(id)}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
             onDeleteCookLog={(id)=>{
               addDeletedId(id);
@@ -4735,10 +5085,11 @@ export default function App(){
         }
       }} onClose={()=>setShowCreate(false)}/>}
       {showQuickLog&&<QuickLogSheet onLog={handleQuickLog} onClose={()=>setShowQuickLog(false)} goal={goal} cookedDays={cookedDays}/>}
-      {showAddFriends&&<AddFriendsSheet onClose={()=>setShowAddFriends(false)} searchUsers={searchUsers} sendFriendRequest={sendFriendRequest} loadFriends={loadFriends}/>}
+      {showFollowers&&<FollowersSheet onClose={()=>setShowFollowers(false)} searchUsers={searchUsers} followUser={followUser} unfollowUser={unfollowUser} isFollowing={isFollowing} loadFollowers={loadFollowers} loadFollowing={loadFollowing} currentUserId={user?.id} onOpenProfile={(id)=>{setShowFollowers(false);setProfileSheetUserId(id);}}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} cookLog={cookLog} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
 
+      {profileSheetUserId&&<UserProfileSheet userId={profileSheetUserId} currentUserId={user?.id} loadProfileById={loadProfileById} isFollowing={isFollowing} followUser={followUser} unfollowUser={unfollowUser} loadFollowers={loadFollowers} loadFollowing={loadFollowing} onClose={()=>setProfileSheetUserId(null)}/>}
       {showInstaShare&&<InstagramShareSheet post={showInstaShare} onClose={()=>setShowInstaShare(null)}/>}
       {showCookTogether&&<CookTogetherSheet recipe={showCookTogether} onClose={()=>setShowCookTogether(null)}/>}
       {showDrawer&&(
@@ -4750,11 +5101,11 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}} onShowFollowers={()=>{setShowFollowers(true);setShowDrawer(false);}}/>
           </div>
         </div>
       )}
-      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} uploadAvatar={uploadAvatar} setToast={setToast} signOut={signOut} saveProfileField={saveProfileField}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}
