@@ -3759,7 +3759,7 @@ function NotificationSettings({onBack}){
           </button>
         </div>
       ))}
-      <div style={{marginTop:16}}><Btn onClick={onBack} full>Save</Btn></div>
+      <div style={{marginTop:16}}><Btn onClick={onBack} full>Done</Btn></div>
     </div>
   );
 }
