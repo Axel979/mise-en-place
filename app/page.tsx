@@ -2789,7 +2789,7 @@ function CookTogetherSheet({recipe, onClose}){
   );
 }
 
-/* ═══ FOLLOWERS SHEET ═════════════════════════════════════════════════════ */
+/* ═══ FOLLOWERS SHEET (full-screen) ══════════════════════════════════════ */
 function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollowing:isFollowingFn, loadFollowers:loadFollowersFn, loadFollowing:loadFollowingFn, currentUserId, onOpenProfile}){
   const [tab,setTab]=useState("following");
   const [query,setQuery]=useState("");
@@ -2801,16 +2801,16 @@ function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollo
   const [busy,setBusy]=useState({});
   const debounceRef=useRef(null);
 
-  useEffect(()=>{
-    (async()=>{
-      const [fwing,fwers]=await Promise.all([loadFollowingFn(),loadFollowersFn()]);
-      setFollowingList(fwing||[]);
-      setFollowersList(fwers||[]);
-      const states={};
-      (fwing||[]).forEach(u=>{states[u.id]=true;});
-      setFollowStates(states);
-    })();
-  },[]);
+  const refetchLists=async()=>{
+    const [fwing,fwers]=await Promise.all([loadFollowingFn(),loadFollowersFn()]);
+    setFollowingList(fwing||[]);
+    setFollowersList(fwers||[]);
+    const states={};
+    (fwing||[]).forEach(u=>{states[u.id]=true;});
+    setFollowStates(prev=>({...prev,...states}));
+  };
+
+  useEffect(()=>{refetchLists();},[]);
 
   const handleSearch=(val)=>{
     setQuery(val);
@@ -2820,7 +2820,6 @@ function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollo
     debounceRef.current=setTimeout(async()=>{
       const r=await searchUsers(val.trim());
       setResults(r||[]);
-      // Check follow status for results
       const states={...followStates};
       for(const u of(r||[])){
         if(states[u.id]===undefined){
@@ -2839,11 +2838,20 @@ function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollo
       if(!res.error){
         setFollowStates(s=>({...s,[userId]:false}));
         setFollowingList(l=>l.filter(u=>u.id!==userId));
+      }else{
+        console.error('[FollowersSheet] unfollow failed:', res.error);
       }
     }else{
       const res=await followUser(userId);
       if(!res.error){
         setFollowStates(s=>({...s,[userId]:true}));
+        // Add to followingList from search results or followers list
+        const userObj=results.find(u=>u.id===userId)||followersList.find(u=>u.id===userId);
+        if(userObj){
+          setFollowingList(l=>[...l.filter(u=>u.id!==userId),userObj]);
+        }
+      }else{
+        console.error('[FollowersSheet] follow failed:', res.error);
       }
     }
     setBusy(b=>({...b,[userId]:false}));
@@ -2876,24 +2884,30 @@ function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollo
   const tabStyle=(t)=>({padding:"8px 0",fontSize:13,fontWeight:tab===t?800:600,color:tab===t?C.flame:C.muted,background:"none",border:"none",borderBottom:tab===t?`2px solid ${C.flame}`:"2px solid transparent",cursor:"pointer",fontFamily:"inherit",flex:1,textAlign:"center"});
 
   return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(30,18,8,.72)",display:"flex",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:C.paper,width:"100%",maxWidth:480,height:"100%",display:"flex",flexDirection:"column",position:"relative"}}>
+      {/* Header */}
+      <div style={{flexShrink:0,padding:"14px 20px 0",borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",padding:4,display:"flex",alignItems:"center",gap:8}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
           <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>People</div>
-          <CloseBtn onClose={onClose}/>
+          <div style={{width:26}}/>
         </div>
-
-        {/* Tabs */}
-        <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:"flex",gap:0}}>
           <button onClick={()=>setTab("following")} style={tabStyle("following")}>Following</button>
           <button onClick={()=>setTab("followers")} style={tabStyle("followers")}>Followers</button>
           <button onClick={()=>setTab("find")} style={tabStyle("find")}>Find</button>
         </div>
+      </div>
 
+      {/* Scrollable content */}
+      <div style={{flex:1,overflowY:"auto",padding:"0 20px 44px"}}>
         {/* Find tab */}
         {tab==="find"&&(
           <>
-            <div style={{position:"relative",marginBottom:16}}>
+            <div style={{position:"relative",marginTop:16,marginBottom:16}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <input value={query} onChange={e=>handleSearch(e.target.value)} placeholder="Search by username…"
                 style={{width:"100%",padding:"11px 14px 11px 38px",borderRadius:14,border:`1.5px solid ${query?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box"}}/>
@@ -2937,7 +2951,8 @@ function FollowersSheet({onClose, searchUsers, followUser, unfollowUser, isFollo
           </>
         )}
       </div>
-    </Sheet>
+    </div>
+    </div>
   );
 }
 
@@ -3817,7 +3832,7 @@ function DataSettings({onBack, supabase}){
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard}){
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard,onShowFollowers}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/(goal?.target||3)*100);
 
@@ -3868,6 +3883,9 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
       </div>
 
       {/* Menu rows */}
+      <MenuRow label="People" onClick={()=>{onShowFollowers&&onShowFollowers();onClose();}} icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      }/>
       <MenuRow label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       }/>
@@ -4598,7 +4616,8 @@ export default function App(){
     const postCaption=caption||`Just cooked ${recipe.name}!`;
     setPosts(ps=>[{
       id:`p-${Date.now()}`,
-      user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo?.current?.title||""},
+      userId:uid||null,
+      user:{name:effectiveProfile?.username||"You",avatar:effectiveProfile?.username||"?",level:levelInfo?.current?.title||"",avatarUrl:effectiveProfile?.avatar_url||null},
       recipe:recipe.name,emoji:recipe.emoji,photo,
       caption:postCaption,
       time:"just now",mwah:0,myMwah:false,comments:[],
@@ -4891,7 +4910,7 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}} onShowFollowers={()=>{setShowFollowers(true);setShowDrawer(false);}}/>
           </div>
         </div>
       )}

@@ -236,11 +236,15 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('activity_feed')
-        .select('*')
+        .select('*, profiles:user_id(username, avatar_url)')
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((r: any) => ({
+        ...r,
+        username: r.profiles?.username || null,
+        avatar_url: r.profiles?.avatar_url || null,
+      }));
     } catch (e) {
       console.error('loadFeed error:', e);
       return [];
@@ -515,12 +519,19 @@ export function useAuth() {
     const uid = userId || userIdRef.current;
     if (!uid) return [];
     try {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from('follows')
-        .select('following_id, profiles!follows_following_id_fkey(id, username, avatar_url, xp)')
+        .select('following_id')
         .eq('follower_id', uid);
       if (error) throw error;
-      return (data || []).map((r: any) => r.profiles).filter(Boolean);
+      const ids = (rows || []).map((r: any) => r.following_id).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, xp')
+        .in('id', ids);
+      if (pErr) throw pErr;
+      return profiles || [];
     } catch (e) {
       console.error('loadFollowing error:', e);
       return [];
@@ -531,12 +542,19 @@ export function useAuth() {
     const uid = userId || userIdRef.current;
     if (!uid) return [];
     try {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from('follows')
-        .select('follower_id, profiles!follows_follower_id_fkey(id, username, avatar_url, xp)')
+        .select('follower_id')
         .eq('following_id', uid);
       if (error) throw error;
-      return (data || []).map((r: any) => r.profiles).filter(Boolean);
+      const ids = (rows || []).map((r: any) => r.follower_id).filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, xp')
+        .in('id', ids);
+      if (pErr) throw pErr;
+      return profiles || [];
     } catch (e) {
       console.error('loadFollowers error:', e);
       return [];
