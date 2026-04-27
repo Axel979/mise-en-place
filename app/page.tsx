@@ -3800,33 +3800,158 @@ function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
   );
 }
 
-function DataSettings({onBack, supabase}){
-  const handleDeleteAccount=async()=>{
-    if(!confirm('Are you sure? This cannot be undone.')) return;
-    // TODO: call delete-user edge function to remove Supabase account
+function DataSettings({onBack, supabase, user, setToast, signOut}){
+  const [exporting, setExporting] = useState(null);
+  const [deleteStep, setDeleteStep] = useState(0); // 0=idle, 1=confirm, 2=type DELETE
+  const [deleteInput, setDeleteInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const triggerDownload=(content,filename,mime)=>{
+    const blob=new Blob([content],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCSV=async()=>{
+    setExporting('csv');
     try{
+      const uid=user?.id;
+      if(!uid) throw new Error('Not signed in');
+      const {data,error}=await supabase.from('completed_recipes').select('name,recipe_id,cooked_at,xp_earned').eq('user_id',uid).order('cooked_at',{ascending:false});
+      if(error) throw error;
+      const rows=data||[];
+      const header='recipe_name,recipe_id,cooked_at,heat_earned';
+      const csv=[header,...rows.map(r=>[
+        '"'+(r.name||'').replace(/"/g,'""')+'"',
+        r.recipe_id||'',
+        r.cooked_at||'',
+        r.xp_earned||0
+      ].join(','))].join('\n');
+      const date=new Date().toISOString().slice(0,10);
+      triggerDownload(csv,`mise-en-place-cook-history-${date}.csv`,'text/csv');
+      if(setToast) setToast({emoji:'',title:'Exported',subtitle:'Cook history downloaded'});
+    }catch(e){
+      console.error('Export CSV error:',e);
+      if(setToast) setToast({emoji:'',title:'Export failed',subtitle:'Could not download cook history'});
+    }finally{setExporting(null);}
+  };
+
+  const handleExportJSON=async()=>{
+    setExporting('json');
+    try{
+      const uid=user?.id;
+      if(!uid) throw new Error('Not signed in');
+      const [profileRes,recipesRes,userRecipesRes,feedRes,followingRes,followersRes]=await Promise.all([
+        supabase.from('profiles').select('*').eq('id',uid).single(),
+        supabase.from('completed_recipes').select('*').eq('user_id',uid),
+        supabase.from('user_recipes').select('*').eq('user_id',uid),
+        supabase.from('activity_feed').select('*').eq('user_id',uid),
+        supabase.from('follows').select('following_id').eq('follower_id',uid),
+        supabase.from('follows').select('follower_id').eq('following_id',uid),
+      ]);
+      const dump={
+        exported_at:new Date().toISOString(),
+        profile:profileRes.data||null,
+        completed_recipes:recipesRes.data||[],
+        user_recipes:userRecipesRes.data||[],
+        activity_feed:feedRes.data||[],
+        following:(followingRes.data||[]).map(r=>r.following_id),
+        followers:(followersRes.data||[]).map(r=>r.follower_id),
+      };
+      const date=new Date().toISOString().slice(0,10);
+      triggerDownload(JSON.stringify(dump,null,2),`mise-en-place-data-${date}.json`,'application/json');
+      if(setToast) setToast({emoji:'',title:'Exported',subtitle:'Your data has been downloaded'});
+    }catch(e){
+      console.error('Export JSON error:',e);
+      if(setToast) setToast({emoji:'',title:'Export failed',subtitle:'Could not download your data'});
+    }finally{setExporting(null);}
+  };
+
+  const handleDeleteAccount=async()=>{
+    if(deleteInput!=='DELETE') return;
+    setDeleting(true);
+    try{
+      // Soft delete: set deleted_at on profile via raw fetch
+      const token=(()=>{
+        if(typeof document==='undefined') return null;
+        const match=document.cookie.split(';').find(c=>c.trim().match(/^sb-[^=]+-auth-token=/));
+        if(!match) return null;
+        try{let raw=match.split('=').slice(1).join('=');if(raw.startsWith('base64-'))raw=atob(raw.slice(7));return JSON.parse(decodeURIComponent(raw))?.access_token||null;}catch{return null;}
+      })();
+      const SUPABASE_URL=process.env.NEXT_PUBLIC_SUPABASE_URL||'https://tqjkxmrhalrlbfackydv.supabase.co';
+      const SUPABASE_ANON=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||'';
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${token||SUPABASE_ANON}`,'Prefer':'return=minimal'},
+        body:JSON.stringify({deleted_at:new Date().toISOString()}),
+      });
+      if(!res.ok) console.error('Soft delete PATCH failed:',res.status);
       await supabase.auth.signOut();
       localStorage.clear();
       window.location.href='/login';
     }catch(e){
       console.error('Delete account error:',e);
+      if(setToast) setToast({emoji:'',title:'Delete failed',subtitle:'Please try again or contact support'});
+      setDeleting(false);
     }
   };
+
+  const btnStyle={padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontFamily:"inherit",width:"100%"};
+
   return(
     <div>
       <DrawerSectionHeader title="Your Data" onBack={onBack}/>
       <div style={{display:"flex",flexDirection:"column",gap:12}}>
-        {[["Export cook history","Download all your recipes and notes as CSV"],["Download my data","Get a copy of everything we store about you"]].map(([title,sub])=>(
-          <button key={title} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.border}`,background:C.cream,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
-            <div style={{fontWeight:700,fontSize:14,color:C.bark}}>{title}</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{sub}</div>
-          </button>
-        ))}
-        <div style={{height:1,background:C.border}}/>
-        <button onClick={handleDeleteAccount} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
-          <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
-          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently remove your account and all data</div>
+        <button onClick={handleExportCSV} disabled={!!exporting} style={btnStyle}>
+          <div style={{fontWeight:700,fontSize:14,color:C.bark,display:"flex",alignItems:"center",gap:8}}>
+            {exporting==='csv'&&<svg width="14" height="14" viewBox="0 0 20 20" style={{animation:'spin 0.8s linear infinite'}}><circle cx="10" cy="10" r="8" fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="40 20" strokeLinecap="round"/></svg>}
+            Export cook history
+          </div>
+          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Download all your recipes and notes as CSV</div>
         </button>
+        <button onClick={handleExportJSON} disabled={!!exporting} style={btnStyle}>
+          <div style={{fontWeight:700,fontSize:14,color:C.bark,display:"flex",alignItems:"center",gap:8}}>
+            {exporting==='json'&&<svg width="14" height="14" viewBox="0 0 20 20" style={{animation:'spin 0.8s linear infinite'}}><circle cx="10" cy="10" r="8" fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="40 20" strokeLinecap="round"/></svg>}
+            Download my data
+          </div>
+          <div style={{fontSize:12,color:C.muted,marginTop:2}}>Get a copy of everything we store about you</div>
+        </button>
+        <div style={{height:1,background:C.border}}/>
+
+        {/* Delete account — multi-step */}
+        {deleteStep===0&&(
+          <button onClick={()=>setDeleteStep(1)} style={{padding:"14px 16px",borderRadius:14,border:`1.5px solid #E05C7A33`,background:"#E05C7A08",cursor:"pointer",textAlign:"left",fontFamily:"inherit",width:"100%"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A"}}>Delete account</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Permanently remove your account and all data</div>
+          </button>
+        )}
+        {deleteStep===1&&(
+          <div style={{padding:"16px",borderRadius:14,border:"1.5px solid #E05C7A33",background:"#E05C7A08"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A",marginBottom:8}}>Are you sure?</div>
+            <div style={{fontSize:12,color:C.muted,lineHeight:1.5,marginBottom:12}}>
+              Your account will be deleted and you'll be signed out. Your data will be removed from public view immediately and permanently deleted within 30 days. Email hello@yourmiseenplace.app within that window to restore.
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setDeleteStep(0)} style={{flex:1,padding:"10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.bark,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={()=>setDeleteStep(2)} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:"#E05C7A",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Continue</button>
+            </div>
+          </div>
+        )}
+        {deleteStep===2&&(
+          <div style={{padding:"16px",borderRadius:14,border:"1.5px solid #E05C7A33",background:"#E05C7A08"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#E05C7A",marginBottom:8}}>Type DELETE to confirm</div>
+            <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder="DELETE"
+              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${deleteInput==='DELETE'?"#E05C7A":C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:12,fontFamily:"inherit"}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{setDeleteStep(0);setDeleteInput('');}} style={{flex:1,padding:"10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.bark,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={handleDeleteAccount} disabled={deleteInput!=='DELETE'||deleting} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:deleteInput==='DELETE'?"#E05C7A":"#D8D0C8",color:"#fff",fontWeight:700,fontSize:13,cursor:deleteInput==='DELETE'&&!deleting?"pointer":"not-allowed",fontFamily:"inherit"}}>
+                {deleting?'Deleting...':'Delete my account'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -4163,7 +4288,7 @@ class AppErrorBoundary extends React.Component {
 }
 
 /* ═══ SETTINGS SHEET ══════════════════════════════════════════════════════ */
-function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose, appTheme, setAppTheme, uploadAvatar}){
+function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose, appTheme, setAppTheme, uploadAvatar, setToast, signOut, saveProfileField}){
   const [section, setSection] = useState(null);
 
   // Section components rendered inline
@@ -4198,7 +4323,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="data") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <DataSettings onBack={()=>setSection(null)} supabase={supabase}/>
+        <DataSettings onBack={()=>setSection(null)} supabase={supabase} user={user} setToast={setToast} signOut={signOut}/>
       </div>
     </Sheet>
   );
@@ -4280,7 +4405,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 }
 
 export default function App(){
-  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends, followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById, uploadAvatar } = useAuth();
+  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends, followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById, uploadAvatar } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4914,7 +5039,7 @@ export default function App(){
           </div>
         </div>
       )}
-      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} uploadAvatar={uploadAvatar}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} uploadAvatar={uploadAvatar} setToast={setToast} signOut={signOut} saveProfileField={saveProfileField}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}

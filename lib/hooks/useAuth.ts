@@ -601,7 +601,7 @@ export function useAuth() {
     user, session, profile, loading, supabase, refreshProfile,
     signIn, signOut, refresh,
     saveAllUserData,
-    saveXp, logCompletedRecipe, loadCompletedRecipes,
+    saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes,
     saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal,
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
