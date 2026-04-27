@@ -3764,27 +3764,65 @@ function NotificationSettings({onBack}){
   );
 }
 
-function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
+function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange, saveProfileField, userId, setToast}){
+  const DIET_TO_DB={"None":[],"Vegetarian":["vegetarian"],"Vegan":["vegan"],"Gluten-free":["gluten_free"],"Dairy-free":["dairy_free"],"Keto":["keto"]};
+  const SKILL_TO_DB={"Beginner":"just_starting","Intermediate":"few_dishes","Advanced":"comfortable","Chef":"cook_most_days"};
   const diets = ["None","Vegetarian","Vegan","Gluten-free","Dairy-free","Keto"];
   const skills = ["Beginner","Intermediate","Advanced","Chef"];
   const [selectedDiet, setSelectedDiet] = useState("None");
   const [selectedSkill, setSelectedSkill] = useState("Beginner");
+  const [savedIndicator, setSavedIndicator] = useState(null);
+  const savedTimerRef = useRef(null);
+
   useEffect(()=>{
+    if(typeof window==='undefined') return;
     try{ const v=localStorage.getItem("mep_diet"); if(v) setSelectedDiet(v); }catch{}
     try{ const v=localStorage.getItem("mep_skill"); if(v) setSelectedSkill(v); }catch{}
   },[]);
 
-  const handleDiet=(d)=>{
+  const showSaved=(label)=>{
+    setSavedIndicator(label);
+    clearTimeout(savedTimerRef.current);
+    savedTimerRef.current=setTimeout(()=>setSavedIndicator(null),1500);
+  };
+
+  const handleDiet=async(d)=>{
     setSelectedDiet(d);
     try{ localStorage.setItem("mep_diet",d); }catch{}
     if(onDietChange) onDietChange(d);
+    if(saveProfileField&&userId){
+      try{
+        await saveProfileField(userId,{dietary:DIET_TO_DB[d]||[]});
+        showSaved('diet');
+      }catch(e){
+        console.error('Sync dietary failed:',e);
+        if(setToast) setToast({emoji:'',title:"Couldn't save to cloud",subtitle:'Saved locally'});
+      }
+    }
+  };
+
+  const handleSkill=async(s)=>{
+    setSelectedSkill(s);
+    try{ localStorage.setItem("mep_skill",s); }catch{}
+    if(saveProfileField&&userId){
+      try{
+        await saveProfileField(userId,{skill_level:SKILL_TO_DB[s]||s.toLowerCase()});
+        showSaved('skill');
+      }catch(e){
+        console.error('Sync skill_level failed:',e);
+        if(setToast) setToast({emoji:'',title:"Couldn't save to cloud",subtitle:'Saved locally'});
+      }
+    }
   };
 
   return(
     <div>
       <DrawerSectionHeader title="Cooking Preferences" onBack={onBack}/>
       <div style={{marginBottom:20}}>
-        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10}}>Dietary preference</div>
+        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
+          Dietary preference
+          {savedIndicator==='diet'&&<span style={{fontSize:11,color:C.muted,fontWeight:600,opacity:.8,transition:"opacity .3s"}}>Saved</span>}
+        </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
           {diets.map(d=>(
             <button key={d} onClick={()=>handleDiet(d)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedDiet===d?C.flame:C.border}`,background:selectedDiet===d?`${C.flame}12`:"transparent",color:selectedDiet===d?C.flame:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
@@ -3795,10 +3833,13 @@ function CookingPrefsSettings({onBack, goal, onEditGoal, onDietChange}){
         {selectedDiet!=="None"&&<div style={{fontSize:11,color:C.muted,marginTop:8}}>Recipe suggestions will respect your preference.</div>}
       </div>
       <div style={{marginBottom:20}}>
-        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10}}>Skill level</div>
+        <div style={{fontWeight:700,fontSize:13,color:C.bark,marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
+          Skill level
+          {savedIndicator==='skill'&&<span style={{fontSize:11,color:C.muted,fontWeight:600,opacity:.8,transition:"opacity .3s"}}>Saved</span>}
+        </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
           {skills.map(s=>(
-            <button key={s} onClick={()=>{setSelectedSkill(s);try{localStorage.setItem("mep_skill",s);}catch{}}} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.sky:C.border}`,background:selectedSkill===s?`${C.sky}12`:"transparent",color:selectedSkill===s?C.sky:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+            <button key={s} onClick={()=>handleSkill(s)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${selectedSkill===s?C.sky:C.border}`,background:selectedSkill===s?`${C.sky}12`:"transparent",color:selectedSkill===s?C.sky:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
               {s}
             </button>
           ))}
@@ -4331,7 +4372,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="cooking") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}} onDietChange={(d)=>{ try{localStorage.setItem("mep_diet",d);}catch{} }}/>
+        <CookingPrefsSettings onBack={()=>setSection(null)} goal={goal} onEditGoal={()=>{onGoalChange&&onGoalChange(goal);}} onDietChange={(d)=>{ try{localStorage.setItem("mep_diet",d);}catch{} }} saveProfileField={saveProfileField} userId={user?.id} setToast={setToast}/>
       </div>
     </Sheet>
   );
