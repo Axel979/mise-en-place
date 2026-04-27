@@ -4263,64 +4263,72 @@ export default function App(){
 
   useEffect(()=>{
     if(profile){
-      // Only overwrite localStorage state with Supabase data if Supabase has more/better data
-      if(profile.xp>0){setXp(prev=>profile.xp>prev?profile.xp:prev);if(sessionStartLevelRef.current===null)sessionStartLevelRef.current=getLevelInfo(profile.xp).current.level;}
+      // Supabase is source of truth — React state and localStorage follow it
+      const supabaseXp=profile.xp||0;
+      setXp(supabaseXp);
+      if(sessionStartLevelRef.current===null) sessionStartLevelRef.current=getLevelInfo(supabaseXp).current.level;
+      try{ localStorage.setItem('mep_xp', String(supabaseXp)); }catch{}
+
       if(!onboarded){
         setOnboarded(true);
         try{ localStorage.setItem("mep_onboarded","true"); }catch{}
       }
-      if(Array.isArray(profile.earned_badges) && profile.earned_badges.length>0){profile.earned_badges.forEach(id=>loadedBadgesRef.current.add(id));setEarnedBadges(prev=>profile.earned_badges.length>prev.length?profile.earned_badges:prev);}
-      if(Array.isArray(profile.saved_posts) && profile.saved_posts.length>0) setSavedPosts(prev=>profile.saved_posts.length>prev.size?new Set(profile.saved_posts):prev);
-      if(Array.isArray(profile.cooked_dates) && profile.cooked_dates.length>0){
-        setCookedDatesAll(prev=>{
-          if(profile.cooked_dates.length<=prev.length) return prev;
-          const now=new Date();
-          const day=now.getDay();
-          const monday=new Date(now);
-          monday.setDate(now.getDate()-((day+6)%7));
-          const set=new Set(profile.cooked_dates);
-          const week=[];
-          for(let i=0;i<7;i++){
-            const d=new Date(monday); d.setDate(monday.getDate()+i);
-            week.push(set.has(d.toISOString().slice(0,10)));
-          }
-          setCookedDays(week);
-          return profile.cooked_dates;
-        });
+
+      const supabaseBadges=Array.isArray(profile.earned_badges)?profile.earned_badges:[];
+      supabaseBadges.forEach(id=>loadedBadgesRef.current.add(id));
+      setEarnedBadges(supabaseBadges);
+      try{ localStorage.setItem('mep_earnedBadges', JSON.stringify(supabaseBadges)); }catch{}
+
+      const supabasePosts=Array.isArray(profile.saved_posts)?profile.saved_posts:[];
+      const del=getDeletedIds();
+      const filteredPosts=supabasePosts.filter(id=>!del.has(String(id)));
+      setSavedPosts(new Set(filteredPosts));
+      try{ localStorage.setItem('mep_savedPosts', JSON.stringify(filteredPosts)); }catch{}
+
+      const supabaseDates=Array.isArray(profile.cooked_dates)?profile.cooked_dates:[];
+      setCookedDatesAll(supabaseDates);
+      try{ localStorage.setItem('mep_cookedDatesAll', JSON.stringify(supabaseDates)); }catch{}
+
+      // Rebuild current week's cookedDays from cooked_dates
+      const now=new Date();
+      const dayIdx=now.getDay();
+      const monday=new Date(now);
+      monday.setDate(now.getDate()-((dayIdx+6)%7));
+      const dateSet=new Set(supabaseDates);
+      const week=[];
+      for(let i=0;i<7;i++){
+        const d=new Date(monday); d.setDate(monday.getDate()+i);
+        week.push(dateSet.has(d.toISOString().slice(0,10)));
       }
+      setCookedDays(week);
+      try{ localStorage.setItem('mep_cookedDays', JSON.stringify(week)); }catch{}
+
       if(profile.goal_id){
         const g=STREAK_GOALS.find(x=>x.id===profile.goal_id);
         if(g) setGoal(g);
       }
-      // Mirror Supabase data to localStorage cache
-      try{ if(profile.xp>0) localStorage.setItem('mep_xp', String(profile.xp)); }catch{}
-      try{ if(Array.isArray(profile.cooked_dates)&&profile.cooked_dates.length>0) localStorage.setItem('mep_cookedDatesAll', JSON.stringify(profile.cooked_dates)); }catch{}
-      try{ if(Array.isArray(profile.earned_badges)&&profile.earned_badges.length>0) localStorage.setItem('mep_earnedBadges', JSON.stringify(profile.earned_badges)); }catch{}
-      try{ if(Array.isArray(profile.saved_posts)&&profile.saved_posts.length>0){const del=getDeletedIds();localStorage.setItem('mep_savedPosts', JSON.stringify(profile.saved_posts.filter(id=>!del.has(String(id)))));} }catch{}
-      // Only load cook log from Supabase if it has more entries than localStorage
+
       loadCompletedRecipes().then(rows=>{
-        if(rows && rows.length>0){
+        if(Array.isArray(rows)){
           const del2=getDeletedIds();
           const filteredRows=rows.filter(r=>!del2.has(String(r.id))&&!del2.has('log-'+r.id));
-          setCookLog(prev=>{
-            if(filteredRows.length<=prev.length) return prev;
-            const mapped=filteredRows.map(r=>({
-              id:`log-${r.id}`,
-              name:r.name||r.recipe_id||"",
-              emoji:r.emoji||"🍳",
-              category:r.category||"",
-              xp:r.xp_earned||r.xp||0,
-              difficulty:r.difficulty||"Medium",
-              rating:r.rating||0,
-              photo:r.photo_url||null,
-              caption:r.notes||"",
-              date: r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
-            }));
-            try{ localStorage.setItem('mep_cookLog', JSON.stringify(mapped)); }catch{}
-            return mapped;
-          });
+          const mapped=filteredRows.map(r=>({
+            id:`log-${r.id}`,
+            name:r.name||r.recipe_id||"",
+            emoji:r.emoji||"🍳",
+            category:r.category||"",
+            xp:r.xp_earned||r.xp||0,
+            difficulty:r.difficulty||"Medium",
+            rating:r.rating||0,
+            photo:r.photo_url||null,
+            caption:r.notes||"",
+            date:r.cooked_at?new Date(r.cooked_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"",
+          }));
+          setCookLog(mapped);
+          try{ localStorage.setItem('mep_cookLog', JSON.stringify(mapped)); }catch{}
         }
       }).catch(e=>console.error('loadCompletedRecipes failed',e));
+
       // Mark hydrated on next tick so save effects don't fire on initial load
       setTimeout(()=>{hydratedRef.current=true;},0);
       // Load user's personal recipes from Supabase
@@ -4354,6 +4362,12 @@ export default function App(){
       }).catch(e=>console.error('loadFeed failed',e));
     }
   },[profile]);
+
+  // Mirror earnedBadges to localStorage whenever React state changes
+  useEffect(()=>{
+    if(!hydratedRef.current) return;
+    try{ localStorage.setItem('mep_earnedBadges', JSON.stringify(earnedBadges)); }catch{}
+  },[earnedBadges]);
 
   // Saved posts and goal: localStorage primary, Supabase secondary
   const prevSaved=useRef(null);
@@ -4396,6 +4410,7 @@ export default function App(){
       const freshBadges=newOnes.filter(b=>!loadedBadgesRef.current.has(b.id));
       if(freshBadges.length>0) setToast(t=>t||{emoji:freshBadges[0].emoji,title:freshBadges[0].label,subtitle:"Badge unlocked!"});
     }
+    return newOnes.map(b=>b.id);
   },[earnedBadges]);
 
   const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends",challengeId=null)=>{
@@ -4467,12 +4482,12 @@ export default function App(){
     const cats=Object.keys(SKILL_MAP).reduce((acc,c)=>{acc[c]=(newSkill[`${c}_count`]||0);return acc;},{});
     const uniqueCuisines=Object.values(cats).filter(v=>v>0).length;
     const streak=cookedDays.filter(Boolean).length+1;
-    checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:[],level:getLevelInfo(newXp).current.level,mwah:0});
+    const newBadgeIds=checkBadges({total:totalCooked,streak,cuisines:uniqueCuisines,cats,challs:[],level:getLevelInfo(newXp).current.level,mwah:0});
+    const allBadges=[...earnedBadges,...newBadgeIds];
 
     // Primary persistence: save to localStorage immediately
     try{
       localStorage.setItem('mep_xp', String(newXp));
-      localStorage.setItem('mep_earnedBadges', JSON.stringify(earnedBadges));
       localStorage.setItem('mep_cookedDatesAll', JSON.stringify(newDates));
       const di2=new Date().getDay();const idx2=di2===0?6:di2-1;
       const days=[...cookedDays];days[idx2]=true;
@@ -4488,6 +4503,7 @@ export default function App(){
         xp: newXp,
         completedRecipe: {...recipe, photo},
         cookedDates: newDates,
+        earnedBadges: allBadges,
       });
     }
   },[xp,allRecipes,cookedDays,cookedDatesAll,skillData,levelInfo,checkBadges]);
