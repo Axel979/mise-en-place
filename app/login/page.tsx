@@ -134,9 +134,31 @@ function LoginScreen({onSignup, onReset}:{onSignup:()=>void, onReset:()=>void}) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setError(error.message); setLoading(false); }
-    else router.push('/');
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) { setError(signInError.message); setLoading(false); return; }
+
+    // Check if account is soft-deleted
+    const userId = signInData?.user?.id;
+    if (userId) {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('deleted_at')
+          .eq('id', userId)
+          .maybeSingle();
+        if (profileData?.deleted_at) {
+          await supabase.auth.signOut();
+          try { localStorage.clear(); } catch {}
+          setError('This account has been deleted. Email hello@yourmiseenplace.app within 30 days to restore.');
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // Profile fetch failed — don't block login on network errors
+      }
+    }
+
+    router.push('/');
   };
 
   return (

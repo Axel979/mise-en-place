@@ -4584,6 +4584,16 @@ export default function App(){
     if(!user) return;
     const isDev = process.env.NODE_ENV === 'development';
     if(profile){
+      // Block soft-deleted accounts
+      if(profile.deleted_at){
+        if(isDev) console.log('[Gate] profile soft-deleted → signing out');
+        (async()=>{
+          try{ await supabase.auth.signOut(); }catch{}
+          try{ localStorage.clear(); }catch{}
+          window.location.href='/login';
+        })();
+        return;
+      }
       if(profile.onboarded_at){
         if(isDev) console.log('[Gate] profile complete → app');
         setOnboardingStatus('complete');
