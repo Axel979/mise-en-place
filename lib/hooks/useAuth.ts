@@ -277,6 +277,7 @@ export function useAuth() {
         isPersonal: true,
         isCustom: !r.is_imported,
         isImported: r.is_imported || false,
+        isPublic: r.is_public !== false,
         photo: null,
         emoji: '',
         done: false,
@@ -309,6 +310,7 @@ export function useAuth() {
           source_name: recipe.sourceName || null,
           xp: recipe.xp || 60,
           is_imported: recipe.isImported || false,
+          is_public: recipe.isPublic !== false,
         })
         .select()
         .single();
@@ -321,22 +323,46 @@ export function useAuth() {
   };
 
   const updateUserRecipe = async (supabaseId: string, updates: any) => {
+    // Raw fetch PATCH — supabase.from().update() hangs in this env
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
+    const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const token = getAuthToken() || SUPABASE_ANON;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const { error } = await supabase
-        .from('user_recipes')
-        .update({
-          name: updates.name,
-          category: updates.category,
-          difficulty: updates.difficulty,
-          time: updates.time,
-          ingredients: updates.ingredients,
-          steps: updates.steps,
-          tip: updates.tip,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', supabaseId);
-      if (error) throw error;
-    } catch (e) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/user_recipes?id=eq.${supabaseId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify((() => {
+          const payload: any = {
+            name: updates.name,
+            category: updates.category,
+            difficulty: updates.difficulty,
+            time: updates.time,
+            ingredients: updates.ingredients,
+            steps: updates.steps,
+            tip: updates.tip,
+            updated_at: new Date().toISOString(),
+          };
+          if (typeof updates.isPublic === 'boolean') {
+            payload.is_public = updates.isPublic;
+          }
+          return payload;
+        })()),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`PATCH user_recipes failed ${res.status}: ${body}`);
+      }
+    } catch (e: any) {
+      clearTimeout(timeoutId);
       console.error('updateUserRecipe error:', e);
     }
   };
