@@ -338,17 +338,22 @@ export function useAuth() {
           'Authorization': `Bearer ${token}`,
           'Prefer': 'return=minimal',
         },
-        body: JSON.stringify({
-          name: updates.name,
-          category: updates.category,
-          difficulty: updates.difficulty,
-          time: updates.time,
-          ingredients: updates.ingredients,
-          steps: updates.steps,
-          tip: updates.tip,
-          is_public: updates.isPublic !== false,
-          updated_at: new Date().toISOString(),
-        }),
+        body: JSON.stringify((() => {
+          const payload: any = {
+            name: updates.name,
+            category: updates.category,
+            difficulty: updates.difficulty,
+            time: updates.time,
+            ingredients: updates.ingredients,
+            steps: updates.steps,
+            tip: updates.tip,
+            updated_at: new Date().toISOString(),
+          };
+          if (typeof updates.isPublic === 'boolean') {
+            payload.is_public = updates.isPublic;
+          }
+          return payload;
+        })()),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
