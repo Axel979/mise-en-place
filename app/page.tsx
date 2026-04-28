@@ -2293,6 +2293,7 @@ function CreateRecipeSheet({onSave,onClose}){
   const [pasteText,setPasteText]=useState("");
   const [showPaste,setShowPaste]=useState(false);
   const [parseNote,setParseNote]=useState("");
+  const [isPublic,setIsPublic]=useState(true);
   const CATS=["Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
 
   const addIngredient=()=>setIngredients(i=>[...i,""]);
@@ -2329,7 +2330,7 @@ function CreateRecipeSheet({onSave,onClose}){
       category,diets:["No restrictions"],macros:null,done:false,
       ingredients:ingredients.filter(i=>i.trim()),
       steps:steps.filter(s=>s.body.trim()).map(s=>({title:s.title||"Step",body:s.body,timer:0})),
-      tip:tip.trim()||null,isCustom:true,isPersonal:true,
+      tip:tip.trim()||null,isCustom:true,isPersonal:true,isPublic,
     });
     onClose();
   };
@@ -2445,7 +2446,26 @@ function CreateRecipeSheet({onSave,onClose}){
           </div>
         )}
 
-        <div style={{display:"flex",gap:10,marginTop:20}}>
+        {/* Visibility toggle */}
+        <div style={{marginTop:20,marginBottom:16,padding:"14px 16px",borderRadius:14,border:`1px solid ${C.border}`,background:C.cream}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:13,color:C.bark,display:"flex",alignItems:"center",gap:6}}>
+                {isPublic
+                  ?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                  :<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                }
+                Visibility
+              </div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>{isPublic?"Anyone can find this recipe":"Only visible in your library"}</div>
+            </div>
+            <button onClick={()=>setIsPublic(v=>!v)} style={{width:52,height:28,borderRadius:14,background:isPublic?C.flame:`${C.muted}55`,border:"none",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:isPublic?27:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+            </button>
+          </div>
+        </div>
+
+        <div style={{display:"flex",gap:10}}>
           <Btn onClick={onClose} outline color={C.muted} style={{flex:1}}>Cancel</Btn>
           <Btn onClick={handleSave} disabled={!name.trim()||ingredients.filter(i=>i.trim()).length===0} style={{flex:2}}>Save Recipe</Btn>
         </div>
@@ -4248,6 +4268,7 @@ function EditRecipeSheet({recipe, onSave, onClose}){
   const [ingredients, setIngredients] = useState((recipe.ingredients||[]).join("\n"));
   const [steps, setSteps] = useState((recipe.steps||[]).map(s=>s.body).join("\n"));
   const [tip, setTip] = useState(recipe.tip||"");
+  const [isPublic, setIsPublic] = useState(recipe.isPublic !== false);
 
   const handleSave = () => {
     const newIngredients = ingredients.split("\n").map(l=>l.trim()).filter(Boolean);
@@ -4265,6 +4286,7 @@ function EditRecipeSheet({recipe, onSave, onClose}){
       ingredients: newIngredients,
       steps: newSteps,
       tip: tip.trim()||null,
+      isPublic,
     });
     onClose();
   };
@@ -4312,6 +4334,25 @@ function EditRecipeSheet({recipe, onSave, onClose}){
 
         <Label text="Chef tip (optional)"/>
         <input value={tip} onChange={e=>setTip(e.target.value)} style={inputStyle} placeholder="Any helpful tip..."/>
+
+        {/* Visibility toggle */}
+        <div style={{marginBottom:16,padding:"14px 16px",borderRadius:14,border:`1px solid ${C.border}`,background:C.cream}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:13,color:C.bark,display:"flex",alignItems:"center",gap:6}}>
+                {isPublic
+                  ?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                  :<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                }
+                Visibility
+              </div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>{isPublic?"Anyone can find this recipe":"Only visible in your library"}</div>
+            </div>
+            <button onClick={()=>setIsPublic(v=>!v)} style={{width:52,height:28,borderRadius:14,background:isPublic?C.flame:`${C.muted}55`,border:"none",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:isPublic?27:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+            </button>
+          </div>
+        </div>
 
         <Btn onClick={handleSave} full>Save Changes</Btn>
       </div>

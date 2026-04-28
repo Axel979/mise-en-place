@@ -277,6 +277,7 @@ export function useAuth() {
         isPersonal: true,
         isCustom: !r.is_imported,
         isImported: r.is_imported || false,
+        isPublic: r.is_public !== false,
         photo: null,
         emoji: '',
         done: false,
