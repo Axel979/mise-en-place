@@ -1363,8 +1363,16 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               {[...myRecipes,...savedRecipes].map(r=>(
                 <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
                   <DeleteBadge onDel={()=>{if(onDeleteRecipe)onDeleteRecipe(r);}}/>
-                  <div style={{width:80,flexShrink:0,background:`linear-gradient(135deg,${C.sage}20,${C.sage}08)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {/* Thumbnail area — Private badge overlaid if not public */}
+                  {/* Assumption: this only renders in My Recipes tab which is owner-only */}
+                  <div style={{width:80,flexShrink:0,background:`linear-gradient(135deg,${C.sage}20,${C.sage}08)`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5" opacity=".6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    {r.isPublic===false&&(
+                      <div style={{position:"absolute",top:6,left:6,background:"rgba(158,140,126,.9)",borderRadius:999,padding:"2px 7px",display:"flex",alignItems:"center",gap:3}}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <span style={{fontSize:9,fontWeight:700,color:"#fff"}}>Private</span>
+                      </div>
+                    )}
                   </div>
                   <div style={{padding:"13px 14px",flex:1,minWidth:0}}>
                     <div style={{fontWeight:800,fontSize:14,color:C.bark,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.name}</div>
