@@ -310,6 +310,7 @@ export function useAuth() {
           source_name: recipe.sourceName || null,
           xp: recipe.xp || 60,
           is_imported: recipe.isImported || false,
+          is_public: recipe.isPublic !== false,
         })
         .select()
         .single();
@@ -322,10 +323,22 @@ export function useAuth() {
   };
 
   const updateUserRecipe = async (supabaseId: string, updates: any) => {
+    // Raw fetch PATCH — supabase.from().update() hangs in this env
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
+    const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const token = getAuthToken() || SUPABASE_ANON;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
-      const { error } = await supabase
-        .from('user_recipes')
-        .update({
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/user_recipes?id=eq.${supabaseId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
           name: updates.name,
           category: updates.category,
           difficulty: updates.difficulty,
@@ -333,11 +346,18 @@ export function useAuth() {
           ingredients: updates.ingredients,
           steps: updates.steps,
           tip: updates.tip,
+          is_public: updates.isPublic !== false,
           updated_at: new Date().toISOString(),
-        })
-        .eq('id', supabaseId);
-      if (error) throw error;
-    } catch (e) {
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`PATCH user_recipes failed ${res.status}: ${body}`);
+      }
+    } catch (e: any) {
+      clearTimeout(timeoutId);
       console.error('updateUserRecipe error:', e);
     }
   };
