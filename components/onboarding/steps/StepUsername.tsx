@@ -4,8 +4,8 @@ import { useUsernameValidation } from '@/lib/username/useUsernameValidation';
 import type { OnboardingAction } from '../OnboardingFlow';
 
 const C = {
-  flame: '#FF4D1C', bark: '#3B2A1A', cream: '#FFF8F0', paper: '#FAF4EE',
-  muted: '#9E8C7E', sage: '#5C7A4E', border: '#EEE5DC',
+  flame: '#FF4D1C', bark: '#1A1A1A', cream: '#FFFFFF', paper: '#FAFAFA',
+  muted: '#757575', sage: '#5C7A4E', border: '#E5E5E5',
 };
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";

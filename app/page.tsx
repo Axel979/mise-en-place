@@ -7,9 +7,9 @@ import { hapticImpact } from "@/lib/haptics";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
-  flame:"#FF4D1C", ember:"#FF8C42", cream:"#FFF8F0", paper:"#FAF4EE",
-  bark:"#3B2A1A",  sage:"#5C7A4E",  moss:"#8BAF78",  gold:"#F5C842",
-  muted:"#9E8C7E", border:"#EEE5DC",pill:"#F0EBE6",  sky:"#4A90D9",
+  flame:"#FF4D1C", ember:"#FF8C42", cream:"#FFFFFF", paper:"#FAFAFA",
+  bark:"#1A1A1A",  sage:"#5C7A4E",  moss:"#8BAF78",  gold:"#F5C842",
+  muted:"#757575", border:"#E5E5E5",pill:"#F0F0F0",  sky:"#4A90D9",
   plum:"#9B5DE5",  rose:"#E05C7A",  dark:"#111118",
 };
 const DF = "'Playfair Display',Georgia,serif";
@@ -17,10 +17,10 @@ const BF = "'Source Serif 4',Georgia,serif";
 const CSS = `
   html, body { width: 100%; overflow-x: hidden; }
   #__next { width: 100%; }
-  :root{--bg-page:#FAF4EE;--bg-card:#FFF8F0;--bg-pill:#F0EBE6;--bg-border:#EEE5DC;--text-primary:#3B2A1A;--text-muted:#9E8C7E;--accent:#FF4D1C}
+  :root{--bg-page:#FAFAFA;--bg-card:#FFFFFF;--bg-pill:#F0F0F0;--bg-border:#E5E5E5;--text-primary:#1A1A1A;--text-muted:#757575;--accent:#FF4D1C}
   @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg-page:#1A0F08;--bg-card:#2A1A0E;--bg-pill:#2A1E15;--bg-border:#3A2A1A;--text-primary:#FFF8F0;--text-muted:#9E8C7E;--accent:#FF4D1C}}
   [data-theme="dark"]{--bg-page:#1A0F08;--bg-card:#2A1A0E;--bg-pill:#2A1E15;--bg-border:#3A2A1A;--text-primary:#FFF8F0;--text-muted:#9E8C7E;--accent:#FF4D1C}
-  [data-theme="light"]{--bg-page:#FAF4EE;--bg-card:#FFF8F0;--bg-pill:#F0EBE6;--bg-border:#EEE5DC;--text-primary:#3B2A1A;--text-muted:#9E8C7E;--accent:#FF4D1C}
+  [data-theme="light"]{--bg-page:#FAFAFA;--bg-card:#FFFFFF;--bg-pill:#F0F0F0;--bg-border:#E5E5E5;--text-primary:#1A1A1A;--text-muted:#757575;--accent:#FF4D1C}
 
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600;700&display=swap');
   *,*::before,*::after{box-sizing:border-box} body{margin:0;background:var(--bg-page,${C.paper});font-family:${BF}}
@@ -2536,7 +2536,7 @@ function NotificationsTab({notifications,setNotifications,setTab}){
                 <div style={{width:44,height:44,borderRadius:14,background:`${cfg.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>
                   {n.avatar}
                 </div>
-                <div style={{position:"absolute",bottom:-4,right:-4,width:20,height:20,borderRadius:"50%",background:cfg.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,border:"2px solid #FAF4EE"}}>
+                <div style={{position:"absolute",bottom:-4,right:-4,width:20,height:20,borderRadius:"50%",background:cfg.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,border:`2px solid ${C.paper}`}}>
                   {cfg.icon}
                 </div>
               </div>
