@@ -627,6 +627,14 @@ const XPBar=({pct,color=C.flame,h=8})=>(
   </div>
 );
 const DiffBadge=({level})=>{const c={Easy:C.sage,Medium:C.ember,Hard:C.flame}[level]||C.muted;return<span style={{fontSize:10,fontWeight:800,color:c,background:`${c}1A`,borderRadius:6,padding:"2px 7px"}}>{level}</span>;};
+const EmptyStateLemon=({message})=>(
+  <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 24px',textAlign:'center',minHeight:300}}>
+    <div style={{width:80,height:80,borderRadius:'50%',background:C.cream,border:`1px solid ${C.border}`,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:16}}>
+      <img src="/lemon.png" alt="Lemon" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+    </div>
+    <p style={{fontSize:14,color:C.muted,lineHeight:1.5,maxWidth:280,margin:0}}>{message}</p>
+  </div>
+);
 const Chip=({label,color=C.muted,bg})=><span style={{fontSize:10,fontWeight:700,color,background:bg||`${color}18`,borderRadius:6,padding:"2px 8px",whiteSpace:"nowrap"}}>{label}</span>;
 const Sheet=({children,onClose})=>(
   <div style={{position:"fixed",inset:0,background:"rgba(30,18,8,.72)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
@@ -1315,13 +1323,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       {!showBadges&&libTab==="cooked"&&(
         <div>
           {safeLog.length===0?(
-            <div style={{textAlign:"center",padding:"60px 32px"}}>
-              <div style={{width:56,height:56,borderRadius:18,background:`${a(C.flame,'12')}`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-              </div>
-              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>Nothing cooked yet</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:260,margin:"0 auto"}}>Every recipe you complete gets added here. Start cooking to build your log.</div>
-            </div>
+            <EmptyStateLemon message="Empty for now. Cook a recipe and log it — this fills up fast."/>
           ):(
             <div style={{padding:"0 16px"}}>
               {/* Filter + sort */}
@@ -1399,13 +1401,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       {!showBadges&&libTab==="recipes"&&(
         <div style={{padding:"0 16px"}}>
           {(myRecipes.length+savedRecipes.length)===0?(
-            <div style={{textAlign:"center",padding:"60px 20px"}}>
-              <div style={{width:56,height:56,borderRadius:18,background:`${a(C.sage,'12')}`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </div>
-              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>No recipes yet</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:260,margin:"0 auto"}}>Create a recipe from the Recipes tab. Your recipes appear here.</div>
-            </div>
+            <EmptyStateLemon message="No recipes here yet. Add one of your own when you've got a good one worth keeping."/>
           ):(
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {[...myRecipes,...savedRecipes].map(r=>(
@@ -1492,13 +1488,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
             ):null;})()}
 
           {savedRecipes.length===0&&(savedPosts?.size||0)===0&&(
-            <div style={{textAlign:"center",padding:"60px 20px"}}>
-              <div style={{width:56,height:56,borderRadius:18,background:`${a(C.flame,'10')}`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-              </div>
-              <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF,marginBottom:8}}>Nothing saved yet</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:260,margin:"0 auto"}}>Save recipes from the Recipes tab or bookmark posts from your feed.</div>
-            </div>
+            <EmptyStateLemon message="Nothing saved yet. Tap the bookmark on any recipe you want to come back to."/>
           )}
           {!jiggleMode&&(savedRecipes.length>0||(savedPosts?.size||0)>0)&&<div style={{textAlign:"center",padding:"24px 0 8px",fontSize:12,color:C.muted,letterSpacing:"0.05em"}}>Hold a card to delete</div>}
         </div>
@@ -1885,13 +1875,11 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
 
           {/* Posts */}
           {visiblePosts.length===0
-            ?<div style={{textAlign:"center",padding:"60px 20px"}}>
-              <div style={{width:52,height:52,borderRadius:16,background:`${a(C.flame,'10')}`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-              </div>
-              <div style={{fontWeight:800,fontSize:16,color:C.bark,marginBottom:6}}>{feedView==="community"?"No community posts yet":"No posts yet"}</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.6,maxWidth:240,margin:"0 auto"}}>{feedView==="friends"?"Add friends to see their cooking":"Complete a recipe and share it!"}</div>
-              {feedView==="friends"&&<button onClick={onAddFriends} style={{marginTop:16,padding:"10px 24px",borderRadius:12,border:"none",background:C.flame,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Find Friends</button>}
+            ?<div>
+              <EmptyStateLemon message={feedView==="friends"
+                ?"You're not following anyone yet. Friends make this fun — find someone whose cooking you actually want to see."
+                :"Quiet over here for now. Post something or browse the community."}/>
+              {feedView==="friends"&&<div style={{textAlign:"center",marginTop:-20,paddingBottom:20}}><button onClick={onAddFriends} style={{padding:"10px 24px",borderRadius:12,border:"none",background:C.flame,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Find People</button></div>}
             </div>
             :<div>{visiblePosts.map(post=><PostCard key={post.id} post={post}/>)}</div>
           }
