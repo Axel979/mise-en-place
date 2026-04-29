@@ -5142,7 +5142,7 @@ export default function App(){
         {/* Backdrop overlay */}
         <div onClick={()=>setShowRadialMenu(false)} style={{
           position:"fixed",inset:0,zIndex:5,
-          background:showRadialMenu?"rgba(59,42,26,0.45)":"rgba(0,0,0,0)",
+          background:showRadialMenu?"rgba(0,0,0,0.5)":"rgba(0,0,0,0)",
           pointerEvents:showRadialMenu?"auto":"none",
           transition:"background 0.3s ease",
         }}/>
@@ -5164,8 +5164,8 @@ export default function App(){
               willChange:"transform, opacity",
               pointerEvents:showRadialMenu?"auto":"none",
             }}>
-              <div style={{background:"#FFF8F0",borderRadius:999,padding:"7px 13px",fontSize:12,fontWeight:500,color:C.bark,whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{b.label}</div>
-              <div style={{width:38,height:38,borderRadius:"50%",background:"#FFF8F0",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(0,0,0,0.18)",flexShrink:0}}>
+              <div style={{background:C.cream,borderRadius:999,padding:"7px 13px",fontSize:12,fontWeight:500,color:C.bark,whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{b.label}</div>
+              <div style={{width:38,height:38,borderRadius:"50%",background:C.cream,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(0,0,0,0.18)",flexShrink:0}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{b.icon}</svg>
               </div>
             </div>
