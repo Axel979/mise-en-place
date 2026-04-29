@@ -1196,7 +1196,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
   );
 
   return(
-    <div style={{paddingBottom:40}} onClick={()=>{if(jiggleMode)setJiggleMode(false);}}>
+    <div style={{paddingBottom:100}} onClick={()=>{if(jiggleMode)setJiggleMode(false);}}>
 
       {/* ── Hero bubble ─────────────────────────────────────────── */}
       <div style={{margin:"4px 16px 14px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:22,padding:"18px 18px 16px",color:"#fff",position:"relative",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.12)"}}>
@@ -4137,7 +4137,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
   );
 
   return(
-    <div style={{paddingBottom:40}}>
+    <div style={{paddingBottom:100}}>
 
       {/* Hero */}
       <div style={{background:`linear-gradient(160deg,${C.bark},#3D2010)`,padding:"24px 20px 28px",position:"relative",overflow:"hidden"}}>
@@ -5053,7 +5053,7 @@ export default function App(){
           </div>
         </div>
 
-        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:80}}>
+        <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:100}}>
           {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating,vis,chId)=>{handleComplete(r,p,c_,rating,vis,chId);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
