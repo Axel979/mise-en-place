@@ -993,7 +993,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
 
       <div style={{display:"flex",margin:"16px 16px 0",background:C.pill,borderRadius:14,padding:4,gap:4}}>
         {[["overview","Overview"],["cook","Cook Mode"]].map(([m,lbl])=>(
-          <button key={m} onClick={()=>setMode(m)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:mode===m?"#fff":"transparent",color:mode===m?C.bark:C.muted,boxShadow:mode===m?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
+          <button key={m} onClick={()=>setMode(m)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px",fontWeight:800,fontSize:13,background:mode===m?C.cream:"transparent",color:mode===m?C.bark:C.muted,boxShadow:mode===m?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s"}}>{lbl}</button>
         ))}
       </div>
 
@@ -1237,7 +1237,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
       {/* ── Tabs ─────────────────────────────────────────────────── */}
       <div style={{display:"flex",margin:"0 16px 16px",background:C.pill,borderRadius:14,padding:4,gap:3}}>
         {[["cooked","Cooked"],["recipes","My Recipes"],["saved","Saved"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>{setLibTab(id);setShowBadges(false);}} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?"#fff":"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
+          <button key={id} onClick={()=>{setLibTab(id);setShowBadges(false);}} style={{flex:1,border:"none",cursor:"pointer",borderRadius:11,padding:"9px 6px",fontWeight:800,fontSize:13,background:libTab===id?C.cream:"transparent",color:libTab===id?C.bark:C.muted,boxShadow:libTab===id?"0 2px 8px rgba(0,0,0,.08)":"none",transition:"all .18s",fontFamily:"inherit"}}>{lbl}</button>
         ))}
       </div>
 
@@ -1593,7 +1593,7 @@ function CommunityTab({allRecipes,onOpen,onSaveToLibrary}){
       <div style={{padding:"0 16px",display:"flex",flexDirection:"column",gap:14}}>
         {filtered.map((r,idx)=>(
           <div key={r.id} onClick={()=>setSelected(r)} className="ch"
-            style={{background:"#fff",borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 14px rgba(0,0,0,.06)",animation:`fadeUp .3s ease ${idx*.05}s both`,transition:"transform .18s,box-shadow .18s",cursor:"pointer"}}>
+            style={{background:C.cream,borderRadius:20,overflow:"hidden",border:`1px solid ${C.border}`,boxShadow:"0 2px 14px rgba(0,0,0,.06)",animation:`fadeUp .3s ease ${idx*.05}s both`,transition:"transform .18s,box-shadow .18s",cursor:"pointer"}}>
             <div style={{position:"relative",height:180,overflow:"hidden"}}>
               <img src={r.photo} alt={r.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
               <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.55))"}}/>
@@ -4494,7 +4494,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
         <div style={{background:C.cream,borderRadius:16,border:`1px solid ${C.border}`,padding:"12px 14px",marginBottom:18}}>
           <div style={{display:"flex",background:C.pill,borderRadius:10,padding:3,gap:3}}>
             {[["light","Light"],["dark","Dark"],["auto","Auto"]].map(([id,lbl])=>(
-              <button key={id} onClick={()=>setAppTheme&&setAppTheme(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:8,padding:"8px 4px",fontWeight:700,fontSize:12,background:appTheme===id?"#fff":"transparent",color:appTheme===id?C.bark:C.muted,boxShadow:appTheme===id?"0 1px 4px rgba(0,0,0,.08)":"none",transition:"all .15s",fontFamily:"inherit"}}>
+              <button key={id} onClick={()=>setAppTheme&&setAppTheme(id)} style={{flex:1,border:"none",cursor:"pointer",borderRadius:8,padding:"8px 4px",fontWeight:700,fontSize:12,background:appTheme===id?C.cream:"transparent",color:appTheme===id?C.bark:C.muted,boxShadow:appTheme===id?"0 1px 4px rgba(0,0,0,.08)":"none",transition:"all .15s",fontFamily:"inherit"}}>
                 {lbl}
               </button>
             ))}
