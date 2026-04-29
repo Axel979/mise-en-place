@@ -29,22 +29,22 @@ const CSS = `
     --bark:#1A1A1A;--sage:#5C7A4E;--moss:#8BAF78;--gold:#F5C842;
     --muted:#757575;--border:#E5E5E5;--pill:#F0F0F0;--sky:#4A90D9;
     --plum:#9B5DE5;--rose:#E05C7A;--dark:#111118;
-    --surface-inverted:#1A1A1A;
+    --surface-inverted:#2A1F12;
   }
   [data-theme="dark"] {
-    --flame:#FF6B3D;--ember:#FFA561;--cream:#1C1C1C;--paper:#0F0F0F;
+    --flame:#FF6B3D;--ember:#FFA561;--cream:#3A2A1F;--paper:#1F1611;
     --bark:#F5F5F5;--sage:#8FA88B;--moss:#A8C499;--gold:#F5C842;
-    --muted:#9A9A9A;--border:rgba(255,255,255,0.12);--pill:#2A2A2A;--sky:#6BA4E0;
+    --muted:#A89B8E;--border:rgba(245,230,210,0.10);--pill:#2A1F18;--sky:#6BA4E0;
     --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
-    --surface-inverted:#2A2A2A;
+    --surface-inverted:#120C07;
   }
   @media(prefers-color-scheme:dark){
     :root:not([data-theme="light"]):not([data-theme="dark"]){
-      --flame:#FF6B3D;--ember:#FFA561;--cream:#1C1C1C;--paper:#0F0F0F;
+      --flame:#FF6B3D;--ember:#FFA561;--cream:#3A2A1F;--paper:#1F1611;
       --bark:#F5F5F5;--sage:#8FA88B;--moss:#A8C499;--gold:#F5C842;
-      --muted:#9A9A9A;--border:rgba(255,255,255,0.12);--pill:#2A2A2A;--sky:#6BA4E0;
+      --muted:#A89B8E;--border:rgba(245,230,210,0.10);--pill:#2A1F18;--sky:#6BA4E0;
       --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
-      --surface-inverted:#2A2A2A;
+      --surface-inverted:#120C07;
     }
   }
 
