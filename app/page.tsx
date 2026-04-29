@@ -1005,9 +1005,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
                 <div style={{display:"flex",gap:0}}>
                   {[["Calories",recipe.macros.calories,"kcal",C.flame],["Protein",recipe.macros.protein,"g",C.sky],["Carbs",recipe.macros.carbs,"g",C.gold],["Fat",recipe.macros.fat,"g",C.ember],["Fiber",recipe.macros.fiber,"g",C.sage]].map(([label,val,unit,color],i,arr)=>(
                     <div key={label} style={{flex:1,textAlign:"center",borderRight:i<arr.length-1?`1px solid ${C.border}`:"none",padding:"0 4px"}}>
-                      <div style={{fontWeight:900,fontSize:18,color:C.bark,lineHeight:1}}>{val}</div>
-                      <div style={{fontSize:9,color:C.muted,marginTop:3}}>{unit}</div>
-                      <div style={{fontSize:9,fontWeight:700,color,textTransform:"uppercase",letterSpacing:".05em",marginTop:2}}>{label}</div>
+                      <div style={{lineHeight:1}}><span style={{fontWeight:900,fontSize:18,color:C.bark}}>{val}</span><span style={{fontSize:10,fontWeight:600,color:C.muted,marginLeft:1}}>{unit}</span></div>
+                      <div style={{fontSize:9,fontWeight:700,color,textTransform:"uppercase",letterSpacing:".05em",marginTop:4}}>{label}</div>
                       <div style={{height:2,borderRadius:99,background:color,margin:"6px 8px 0",opacity:.4}}/>
                     </div>
                   ))}
