@@ -11,6 +11,7 @@ const C = {
   bark:"var(--bark)",   sage:"var(--sage)",   moss:"var(--moss)",   gold:"var(--gold)",
   muted:"var(--muted)", border:"var(--border)",pill:"var(--pill)",  sky:"var(--sky)",
   plum:"var(--plum)",   rose:"var(--rose)",   dark:"var(--dark)",
+  surface_inverted:"var(--surface-inverted)",
 };
 // Helper: apply alpha to a CSS variable color. Converts 2-digit hex alpha (00-FF) to percentage.
 // Usage: a(C.flame, '18') → "color-mix(in srgb, var(--flame) 9.4%, transparent)"
@@ -28,12 +29,14 @@ const CSS = `
     --bark:#1A1A1A;--sage:#5C7A4E;--moss:#8BAF78;--gold:#F5C842;
     --muted:#757575;--border:#E5E5E5;--pill:#F0F0F0;--sky:#4A90D9;
     --plum:#9B5DE5;--rose:#E05C7A;--dark:#111118;
+    --surface-inverted:#1A1A1A;
   }
   [data-theme="dark"] {
     --flame:#FF6B3D;--ember:#FFA561;--cream:#1C1C1C;--paper:#0F0F0F;
     --bark:#F5F5F5;--sage:#8FA88B;--moss:#A8C499;--gold:#F5C842;
     --muted:#9A9A9A;--border:rgba(255,255,255,0.12);--pill:#2A2A2A;--sky:#6BA4E0;
     --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
+    --surface-inverted:#2A2A2A;
   }
   @media(prefers-color-scheme:dark){
     :root:not([data-theme="light"]):not([data-theme="dark"]){
@@ -41,6 +44,7 @@ const CSS = `
       --bark:#F5F5F5;--sage:#8FA88B;--moss:#A8C499;--gold:#F5C842;
       --muted:#9A9A9A;--border:rgba(255,255,255,0.12);--pill:#2A2A2A;--sky:#6BA4E0;
       --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
+      --surface-inverted:#2A2A2A;
     }
   }
 
