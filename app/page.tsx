@@ -17,13 +17,29 @@ const BF = "'Source Serif 4',Georgia,serif";
 const CSS = `
   html, body { width: 100%; overflow-x: hidden; }
   #__next { width: 100%; }
-  :root{--bg-page:#FAFAFA;--bg-card:#FFFFFF;--bg-pill:#F0F0F0;--bg-border:#E5E5E5;--text-primary:#1A1A1A;--text-muted:#757575;--accent:#FF4D1C}
-  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg-page:#1A0F08;--bg-card:#2A1A0E;--bg-pill:#2A1E15;--bg-border:#3A2A1A;--text-primary:#FFF8F0;--text-muted:#9E8C7E;--accent:#FF4D1C}}
-  [data-theme="dark"]{--bg-page:#1A0F08;--bg-card:#2A1A0E;--bg-pill:#2A1E15;--bg-border:#3A2A1A;--text-primary:#FFF8F0;--text-muted:#9E8C7E;--accent:#FF4D1C}
-  [data-theme="light"]{--bg-page:#FAFAFA;--bg-card:#FFFFFF;--bg-pill:#F0F0F0;--bg-border:#E5E5E5;--text-primary:#1A1A1A;--text-muted:#757575;--accent:#FF4D1C}
+  :root, [data-theme="light"] {
+    --flame:#FF4D1C;--ember:#FF8C42;--cream:#FFFFFF;--paper:#FAFAFA;
+    --bark:#1A1A1A;--sage:#5C7A4E;--moss:#8BAF78;--gold:#F5C842;
+    --muted:#757575;--border:#E5E5E5;--pill:#F0F0F0;--sky:#4A90D9;
+    --plum:#9B5DE5;--rose:#E05C7A;--dark:#111118;
+  }
+  [data-theme="dark"] {
+    --flame:#FF6B3D;--ember:#FFA561;--cream:#1C1C1C;--paper:#0F0F0F;
+    --bark:#F5F5F5;--sage:#8FA88B;--moss:#A8C499;--gold:#F5C842;
+    --muted:#9A9A9A;--border:rgba(255,255,255,0.12);--pill:#2A2A2A;--sky:#6BA4E0;
+    --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
+  }
+  @media(prefers-color-scheme:dark){
+    :root:not([data-theme="light"]):not([data-theme="dark"]){
+      --flame:#FF6B3D;--ember:#FFA561;--cream:#1C1C1C;--paper:#0F0F0F;
+      --bark:#F5F5F5;--sage:#8FA88B;--moss:#A8C499;--gold:#F5C842;
+      --muted:#9A9A9A;--border:rgba(255,255,255,0.12);--pill:#2A2A2A;--sky:#6BA4E0;
+      --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
+    }
+  }
 
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600;700&display=swap');
-  *,*::before,*::after{box-sizing:border-box} body{margin:0;background:var(--bg-page,${C.paper});font-family:${BF}}
+  *,*::before,*::after{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--bark);font-family:${BF}}
   ::-webkit-scrollbar{display:none}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes pop{0%,100%{transform:scale(1)}45%{transform:scale(1.42)}}

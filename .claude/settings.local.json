@@ -13,7 +13,8 @@
       "Bash(curl -s \"https://mise-en-place-5qor.vercel.app/auth/callback?code=test&type=recovery\" -I)",
       "Bash(git tag:*)",
       "Bash(git checkout:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(grep -oE '\\(color|background|borderColor|border\\):[^,}]*\"#[0-9a-fA-F]{3,8}\"' /Users/axelblitzman/Desktop/mise-en-place/app/page.tsx)"
     ]
   }
 }
