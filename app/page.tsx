@@ -5123,7 +5123,7 @@ export default function App(){
               display:"flex",alignItems:"center",gap:10,cursor:"pointer",
               opacity:showRadialMenu?1:0,
               transform:showRadialMenu?`translate(0px, ${b.y}px) scale(1)`:"translate(40px, 40px) scale(0.3)",
-              transition:`all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) ${showRadialMenu?b.delay:(arr.length-1-i)*25}ms`,
+              transition:`all ${showRadialMenu?"0.24s":"0.32s"} cubic-bezier(0.34, 1.56, 0.64, 1) ${showRadialMenu?b.delay:(arr.length-1-i)*45}ms`,
               willChange:"transform, opacity",
               pointerEvents:showRadialMenu?"auto":"none",
             }}>
@@ -5174,7 +5174,7 @@ export default function App(){
               display:"flex",alignItems:"center",justifyContent:"center",
               boxShadow:"0 4px 16px rgba(255,77,28,0.4)",
               transform:`translateZ(0) rotate(${showRadialMenu?135:0}deg) scale(${showRadialMenu?1.05:1})`,
-              transition:"transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              transition:`transform ${showRadialMenu?"0.24s":"0.32s"} cubic-bezier(0.34, 1.56, 0.64, 1)`,
               flexShrink:0,
               pointerEvents:"auto",
             }}>
