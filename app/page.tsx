@@ -976,7 +976,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
       )}
       {!recipe.photo&&<div style={{position:"relative",height:80,overflow:"hidden"}}><div style={{position:"absolute",top:-10,right:10,fontSize:108,opacity:.08,lineHeight:1}}>{recipe.emoji}</div></div>}
       {/* Floating action buttons — centered to content column */}
-      <div style={{position:"fixed",top:14,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:440,zIndex:90,display:"flex",justifyContent:"space-between",padding:"0 14px",pointerEvents:"none"}}>
+      <div style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:440,zIndex:90,display:"flex",justifyContent:"space-between",padding:"0 14px",pointerEvents:"none"}}>
         <button onClick={onBack} aria-label="Close" style={{width:38,height:38,borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.15)",pointerEvents:"auto"}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
