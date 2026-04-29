@@ -82,7 +82,7 @@ const BASE_RANKS = [
   {title:"Legend",        icon:"", color:"#1A237E", minDishes:2000},
 ];
 
-function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uploadAvatar}){
+function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uploadAvatar, saveProfileField}){
   const [username, setUsername] = React.useState(profile?.username||"");
   const [checking, setChecking] = React.useState(false);
   const [available, setAvailable] = React.useState(null);
@@ -111,13 +111,18 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
   };
 
   const handleSave = async() => {
-    if(!user?.id||!supabase)return;
+    if(!user?.id)return;
     setSaving(true);
-    const updates = {updated_at:new Date().toISOString()};
+    const updates: any = {};
     if(username && username !== profile?.username && available===true){
       updates.username = username.toLowerCase().trim();
     }
-    try{await supabase.from("profiles").upsert({id:user.id,...updates},{onConflict:"id"});onProfileUpdate({...profile,...updates});setSaved(true);}catch(e){console.error('profile save failed',e);}finally{setSaving(false);}
+    if(Object.keys(updates).length===0){setSaving(false);return;}
+    try{
+      await saveProfileField(user.id, updates);
+      onProfileUpdate({...profile,...updates});
+      setSaved(true);
+    }catch(e){console.error('profile save failed',e);}finally{setSaving(false);}
     setTimeout(()=>setSaved(false),2500);
   };
 
@@ -4434,7 +4439,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="account") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate} uploadAvatar={uploadAvatar}/>
+        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate} uploadAvatar={uploadAvatar} saveProfileField={saveProfileField}/>
       </div>
     </Sheet>
   );
