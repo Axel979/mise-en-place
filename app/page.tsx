@@ -4540,6 +4540,7 @@ export default function App(){
   const [showCreate,   setShowCreate]   = useState(false);
   const [libraryInitTab, setLibraryInitTab] = useState(null);
   const [showQuickLog, setShowQuickLog] = useState(false);
+  const [showRadialMenu, setShowRadialMenu] = useState(false);
   const [showFollowers,setShowFollowers]=useState(false);
   const [profileSheetUserId,setProfileSheetUserId]=useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -5097,23 +5098,90 @@ export default function App(){
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
-        {!detailRecipe&&<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,background:C.cream,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 12px",zIndex:50}}>
-          {TABS.map(t=>{
-            const active=tab===t.id;const col=active?C.flame:"#B0A09A";
-            return(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 0",fontFamily:"inherit"}}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  {t.id==="home"&&<><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
-                  {t.id==="recipes"&&<path d="M4 6h16M4 12h16M4 18h10"/>}
-                  {t.id==="feed"&&<><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></>}
-                  {t.id==="library"&&<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>}
-                </svg>
-                <div style={{fontSize:9,fontWeight:800,letterSpacing:".06em",textTransform:"uppercase",color:col}}>{t.label}</div>
-                {active&&<div style={{width:16,height:2,borderRadius:99,background:C.flame,marginTop:1}}/>}
-              </button>
-            );
-          })}
-        </div>}
+        {/* ── Floating nav + radial menu ────────────────────────── */}
+        {!detailRecipe&&<>
+          {/* Backdrop overlay */}
+          <div onClick={()=>setShowRadialMenu(false)} style={{
+            position:"fixed",inset:0,zIndex:5,
+            background:showRadialMenu?"rgba(59,42,26,0.35)":"rgba(0,0,0,0)",
+            backdropFilter:showRadialMenu?"blur(2px)":"blur(0px)",
+            WebkitBackdropFilter:showRadialMenu?"blur(2px)":"blur(0px)",
+            pointerEvents:showRadialMenu?"auto":"none",
+            transition:"background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease",
+          }}/>
+
+          {/* Radial menu bubbles */}
+          {[
+            {label:"Log a cook",y:-54,delay:0,icon:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,action:()=>{setShowRadialMenu(false);setTimeout(()=>setShowQuickLog(true),80);}},
+            {label:"Add recipe",y:-106,delay:45,icon:<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,action:()=>{setShowRadialMenu(false);setTimeout(()=>setShowCreate(true),80);}},
+            {label:"Grocery list",y:-158,delay:90,icon:<><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></>,action:()=>{setShowRadialMenu(false);setTimeout(()=>setShowGroceryList(true),80);}},
+          ].map((b,i,arr)=>(
+            <div key={b.label} onClick={b.action} style={{
+              position:"fixed",bottom:86,right:22,zIndex:8,
+              display:"flex",alignItems:"center",gap:10,cursor:"pointer",
+              opacity:showRadialMenu?1:0,
+              transform:showRadialMenu?`translate(0px, ${b.y}px) scale(1)`:"translate(40px, 40px) scale(0.3)",
+              transition:`all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) ${showRadialMenu?b.delay:(arr.length-1-i)*35}ms`,
+              pointerEvents:showRadialMenu?"auto":"none",
+            }}>
+              <div style={{background:"#FFF8F0",borderRadius:999,padding:"7px 13px",fontSize:12,fontWeight:500,color:C.bark,whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{b.label}</div>
+              <div style={{width:38,height:38,borderRadius:"50%",background:"#FFF8F0",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(0,0,0,0.18)",flexShrink:0}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{b.icon}</svg>
+              </div>
+            </div>
+          ))}
+
+          {/* Floating nav container */}
+          <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:420,display:"flex",alignItems:"flex-end",gap:10,zIndex:9,pointerEvents:"none"}}>
+            {/* Dark pill with 4 tabs */}
+            <div style={{
+              flex:1,display:"flex",justifyContent:"space-around",alignItems:"center",
+              background:"rgba(59,42,26,0.92)",
+              backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",
+              borderRadius:999,padding:8,
+              boxShadow:"0 4px 20px rgba(0,0,0,0.08)",
+              transform:"translateZ(0)",
+              pointerEvents:"auto",
+            }}>
+              {TABS.map(t=>{
+                const active=tab===t.id;
+                return(
+                  <button key={t.id} onClick={()=>{setTab(t.id);setShowRadialMenu(false);}} style={{
+                    background:active?"rgba(255,248,240,0.18)":"none",
+                    border:"none",borderRadius:999,cursor:"pointer",
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                    padding:"6px 10px",fontFamily:"inherit",
+                    pointerEvents:"auto",
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFF8F0" strokeWidth={active?2:1.5} strokeLinecap="round" strokeLinejoin="round" style={{opacity:active?1:0.6}}>
+                      {t.id==="home"&&<><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
+                      {t.id==="recipes"&&<path d="M4 6h16M4 12h16M4 18h10"/>}
+                      {t.id==="feed"&&<><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></>}
+                      {t.id==="library"&&<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>}
+                    </svg>
+                    <div style={{fontSize:9,fontWeight:active?500:400,letterSpacing:".06em",textTransform:"uppercase",color:"#FFF8F0",opacity:active?1:0.6}}>{t.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* + button */}
+            <button onClick={()=>setShowRadialMenu(v=>!v)} style={{
+              width:50,height:50,borderRadius:"50%",border:"none",
+              background:C.flame,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              boxShadow:"0 4px 16px rgba(255,77,28,0.4)",
+              transform:`translateZ(0) rotate(${showRadialMenu?135:0}deg) scale(${showRadialMenu?1.05:1})`,
+              transition:"transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              flexShrink:0,
+              pointerEvents:"auto",
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFF8F0" strokeWidth="2" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </>}
       </div>
 
       {showGoal&&<GoalPicker goal={goal} onSelect={g=>{setGoal(g);setShowGoal(false);}} onClose={()=>setShowGoal(false)}/>}
