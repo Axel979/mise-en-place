@@ -4734,19 +4734,17 @@ export default function App(){
 
       // Mark hydrated on next tick so save effects don't fire on initial load
       setTimeout(()=>{hydratedRef.current=true;},0);
-      // Load user's personal recipes from Supabase
+      // Load user's personal recipes from Supabase (authoritative — replaces localStorage cache)
       loadUserRecipes().then(userRecipes=>{
-        if(userRecipes.length>0){
-          setAllRecipes(current=>{
-            const ids=new Set(current.map(r=>r._supabaseId||r.id));
-            const fresh=userRecipes.filter(r=>!ids.has(r._supabaseId));
-            return [...fresh,...current.filter(r=>!r.isPersonal)];
-          });
-          try{
-            const del=getDeletedIds();const personal=userRecipes.filter(r=>(r.isCustom||r.isPersonal)&&!del.has(String(r.id)));
-            if(personal.length>0) localStorage.setItem('mep_userRecipes',JSON.stringify(personal));
-          }catch{}
-        }
+        setAllRecipes(current=>{
+          const builtIns=current.filter(r=>!r.isPersonal);
+          return [...userRecipes,...builtIns];
+        });
+        try{
+          const del=getDeletedIds();
+          const personal=userRecipes.filter(r=>(r.isCustom||r.isPersonal)&&!del.has(String(r.id)));
+          localStorage.setItem('mep_userRecipes',JSON.stringify(personal));
+        }catch{}
       }).catch(e=>console.error('loadUserRecipes failed',e));
       // Load real feed
       loadFeed().then(feedItems=>{
