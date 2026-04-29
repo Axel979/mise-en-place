@@ -795,7 +795,7 @@ function Onboarding({onComplete}){
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
         </IconBox>
         <div style={{fontWeight:900,fontSize:28,color:C.bark,fontFamily:DF,marginBottom:12}}>You're all set!</div>
-        <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"20px",marginBottom:24,color:"#fff",textAlign:"left"}}>
+        <div style={{background:`${C.bark}`,borderRadius:20,padding:"20px",marginBottom:24,color:"#fff",textAlign:"left"}}>
           {[["Goal",goal.label],["Skill level",skill],["Starting rank","Prep Hand"]].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
               <span style={{fontSize:13,opacity:.6}}>{k}</span>
@@ -1069,7 +1069,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
               <div><div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Dish complete!</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Add it to your cook library and share it</div></div>
               <CloseBtn onClose={handleSkip}/>
             </div>
-            <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center"}}>
+            <div style={{background:`${C.bark}`,borderRadius:18,padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center"}}>
               <AvatarIcon username={recipe.name} size={44} fontSize={18}/>
               <div><div style={{fontWeight:900,fontSize:16,color:"#fff"}}>{recipe.name}</div><div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginTop:2}}>+{recipe.xp} 🔥 Heat earned</div></div>
             </div>
@@ -1199,7 +1199,7 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
     <div style={{paddingBottom:100}} onClick={()=>{if(jiggleMode)setJiggleMode(false);}}>
 
       {/* ── Hero bubble ─────────────────────────────────────────── */}
-      <div style={{margin:"4px 16px 14px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:22,padding:"18px 18px 16px",color:"#fff",position:"relative",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.12)"}}>
+      <div style={{margin:"4px 16px 14px",background:`${C.bark}`,borderRadius:22,padding:"18px 18px 16px",color:"#fff",position:"relative",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.12)"}}>
         <div style={{fontWeight:900,fontSize:21,fontFamily:DF,marginBottom:14}}>Cook Library</div>
         <div style={{display:"flex",gap:8}}>
           <StatBubble label="Cooked" value={totalCooked} active={libTab==="cooked"} onClick={()=>setLibTab("cooked")}/>
@@ -1885,7 +1885,7 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
     <div style={{paddingBottom:32}}>
 
       {/* ── Stats hero ───────────────────────────────────────────── */}
-      <div style={{margin:"0 16px 16px",position:"relative",background:`linear-gradient(145deg,${C.bark} 0%,#3D2010 100%)`,borderRadius:24,padding:"18px 18px 14px",overflow:"hidden",color:"#fff",boxShadow:"0 4px 24px rgba(0,0,0,.18)"}}>
+      <div style={{margin:"0 16px 16px",position:"relative",background:`${C.bark}`,borderRadius:24,padding:"18px 18px 14px",overflow:"hidden",color:"#fff",boxShadow:"0 4px 24px rgba(0,0,0,.18)"}}>
         {/* Top row: goal progress */}
         <div style={{marginBottom:10}}>
           <div style={{fontSize:10,fontWeight:700,opacity:.45,textTransform:"uppercase",letterSpacing:".12em",marginBottom:3}}>{goal.label}</div>
@@ -2697,7 +2697,7 @@ function QuickLogSheet({onLog, onClose, goal, cookedDays}){
           <CloseBtn onClose={onClose}/>
         </div>
 
-        <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"18px 20px",marginBottom:18,color:"#fff"}}>
+        <div style={{background:`${C.bark}`,borderRadius:18,padding:"18px 20px",marginBottom:18,color:"#fff"}}>
           <div style={{fontSize:11,opacity:.6,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>This Week</div>
           <div style={{fontSize:36,fontWeight:900,fontFamily:DF}}>{weekDone}/{goal.target} {goal.icon}</div>
           <div style={{fontSize:13,opacity:.7,marginTop:4}}>
@@ -2752,7 +2752,7 @@ function CookTogetherSheet({recipe, onClose}){
 
         {!started?(
           <>
-            <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:18,padding:"16px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center",color:"#fff"}}>
+            <div style={{background:`${C.bark}`,borderRadius:18,padding:"16px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center",color:"#fff"}}>
               <span style={{fontSize:36}}>{recipe?.emoji||""}</span>
               <div>
                 <div style={{fontWeight:900,fontSize:16}}>{recipe?.name||"Select a recipe"}</div>
@@ -3504,7 +3504,7 @@ function WeeklyRecapSheet({cookedDays, xp, weeklyXp, levelInfo, posts, earnedBad
           <CloseBtn onClose={onClose}/>
         </div>
 
-        <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"24px",marginBottom:14,color:"#fff"}}>
+        <div style={{background:`${C.bark}`,borderRadius:20,padding:"24px",marginBottom:14,color:"#fff"}}>
           <div style={{fontSize:11,opacity:.6,textTransform:"uppercase",letterSpacing:".1em",marginBottom:12}}>This Week</div>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:18}}>
             {[["",weekDone,"Days cooked"],["🔥",weeklyXp,"Heat earned"],["📈",levelInfo.current.level,levelInfo.current.title]].map(([icon,val,label])=>(
@@ -3638,7 +3638,7 @@ function YearInReviewSheet({cookLog,xp,levelInfo,earnedBadges,allRecipes,onClose
           <CloseBtn onClose={onClose}/>
         </div>
 
-        <div style={{background:`linear-gradient(135deg,${C.bark},#5C3A20)`,borderRadius:20,padding:"24px 20px",color:"#fff",marginBottom:16}}>
+        <div style={{background:`${C.bark}`,borderRadius:20,padding:"24px 20px",color:"#fff",marginBottom:16}}>
           <div style={{fontSize:11,opacity:.5,textTransform:"uppercase",letterSpacing:".1em",marginBottom:16}}>{year} Summary</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
             {[["",totalCooked,"Dishes Cooked"],["🔥",totalHeat,"Total Heat Earned"],["🌍",cuisines.length,"Cuisines Explored"],["🏅",earnedBadges.length,"Badges Earned"]].map(([icon,val,label])=>(
@@ -4058,7 +4058,7 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
   return(
     <div>
       {/* Profile card */}
-      <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px",marginBottom:20,position:"relative",overflow:"hidden"}}>
+      <div style={{background:`${C.bark}`,borderRadius:20,padding:"18px",marginBottom:20,position:"relative",overflow:"hidden"}}>
         <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
           <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={54} fontSize={22}/>
           <div style={{flex:1,minWidth:0}}>
@@ -4128,7 +4128,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
     <div style={{paddingBottom:100}}>
 
       {/* Hero */}
-      <div style={{background:`linear-gradient(160deg,${C.bark},#3D2010)`,padding:"24px 20px 28px",position:"relative",overflow:"hidden"}}>
+      <div style={{background:`${C.bark}`,padding:"24px 20px 28px",position:"relative",overflow:"hidden"}}>
 
         {/* Settings button */}
         <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
@@ -4366,7 +4366,7 @@ class AppErrorBoundary extends React.Component {
           <div style={{width:64,height:64,borderRadius:20,background:"#E05C7A15",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20}}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E05C7A" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
-          <div style={{fontWeight:900,fontSize:20,color:"#3D2010",marginBottom:8,textAlign:"center"}}>Something went wrong</div>
+          <div style={{fontWeight:900,fontSize:20,color:C.bark,marginBottom:8,textAlign:"center"}}>Something went wrong</div>
           <div style={{fontSize:14,color:"#8A7060",marginBottom:28,textAlign:"center",lineHeight:1.6,maxWidth:280}}>Don't worry — your cooking streak is safe. Tap below to reload.</div>
           <button onClick={()=>window.location.reload()} style={{background:"#E05C7A",border:"none",borderRadius:14,padding:"13px 32px",color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer"}}>Reload App</button>
           <div style={{marginTop:16,fontSize:11,color:"#B0A090",fontFamily:"monospace",maxWidth:300,textAlign:"center",wordBreak:"break-word"}}>{this.state.error?.message}</div>
@@ -4442,7 +4442,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
         </div>
 
         {/* Account info card */}
-        <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:16,padding:"14px 16px",marginBottom:22,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{background:`${C.bark}`,borderRadius:16,padding:"14px 16px",marginBottom:22,display:"flex",alignItems:"center",gap:12}}>
           <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={42} fontSize={17}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:800,fontSize:15,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.username||user?.email?.split("@")[0]||"Chef"}</div>
