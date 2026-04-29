@@ -23,9 +23,10 @@ function getAuthToken(): string | null {
 
 // ── Design tokens ─────────────────────────────────────────────
 const C = {
-  flame: '#FF4D1C', bark: '#3B2A1A', cream: '#FFF8F0', paper: '#FAF4EE',
-  muted: '#9E8C7E', gold: '#F5C842', sage: '#5C7A4E', border: '#EEE5DC',
+  flame: 'var(--flame)', bark: 'var(--bark)', cream: 'var(--cream)', paper: 'var(--paper)',
+  muted: 'var(--muted)', gold: 'var(--gold)', sage: 'var(--sage)', border: 'var(--border)',
 };
+const a=(v:string,h:string)=>`color-mix(in srgb, ${v} ${Math.round(parseInt(h,16)/255*100)}%, transparent)`;
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
 
@@ -186,12 +187,7 @@ const STEP_NAMES = ['username', 'goal', 'dietary', 'skill'] as const;
 function TypingIndicator() {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 12 }} aria-label="Assistant is typing">
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${C.flame}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {/* TODO: Mascot slot — swap SVG for animated mascot component when ready */}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={C.flame} strokeWidth="1.5" opacity=".6" />
-        </svg>
-      </div>
+      <img src="/lemon.png" alt="Lemon" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
       <div style={{ background: C.cream, borderRadius: '16px 16px 16px 4px', padding: '12px 16px', display: 'flex', gap: 4 }}>
         {[0, 1, 2].map((i) => (
           <div
@@ -210,12 +206,7 @@ function TypingIndicator() {
 function AppBubble({ text, animate }: { text: string; animate: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 12, animation: animate ? 'bubbleIn .3s ease-out both' : 'none' }}>
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${C.flame}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {/* TODO: Mascot slot — swap SVG for animated mascot component when ready */}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={C.flame} strokeWidth="1.5" opacity=".6" />
-        </svg>
-      </div>
+      <img src="/lemon.png" alt="Lemon" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
       <div style={{ background: C.cream, color: C.bark, borderRadius: '16px 16px 16px 4px', padding: '12px 16px', maxWidth: '75%', fontSize: 15, lineHeight: 1.55, fontFamily: BF, whiteSpace: 'pre-line' }}>
         {text}
       </div>
@@ -645,7 +636,7 @@ function OnboardingFlowInner({ userId, onComplete }: OnboardingFlowProps) {
 
       {/* Finalize error with retry */}
       {finalizeError && (
-        <div style={{ flexShrink: 0, borderTop: `1px solid ${C.border}`, background: '#fff', padding: '16px', maxWidth: 480, width: '100%', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ flexShrink: 0, borderTop: `1px solid ${C.border}`, background: C.cream, padding: '16px', maxWidth: 480, width: '100%', margin: '0 auto', textAlign: 'center' }}>
           <div role="alert" style={{ color: C.flame, fontSize: 14, fontFamily: BF, marginBottom: 12 }}>
             {finalizeError}
           </div>
@@ -661,7 +652,7 @@ function OnboardingFlowInner({ userId, onComplete }: OnboardingFlowProps) {
 
       {/* Bottom input/options area */}
       {showOptions && !completing && (
-        <div style={{ flexShrink: 0, borderTop: `1px solid ${C.border}`, background: '#fff', padding: '16px', maxWidth: 480, width: '100%', margin: '0 auto' }}>
+        <div style={{ flexShrink: 0, padding: '16px 24px 32px', maxWidth: 480, width: '100%', margin: '0 auto' }}>
 
           {step === 0 && (
             <StepUsername

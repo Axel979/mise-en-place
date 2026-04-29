@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 
 const C = {
-  flame: '#FF4D1C', bark: '#3B2A1A', cream: '#FFF8F0',
-  muted: '#9E8C7E', border: '#EEE5DC',
+  flame: 'var(--flame)', bark: 'var(--bark)', cream: 'var(--cream)',
+  muted: 'var(--muted)', border: 'var(--border)',
 };
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
@@ -77,7 +77,7 @@ export default function StepDietary({ onAnswer, onSkip }: StepDietaryProps) {
               style={{
                 padding: '9px 16px',
                 borderRadius: 99,
-                border: `1.5px solid ${isSelected ? 'transparent' : C.muted}`,
+                border: `1px solid ${isSelected ? 'transparent' : C.border}`,
                 background: isSelected ? C.flame : C.cream,
                 color: isSelected ? '#fff' : C.bark,
                 fontWeight: 600,
@@ -100,16 +100,18 @@ export default function StepDietary({ onAnswer, onSkip }: StepDietaryProps) {
           aria-label="Continue with dietary selections"
           style={{
             width: '100%',
-            padding: '14px',
+            padding: '14px 20px',
             borderRadius: 14,
             border: 'none',
             background: C.flame,
             color: '#fff',
-            fontWeight: 700,
-            fontSize: 15,
-            fontFamily: DF,
+            fontWeight: 800,
+            fontSize: 14,
+            fontFamily: 'inherit',
             cursor: 'pointer',
             marginBottom: 8,
+            boxShadow: `0 4px 14px ${C.flame}44`,
+            transition: 'all .18s',
           }}
         >
           Continue

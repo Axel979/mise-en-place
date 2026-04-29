@@ -2,8 +2,8 @@
 import React from 'react';
 
 const C = {
-  flame: '#FF4D1C', bark: '#3B2A1A', cream: '#FFF8F0',
-  muted: '#9E8C7E', border: '#EEE5DC',
+  flame: 'var(--flame)', bark: 'var(--bark)', cream: 'var(--cream)',
+  muted: 'var(--muted)', border: 'var(--border)',
 };
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
@@ -32,12 +32,12 @@ export default function StepGoal({ onAnswer, onSkip }: StepGoalProps) {
             aria-label={opt.label}
             style={{
               width: '100%',
-              padding: '13px 16px',
+              padding: '15px 18px',
               borderRadius: 14,
-              border: `1.5px solid ${C.border}`,
+              border: `1px solid ${C.border}`,
               background: C.cream,
               color: C.bark,
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: 15,
               fontFamily: BF,
               cursor: 'pointer',
