@@ -32,12 +32,12 @@ export default function StepGoal({ onAnswer, onSkip }: StepGoalProps) {
             aria-label={opt.label}
             style={{
               width: '100%',
-              padding: '13px 16px',
+              padding: '15px 18px',
               borderRadius: 14,
-              border: `1.5px solid ${C.border}`,
+              border: `1px solid ${C.border}`,
               background: C.cream,
               color: C.bark,
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: 15,
               fontFamily: BF,
               cursor: 'pointer',

@@ -44,70 +44,51 @@ export default function StepUsername({
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && canSubmit && !usernameSubmitLoading) {
-              handleSubmit();
-            }
-          }}
-          placeholder="Pick a username"
-          autoFocus
-          maxLength={20}
-          aria-label="Username"
-          aria-describedby={showError ? 'username-error' : undefined}
-          aria-invalid={!!showError}
-          style={{
-            flex: 1,
-            padding: '13px 16px',
-            borderRadius: 14,
-            border: `1.5px solid ${borderColor}`,
-            background: C.paper,
-            fontSize: 15,
-            color: C.bark,
-            outline: 'none',
-            fontFamily: BF,
-          }}
-        />
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && canSubmit && !usernameSubmitLoading) {
+            handleSubmit();
+          }
+        }}
+        placeholder="Pick a username"
+        autoFocus
+        maxLength={20}
+        aria-label="Username"
+        aria-describedby={showError ? 'username-error' : undefined}
+        aria-invalid={!!showError}
+        style={{
+          width: '100%',
+          padding: '16px 18px',
+          borderRadius: 14,
+          border: `1px solid ${showError ? C.flame : C.border}`,
+          background: C.cream,
+          fontSize: 17,
+          color: C.bark,
+          outline: 'none',
+          fontFamily: BF,
+          marginBottom: 8,
+        }}
+      />
 
-        {/* Status indicator */}
-        {isChecking && (
-          <div
-            style={{ alignSelf: 'center', fontSize: 12, color: C.muted }}
-            aria-label="Checking availability"
-          >
-            {/* Spinner */}
-            <svg width="20" height="20" viewBox="0 0 20 20" style={{ animation: 'spin 0.8s linear infinite' }}>
-              <circle cx="10" cy="10" r="8" fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="40 20" strokeLinecap="round" />
-            </svg>
-          </div>
-        )}
-        {!isChecking && status === 'available' && (
-          <div style={{ alignSelf: 'center' }} aria-label="Username available">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-        )}
-        {!isChecking && (status === 'taken' || status === 'reserved' || status === 'error') && (
-          <div style={{ alignSelf: 'center' }} aria-label="Username unavailable">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2.5">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </div>
-        )}
-      </div>
-
+      {/* Validation feedback */}
+      {isChecking && (
+        <div style={{ fontSize: 13, color: C.muted, paddingLeft: 4, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 20 20" style={{ animation: 'spin 0.8s linear infinite' }}>
+            <circle cx="10" cy="10" r="8" fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="40 20" strokeLinecap="round" />
+          </svg>
+          Checking...
+        </div>
+      )}
+      {!isChecking && status === 'available' && input.length >= 3 && (
+        <div style={{ fontSize: 13, color: C.sage, paddingLeft: 4, marginBottom: 8 }}>
+          Username available
+        </div>
+      )}
       {showError && (
-        <div
-          id="username-error"
-          role="alert"
-          style={{ fontSize: 13, color: C.flame, marginBottom: 8, paddingLeft: 4 }}
-        >
+        <div id="username-error" role="alert" style={{ fontSize: 13, color: C.flame, marginBottom: 8, paddingLeft: 4 }}>
           {showError}
         </div>
       )}
@@ -118,16 +99,18 @@ export default function StepUsername({
         aria-label={buttonLabel}
         style={{
           width: '100%',
-          padding: '14px',
+          padding: '14px 20px',
           borderRadius: 14,
           border: 'none',
-          background: buttonDisabled ? '#D8D0C8' : C.flame,
+          background: buttonDisabled ? C.pill : C.flame,
           color: '#fff',
-          fontWeight: 700,
-          fontSize: 15,
-          fontFamily: DF,
+          fontWeight: 800,
+          fontSize: 14,
+          fontFamily: 'inherit',
           cursor: buttonDisabled ? 'not-allowed' : 'pointer',
-          transition: 'background .18s',
+          opacity: buttonDisabled ? 0.55 : 1,
+          boxShadow: buttonDisabled ? 'none' : `0 4px 14px ${C.flame}44`,
+          transition: 'all .18s',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

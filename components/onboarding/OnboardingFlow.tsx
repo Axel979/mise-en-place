@@ -652,7 +652,7 @@ function OnboardingFlowInner({ userId, onComplete }: OnboardingFlowProps) {
 
       {/* Bottom input/options area */}
       {showOptions && !completing && (
-        <div style={{ flexShrink: 0, borderTop: `1px solid ${C.border}`, background: C.cream, padding: '16px', maxWidth: 480, width: '100%', margin: '0 auto' }}>
+        <div style={{ flexShrink: 0, padding: '16px 24px 32px', maxWidth: 480, width: '100%', margin: '0 auto' }}>
 
           {step === 0 && (
             <StepUsername
