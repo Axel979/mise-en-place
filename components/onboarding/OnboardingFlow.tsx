@@ -23,9 +23,10 @@ function getAuthToken(): string | null {
 
 // ── Design tokens ─────────────────────────────────────────────
 const C = {
-  flame: '#FF4D1C', bark: '#1A1A1A', cream: '#FFFFFF', paper: '#FAFAFA',
-  muted: '#757575', gold: '#F5C842', sage: '#5C7A4E', border: '#E5E5E5',
+  flame: 'var(--flame)', bark: 'var(--bark)', cream: 'var(--cream)', paper: 'var(--paper)',
+  muted: 'var(--muted)', gold: 'var(--gold)', sage: 'var(--sage)', border: 'var(--border)',
 };
+const a=(v:string,h:string)=>`color-mix(in srgb, ${v} ${Math.round(parseInt(h,16)/255*100)}%, transparent)`;
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
 
@@ -186,7 +187,7 @@ const STEP_NAMES = ['username', 'goal', 'dietary', 'skill'] as const;
 function TypingIndicator() {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 12 }} aria-label="Assistant is typing">
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${C.flame}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${a(C.flame,'10')}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {/* TODO: Mascot slot — swap SVG for animated mascot component when ready */}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={C.flame} strokeWidth="1.5" opacity=".6" />
@@ -210,7 +211,7 @@ function TypingIndicator() {
 function AppBubble({ text, animate }: { text: string; animate: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 12, animation: animate ? 'bubbleIn .3s ease-out both' : 'none' }}>
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${C.flame}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${a(C.flame,'10')}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {/* TODO: Mascot slot — swap SVG for animated mascot component when ready */}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={C.flame} strokeWidth="1.5" opacity=".6" />

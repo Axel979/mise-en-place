@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 
 const C = {
-  flame: '#FF4D1C', bark: '#1A1A1A', cream: '#FFFFFF',
-  muted: '#757575', border: '#E5E5E5',
+  flame: 'var(--flame)', bark: 'var(--bark)', cream: 'var(--cream)',
+  muted: 'var(--muted)', border: 'var(--border)',
 };
 const DF = "'Playfair Display',Georgia,serif";
 const BF = "'Source Serif 4',Georgia,serif";
