@@ -3020,21 +3020,33 @@ function UserProfileSheet({userId,currentUserId,loadProfileById,isFollowing:isFo
   const [followingCount,setFollowingCount]=useState(0);
   const [busy,setBusy]=useState(false);
 
+  const [loadError,setLoadError]=useState(false);
+
   useEffect(()=>{
     let cancelled=false;
+    const timeoutPromise=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Profile load timeout')),10000));
     (async()=>{
-      const [p,f,followers,fwing]=await Promise.all([
-        loadProfileById(userId),
-        userId!==currentUserId?isFollowingFn(userId):Promise.resolve(false),
-        loadFollowersFn(userId),
-        loadFollowingFn(userId),
-      ]);
-      if(cancelled) return;
-      setProf(p);
-      setFollowing(f);
-      setFollowerCount(followers.length);
-      setFollowingCount(fwing.length);
-      setLoading(false);
+      try{
+        const [p,f,followers,fwing]=await Promise.race([
+          Promise.all([
+            loadProfileById(userId),
+            userId!==currentUserId?isFollowingFn(userId):Promise.resolve(false),
+            loadFollowersFn(userId),
+            loadFollowingFn(userId),
+          ]),
+          timeoutPromise,
+        ]) as [any,boolean,any[],any[]];
+        if(cancelled) return;
+        setProf(p);
+        setFollowing(f);
+        setFollowerCount(followers.length);
+        setFollowingCount(fwing.length);
+      }catch(e){
+        console.error('Profile load failed or timed out:',e);
+        if(!cancelled) setLoadError(true);
+      }finally{
+        if(!cancelled) setLoading(false);
+      }
     })();
     return()=>{cancelled=true;};
   },[userId]);
@@ -3053,6 +3065,7 @@ function UserProfileSheet({userId,currentUserId,loadProfileById,isFollowing:isFo
   };
 
   if(loading) return(<Sheet onClose={onClose}><div style={{padding:40,textAlign:'center',color:C.muted}}>Loading…</div></Sheet>);
+  if(loadError) return(<Sheet onClose={onClose}><div style={{padding:40,textAlign:'center',color:C.muted}}>Couldn't load profile. Try again later.</div></Sheet>);
   if(!prof) return(<Sheet onClose={onClose}><div style={{padding:40,textAlign:'center',color:C.muted}}>Profile not found</div></Sheet>);
 
   const isSelf=userId===currentUserId;
