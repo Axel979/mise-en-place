@@ -4539,6 +4539,12 @@ export default function App(){
   const [libraryInitTab, setLibraryInitTab] = useState(null);
   const [showQuickLog, setShowQuickLog] = useState(false);
   const [showRadialMenu, setShowRadialMenu] = useState(false);
+  const [radialAnimating, setRadialAnimating] = useState(false);
+  useEffect(()=>{
+    setRadialAnimating(true);
+    const t=setTimeout(()=>setRadialAnimating(false),400);
+    return ()=>clearTimeout(t);
+  },[showRadialMenu]);
   const [showFollowers,setShowFollowers]=useState(false);
   const [profileSheetUserId,setProfileSheetUserId]=useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -5120,6 +5126,7 @@ export default function App(){
               opacity:showRadialMenu?1:0,
               transform:showRadialMenu?`translate(0px, ${b.y}px) scale(1)`:"translate(40px, 40px) scale(0.3)",
               transition:`all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) ${showRadialMenu?b.delay:(arr.length-1-i)*35}ms`,
+              willChange:radialAnimating?"transform, opacity":"auto",
               pointerEvents:showRadialMenu?"auto":"none",
             }}>
               <div style={{background:"#FFF8F0",borderRadius:999,padding:"7px 13px",fontSize:12,fontWeight:500,color:C.bark,whiteSpace:"nowrap",boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{b.label}</div>
