@@ -977,7 +977,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
       {!recipe.photo&&<div style={{position:"relative",height:80,overflow:"hidden"}}><div style={{position:"absolute",top:-10,right:10,fontSize:108,opacity:.08,lineHeight:1}}>{recipe.emoji}</div></div>}
       <div style={{padding:"28px 20px 0"}}>
         <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:18}}>
-          <button onClick={onBack} style={{position:"fixed",top:16,left:16,zIndex:100,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px"}}>← Back</button>
+          <button onClick={onBack} style={{background:C.pill,border:`1px solid ${C.border}`,borderRadius:10,color:C.bark,cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px"}}>← Back</button>
           {recipe.isPersonal&&<button onClick={()=>setShowEdit(true)} style={{background:C.pill,border:`1px solid ${C.border}`,borderRadius:10,color:C.bark,padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:700}}>Edit</button>}
         </div>
         <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}>
