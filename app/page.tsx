@@ -1200,7 +1200,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
 
       {/* ── Hero bubble ─────────────────────────────────────────── */}
       <div style={{margin:"4px 16px 14px",background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:22,padding:"18px 18px 16px",color:"#fff",position:"relative",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.12)"}}>
-        <div style={{position:"absolute",top:-28,right:-28,width:120,height:120,borderRadius:"50%",border:"24px solid rgba(255,255,255,.05)",pointerEvents:"none"}}/>
         <div style={{fontWeight:900,fontSize:21,fontFamily:DF,marginBottom:14}}>Cook Library</div>
         <div style={{display:"flex",gap:8}}>
           <StatBubble label="Cooked" value={totalCooked} active={libTab==="cooked"} onClick={()=>setLibTab("cooked")}/>
@@ -1887,9 +1886,6 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
 
       {/* ── Stats hero ───────────────────────────────────────────── */}
       <div style={{margin:"0 16px 16px",position:"relative",background:`linear-gradient(145deg,${C.bark} 0%,#3D2010 100%)`,borderRadius:24,padding:"18px 18px 14px",overflow:"hidden",color:"#fff",boxShadow:"0 4px 24px rgba(0,0,0,.18)"}}>
-        {/* Decorative ring */}
-        <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",border:"30px solid rgba(255,255,255,.04)",pointerEvents:"none"}}/>
-
         {/* Top row: goal + edit */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
           <div>
@@ -1960,7 +1956,6 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
         const daysLeft=Math.max(0,Math.ceil((endOfMonth.getTime()-now.getTime())/(1000*60*60*24)));
         return(
           <div onClick={()=>onOpenChallenge&&onOpenChallenge()} className="tap" style={{margin:"0 16px 16px",borderRadius:20,padding:"20px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden",cursor:"pointer"}}>
-            <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",border:"20px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
             <div style={{fontSize:10,fontWeight:700,color:currentChallenge.accent,textTransform:"uppercase",letterSpacing:".15em",opacity:.7,marginBottom:8}}>This month</div>
             <div style={{fontWeight:900,fontSize:24,color:currentChallenge.accent,fontFamily:DF,lineHeight:1.2,marginBottom:8}}>{currentChallenge.theme}</div>
             <div style={{fontSize:13,color:currentChallenge.accent,opacity:.85,lineHeight:1.5,marginBottom:16,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{currentChallenge.description}</div>
@@ -3142,7 +3137,6 @@ function ChallengeDetailSheet({currentChallenge,challengeJoined,onJoinChallenge,
       <div style={{background:C.paper,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,height:"95vh",display:"flex",flexDirection:"column",animation:"slideUp .28s cubic-bezier(.4,0,.2,1)"}}>
         {/* Header */}
         <div style={{borderRadius:"24px 24px 0 0",padding:"20px 20px 16px",background:`linear-gradient(170deg,${currentChallenge.color},${currentChallenge.color}DD)`,position:"relative",overflow:"hidden",flexShrink:0}}>
-          <div style={{position:"absolute",top:-16,right:-16,width:80,height:80,borderRadius:"50%",border:"16px solid rgba(255,255,255,.06)",pointerEvents:"none"}}/>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
             <button onClick={onClose} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:10,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={currentChallenge.accent} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -4070,7 +4064,6 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
     <div>
       {/* Profile card */}
       <div style={{background:`linear-gradient(145deg,${C.bark},#3D2010)`,borderRadius:20,padding:"18px",marginBottom:20,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",border:"24px solid rgba(255,255,255,.04)",pointerEvents:"none"}}/>
         <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
           <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={54} fontSize={22}/>
           <div style={{flex:1,minWidth:0}}>
@@ -4141,7 +4134,6 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
 
       {/* Hero */}
       <div style={{background:`linear-gradient(160deg,${C.bark},#3D2010)`,padding:"24px 20px 28px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-30,right:-30,width:150,height:150,borderRadius:"50%",border:"30px solid rgba(255,255,255,.04)",pointerEvents:"none"}}/>
 
         {/* Settings button */}
         <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
