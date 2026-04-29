@@ -971,27 +971,27 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
 
   return(
     <div style={{background:C.paper,paddingBottom:30}}>
-      <div style={{position:"relative",overflow:"hidden",background:C.surface_inverted}}>
-        {recipe.photo&&(
+      {recipe.photo&&(
+        <div style={{position:"relative",overflow:"hidden"}}>
           <div style={{height:220,overflow:"hidden",position:"relative"}}>
             <img src={recipe.photo} alt={recipe.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <div style={{position:"absolute",bottom:0,left:0,right:0,height:60,background:`linear-gradient(180deg, transparent 0%, ${C.surface_inverted} 100%)`,pointerEvents:"none"}}/>
+            <div style={{position:"absolute",bottom:0,left:0,right:0,height:60,background:`linear-gradient(180deg, transparent 0%, ${C.paper} 100%)`,pointerEvents:"none"}}/>
           </div>
-        )}
-        {!recipe.photo&&<div style={{position:"absolute",top:-10,right:-10,fontSize:108,opacity:.12,lineHeight:1}}>{recipe.emoji}</div>}
-        <div style={{padding:"16px 20px 28px",position:"relative"}}>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px",marginBottom:18}}>← Back</button>
-            {recipe.isPersonal&&<button onClick={()=>setShowEdit(true)} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:10,color:"#fff",padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:700}}>Edit</button>}
-          </div>
-          <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}>
-            <DiffBadge level={recipe.difficulty}/>
-            {(recipe.diets||[]).filter(d=>d!=="No restrictions").slice(0,3).map(d=><Chip key={d} label={d} color="rgba(255,255,255,.9)" bg="rgba(255,255,255,.18)"/>)}
-          </div>
-          <div style={{fontSize:24,fontWeight:900,color:"#fff",lineHeight:1.25,marginBottom:8,fontFamily:DF}}>{recipe.name}</div>
-          <div style={{display:"flex",gap:16,color:"rgba(255,255,255,.65)",fontSize:13}}>
-            <span>{recipe.time}</span><span>{recipe.xp} Heat</span><span>{(recipe.ingredients||[]).length} ingredients</span>
-          </div>
+        </div>
+      )}
+      {!recipe.photo&&<div style={{position:"relative",height:80,overflow:"hidden"}}><div style={{position:"absolute",top:-10,right:10,fontSize:108,opacity:.08,lineHeight:1}}>{recipe.emoji}</div></div>}
+      <div style={{padding:"16px 20px 0"}}>
+        <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:18}}>
+          <button onClick={onBack} style={{background:C.pill,border:`1px solid ${C.border}`,borderRadius:10,color:C.bark,cursor:"pointer",fontSize:13,fontWeight:700,padding:"7px 14px"}}>← Back</button>
+          {recipe.isPersonal&&<button onClick={()=>setShowEdit(true)} style={{background:C.pill,border:`1px solid ${C.border}`,borderRadius:10,color:C.bark,padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:700}}>Edit</button>}
+        </div>
+        <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}>
+          <DiffBadge level={recipe.difficulty}/>
+          {(recipe.diets||[]).filter(d=>d!=="No restrictions").slice(0,3).map(d=><Chip key={d} label={d}/>)}
+        </div>
+        <div style={{fontSize:24,fontWeight:900,color:C.bark,lineHeight:1.25,marginBottom:8,fontFamily:DF}}>{recipe.name}</div>
+        <div style={{display:"flex",gap:16,color:C.muted,fontSize:13}}>
+          <span>{recipe.time}</span><span>{recipe.xp} Heat</span><span>{(recipe.ingredients||[]).length} ingredients</span>
         </div>
       </div>
 
