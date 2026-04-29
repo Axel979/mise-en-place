@@ -12,6 +12,7 @@ const C = {
   muted:"var(--muted)", border:"var(--border)",pill:"var(--pill)",  sky:"var(--sky)",
   plum:"var(--plum)",   rose:"var(--rose)",   dark:"var(--dark)",
   surface_inverted:"var(--surface-inverted)",
+  navPill:"var(--nav-pill)",
 };
 // Helper: apply alpha to a CSS variable color. Converts 2-digit hex alpha (00-FF) to percentage.
 // Usage: a(C.flame, '18') → "color-mix(in srgb, var(--flame) 9.4%, transparent)"
@@ -30,6 +31,7 @@ const CSS = `
     --muted:#757575;--border:#E5E5E5;--pill:#F0F0F0;--sky:#4A90D9;
     --plum:#9B5DE5;--rose:#E05C7A;--dark:#111118;
     --surface-inverted:#2A1F12;
+    --nav-pill:rgba(59,42,26,0.92);
   }
   [data-theme="dark"] {
     --flame:#FF6B3D;--ember:#FFA561;--cream:#3A2A1F;--paper:#1F1611;
@@ -37,6 +39,7 @@ const CSS = `
     --muted:#A89B8E;--border:rgba(245,230,210,0.10);--pill:#2A1F18;--sky:#6BA4E0;
     --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
     --surface-inverted:#120C07;
+    --nav-pill:rgba(80,60,42,0.95);
   }
   @media(prefers-color-scheme:dark){
     :root:not([data-theme="light"]):not([data-theme="dark"]){
@@ -45,6 +48,7 @@ const CSS = `
       --muted:#A89B8E;--border:rgba(245,230,210,0.10);--pill:#2A1F18;--sky:#6BA4E0;
       --plum:#B47FE0;--rose:#E87A92;--dark:#050505;
       --surface-inverted:#120C07;
+      --nav-pill:rgba(80,60,42,0.95);
     }
   }
 
@@ -5177,7 +5181,7 @@ export default function App(){
             {/* Dark pill with 4 tabs */}
             <div style={{
               flex:1,display:"flex",justifyContent:"space-around",alignItems:"center",
-              background:"rgba(59,42,26,0.92)",
+              background:C.navPill,
               backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",
               borderRadius:999,padding:8,
               boxShadow:"0 4px 20px rgba(0,0,0,0.08)",
