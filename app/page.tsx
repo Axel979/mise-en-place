@@ -5114,9 +5114,8 @@ export default function App(){
 
           {/* Bubble layer — anchored to bottom-right of this container */}
           {[
-            {label:"Log a cook",y:-54,delay:0,icon:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowQuickLog(true),80);}},
-            {label:"Add recipe",y:-106,delay:35,icon:<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowCreate(true),80);}},
-            {label:"Grocery list",y:-158,delay:70,icon:<><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowGroceryList(true),80);}},
+            {label:"Add recipe",y:-54,delay:0,icon:<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowCreate(true),80);}},
+            {label:"Grocery list",y:-106,delay:35,icon:<><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowGroceryList(true),80);}},
           ].map((b,i,arr)=>(
             <div key={b.label} onClick={b.action} style={{
               position:"absolute",bottom:68,right:0,zIndex:8,
