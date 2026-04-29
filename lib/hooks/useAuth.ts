@@ -45,6 +45,74 @@ async function patchProfile(userId: string, payload: Record<string, any>): Promi
   }
 }
 
+const SUPABASE_REST = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tqjkxmrhalrlbfackydv.supabase.co';
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+function restHeaders() {
+  const token = getAuthToken() || ANON_KEY;
+  return { 'apikey': ANON_KEY, 'Authorization': `Bearer ${token}` };
+}
+
+async function fetchProfileById(userId: string) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_REST}/rest/v1/profiles?id=eq.${userId}&select=id,username,avatar_url,xp,level,created_at&deleted_at=is.null`,
+      { headers: { ...restHeaders(), 'Accept': 'application/vnd.pgrst.object+json' }, signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (e) { console.error('fetchProfileById error:', e); return null; }
+}
+
+async function fetchIsFollowing(targetUserId: string, currentUserId: string) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_REST}/rest/v1/follows?follower_id=eq.${currentUserId}&following_id=eq.${targetUserId}&select=id`,
+      { headers: restHeaders(), signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.length > 0;
+  } catch { return false; }
+}
+
+async function fetchFollowIds(column: string, userId: string): Promise<string[]> {
+  try {
+    const otherCol = column === 'following_id' ? 'follower_id' : 'following_id';
+    const res = await fetch(
+      `${SUPABASE_REST}/rest/v1/follows?${column}=eq.${userId}&select=${otherCol}`,
+      { headers: restHeaders(), signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((r: any) => r[otherCol]).filter(Boolean);
+  } catch { return []; }
+}
+
+async function fetchProfilesByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+  try {
+    const res = await fetch(
+      `${SUPABASE_REST}/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,username,avatar_url,xp&deleted_at=is.null`,
+      { headers: restHeaders(), signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
+
+async function fetchFollowersList(userId: string) {
+  const ids = await fetchFollowIds('following_id', userId);
+  return fetchProfilesByIds(ids);
+}
+
+async function fetchFollowingList(userId: string) {
+  const ids = await fetchFollowIds('follower_id', userId);
+  return fetchProfilesByIds(ids);
+}
+
+export { fetchProfileById, fetchIsFollowing, fetchFollowersList, fetchFollowingList };
+
 export function useAuth() {
   const [user, setUser]       = useState<any>(null);
   const [session, setSession] = useState<any>(null);

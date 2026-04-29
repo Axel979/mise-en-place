@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import html2canvas from "html2canvas";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useAuth, fetchProfileById, fetchIsFollowing, fetchFollowersList, fetchFollowingList } from "@/lib/hooks/useAuth";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import { hapticImpact } from "@/lib/haptics";
 
@@ -3029,10 +3029,10 @@ function UserProfileSheet({userId,currentUserId,loadProfileById,isFollowing:isFo
       try{
         const [p,f,followers,fwing]=await Promise.race([
           Promise.all([
-            loadProfileById(userId),
-            userId!==currentUserId?isFollowingFn(userId):Promise.resolve(false),
-            loadFollowersFn(userId),
-            loadFollowingFn(userId),
+            fetchProfileById(userId),
+            userId&&currentUserId?fetchIsFollowing(userId,currentUserId):Promise.resolve(false),
+            fetchFollowersList(userId),
+            fetchFollowingList(userId),
           ]),
           timeoutPromise,
         ]) as [any,boolean,any[],any[]];
