@@ -4715,6 +4715,33 @@ export default function App(){
           if(cookedIds.size>0){
             setAllRecipes(rs=>rs.map(r=>cookedIds.has(String(r.id))?{...r,done:true}:r));
           }
+
+          // Rebuild cookedDatesAll and cookedDays from completed_recipes
+          // (profile.cooked_dates may be empty if saveCookedDates failed)
+          const recipeDates=filteredRows
+            .map(r=>r.cooked_at?r.cooked_at.slice(0,10):null)
+            .filter(Boolean);
+          if(recipeDates.length>0){
+            setCookedDatesAll(prev=>{
+              const merged=new Set([...prev,...recipeDates]);
+              const arr=[...merged].sort();
+              try{localStorage.setItem('mep_cookedDatesAll',JSON.stringify(arr));}catch{}
+              // Rebuild current week boolean array
+              const now2=new Date();
+              const dayIdx2=now2.getDay();
+              const monday2=new Date(now2);
+              monday2.setDate(now2.getDate()-((dayIdx2+6)%7));
+              const week2=[];
+              for(let i=0;i<7;i++){
+                const d=new Date(monday2);
+                d.setDate(monday2.getDate()+i);
+                week2.push(merged.has(d.toISOString().slice(0,10)));
+              }
+              setCookedDays(week2);
+              try{localStorage.setItem('mep_cookedDays',JSON.stringify(week2));}catch{}
+              return arr;
+            });
+          }
         }
       }).catch(e=>console.error('loadCompletedRecipes failed',e));
 
