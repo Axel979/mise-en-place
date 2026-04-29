@@ -969,6 +969,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
   const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating,visibility,postToChallenge&&currentChallenge?currentChallenge.id:null);};
   const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0,"friends",null);};
 
+  useEffect(()=>{window.scrollTo({top:0,behavior:'instant'});},[recipe?.id]);
+
   return(
     <div style={{background:C.paper,paddingBottom:30}}>
       {recipe.photo&&(
@@ -4648,6 +4650,8 @@ export default function App(){
     else root.removeAttribute('data-theme');
     try{localStorage.setItem('mep_theme',appTheme);}catch{}
   },[appTheme]);
+  // Scroll to top on tab change
+  useEffect(()=>{window.scrollTo({top:0,behavior:'instant'});},[tab]);
   // Check onboarding status when profile loads
   useEffect(()=>{
     if(!user) return;
