@@ -4098,9 +4098,6 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
       <MenuRow label="Calendar" onClick={()=>{onShowCalendar();onClose();}} icon={
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       }/>
-      <MenuRow label="Groceries" badge={groceryCount} onClick={()=>{onShowGroceryList();onClose();}} icon={
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-      }/>
       <MenuRow label="Leaderboard" onClick={()=>{onShowLeaderboard&&onShowLeaderboard();onClose();}} icon={
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7"/><path d="M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/><path d="M4 22h16"/><path d="M10 22V12M14 22V12"/><rect x="6" y="7" width="12" height="5" rx="1"/></svg>
       }/>
