@@ -5148,7 +5148,7 @@ export default function App(){
         }}/>
 
         {/* Nav + bubbles container — centered, max-width capped */}
-        <div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 40px)",maxWidth:440,zIndex:9,pointerEvents:"none"}}>
+        <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 56px)",maxWidth:440,zIndex:9,pointerEvents:"none"}}>
 
           {/* Bubble layer — anchored to bottom-right of this container */}
           {[
