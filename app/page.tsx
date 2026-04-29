@@ -972,11 +972,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
   return(
     <div style={{background:C.paper,paddingBottom:30}}>
       {recipe.photo&&(
-        <div style={{position:"relative",overflow:"hidden"}}>
-          <div style={{height:220,overflow:"hidden",position:"relative"}}>
-            <img src={recipe.photo} alt={recipe.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <div style={{position:"absolute",bottom:0,left:0,right:0,height:60,background:`linear-gradient(180deg, transparent 0%, ${C.paper} 100%)`,pointerEvents:"none"}}/>
-          </div>
+        <div style={{height:220,overflow:"hidden"}}>
+          <img src={recipe.photo} alt={recipe.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
         </div>
       )}
       {!recipe.photo&&<div style={{position:"relative",height:80,overflow:"hidden"}}><div style={{position:"absolute",top:-10,right:10,fontSize:108,opacity:.08,lineHeight:1}}>{recipe.emoji}</div></div>}
