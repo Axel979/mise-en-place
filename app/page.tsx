@@ -969,9 +969,8 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
     <div style={{background:C.paper,paddingBottom:30}}>
       <div style={{position:"relative",overflow:"hidden",background:C.surface_inverted}}>
         {recipe.photo&&(
-          <div style={{position:"relative",height:220,overflow:"hidden"}}>
+          <div style={{height:220,overflow:"hidden"}}>
             <img src={recipe.photo} alt={recipe.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,.05),rgba(59,42,26,.9))"}}/>
           </div>
         )}
         {!recipe.photo&&<div style={{position:"absolute",top:-10,right:-10,fontSize:108,opacity:.12,lineHeight:1}}>{recipe.emoji}</div>}
