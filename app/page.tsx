@@ -812,7 +812,7 @@ function Onboarding({onComplete}){
   const S=screens[step];
   const pct=(step+1)/4;
   return(
-    <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:420,margin:"0 auto"}}>
+    <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",maxWidth:440,margin:"0 auto"}}>
       {step>0&&<div style={{padding:"20px 24px 0"}}><div style={{background:"#E8DDD4",borderRadius:99,height:4,overflow:"hidden"}}><div style={{width:`${pct*100}%`,height:"100%",background:C.flame,borderRadius:99,transition:"width .4s ease"}}/></div></div>}
       <S/>
     </div>
@@ -5038,9 +5038,9 @@ export default function App(){
     <AppErrorBoundary>
       <style>{CSS}</style>
       {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
-      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",width:"100%",maxWidth:420,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
+      <div style={{fontFamily:BF,background:C.paper,minHeight:"100vh",width:"100%",maxWidth:440,margin:"0 auto",opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"all .35s cubic-bezier(.4,0,.2,1)"}} suppressHydrationWarning>
         {/* Header */}
-        <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,zIndex:50,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{background:C.paper,padding:"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:440,zIndex:50,borderBottom:`1px solid ${C.border}`}}>
           <div style={{fontWeight:900,fontSize:22,color:C.bark,letterSpacing:"-.03em",fontFamily:DF}}>mise<span style={{color:C.flame}}>.</span>en<span style={{color:C.flame}}>.</span>place</div>
           <div style={{display:"flex",gap:12,alignItems:"center"}}>
             <button onClick={()=>setTab("notifications")} className="tap" style={{position:"relative",background:"none",border:"none",padding:4,cursor:"pointer",display:"flex",alignItems:"center"}}>
@@ -5118,7 +5118,7 @@ export default function App(){
         }}/>
 
         {/* Nav + bubbles container — centered, max-width capped */}
-        <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:420,zIndex:9,pointerEvents:"none"}}>
+        <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:440,zIndex:9,pointerEvents:"none"}}>
 
           {/* Bubble layer — anchored to bottom-right of this container */}
           {[
