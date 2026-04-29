@@ -617,7 +617,7 @@ const Sheet=({children,onClose})=>(
 );
 const CloseBtn=({onClose})=><button onClick={onClose} style={{background:C.pill,border:"none",borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:18,color:C.muted,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>;
 const Btn=({children,onClick,color=C.flame,outline=false,disabled=false,full=false,sm=false,style:x={}})=>(
-  <button className="tap" onClick={onClick} disabled={disabled} style={{border:outline?`2px solid ${disabled?C.border:color}`:"none",background:outline?"transparent":disabled?"#D8D0C8":color,color:outline?(disabled?C.border:color):"#fff",borderRadius:14,padding:sm?"8px 14px":"12px 20px",fontWeight:800,fontSize:sm?12:14,cursor:disabled?"not-allowed":"pointer",boxShadow:(!outline&&!disabled)?`0 4px 14px ${color}44`:"none",transition:"all .18s",opacity:disabled?.55:1,width:full?"100%":"auto",...x}}>{children}</button>
+  <button className="tap" onClick={onClick} disabled={disabled} style={{border:outline?`2px solid ${disabled?C.border:color}`:"none",background:outline?"transparent":disabled?C.pill:color,color:outline?(disabled?C.border:color):"#fff",borderRadius:14,padding:sm?"8px 14px":"12px 20px",fontWeight:800,fontSize:sm?12:14,cursor:disabled?"not-allowed":"pointer",boxShadow:(!outline&&!disabled)?`0 4px 14px ${color}44`:"none",transition:"all .18s",opacity:disabled?.55:1,width:full?"100%":"auto",...x}}>{children}</button>
 );
 
 /* ═══ TOASTS ══════════════════════════════════════════════════════════════ */
@@ -802,7 +802,7 @@ function Onboarding({onComplete}){
             const a=skill===l.id;
             return(
               <button key={l.id} className="tap" onClick={()=>setSkill(l.id)} style={{background:a?`${a(C.flame,'12')}`:C.cream,border:`2px solid ${a?C.flame:C.border}`,borderRadius:16,padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .18s",fontFamily:"inherit"}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:a?C.flame:"#D8D0C8",flexShrink:0,transition:"background .18s"}}/>
+                <div style={{width:8,height:8,borderRadius:"50%",background:a?C.flame:C.pill,flexShrink:0,transition:"background .18s"}}/>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{l.label}</div>
                   <div style={{fontSize:12,color:C.muted}}>{l.sub}</div>
@@ -3363,7 +3363,7 @@ function GroceryListSheet({groceryList,setGroceryList,onClose}){
             <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addItem();}}
               placeholder="Add an item..."
               style={{flex:1,padding:"11px 14px",borderRadius:12,border:`1.5px solid ${newItem?C.flame:C.border}`,background:C.cream,fontSize:14,color:C.bark,outline:"none",fontFamily:"inherit",transition:"border-color .18s"}}/>
-            <button onClick={addItem} disabled={!newItem.trim()} style={{width:44,height:44,borderRadius:12,background:newItem.trim()?C.flame:"#D8D0C8",border:"none",cursor:newItem.trim()?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .18s"}}>
+            <button onClick={addItem} disabled={!newItem.trim()} style={{width:44,height:44,borderRadius:12,background:newItem.trim()?C.flame:C.pill,border:"none",cursor:newItem.trim()?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .18s"}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
           </div>
@@ -3772,7 +3772,7 @@ function PrivacySettings({onBack}){
           <div style={{fontWeight:600,fontSize:14,color:C.bark}}>Allow followers</div>
           <div style={{fontSize:11,color:C.muted}}>Let others follow your cooking activity</div>
         </div>
-        <button onClick={()=>handleFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+        <button onClick={()=>handleFollowers(!followers)} style={{width:44,height:26,borderRadius:13,background:followers?C.sage:C.pill,border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
           <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:followers?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
         </button>
       </div>
@@ -3798,7 +3798,7 @@ function NotificationSettings({onBack}){
             <div style={{fontWeight:600,fontSize:14,color:C.bark}}>{title}</div>
             <div style={{fontSize:11,color:C.muted,marginTop:1}}>{desc}</div>
           </div>
-          <button onClick={()=>setNotifs(n=>{const updated={...n,[key]:!n[key]};try{localStorage.setItem('mep_notifPrefs',JSON.stringify(updated));}catch{}return updated;})} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:"#D8D0C8",border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
+          <button onClick={()=>setNotifs(n=>{const updated={...n,[key]:!n[key]};try{localStorage.setItem('mep_notifPrefs',JSON.stringify(updated));}catch{}return updated;})} style={{width:44,height:26,borderRadius:13,background:notifs[key]?C.sage:C.pill,border:"none",cursor:"pointer",position:"relative",transition:"all .2s",flexShrink:0}}>
             <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:notifs[key]?21:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
           </button>
         </div>
@@ -4046,7 +4046,7 @@ function DataSettings({onBack, supabase, user, setToast, signOut}){
               style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${deleteInput==='DELETE'?"#E05C7A":C.border}`,background:C.paper,fontSize:14,color:C.bark,outline:"none",boxSizing:"border-box",marginBottom:12,fontFamily:"inherit"}}/>
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>{setDeleteStep(0);setDeleteInput('');}} style={{flex:1,padding:"10px",borderRadius:10,border:`1.5px solid ${C.border}`,background:"transparent",color:C.bark,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
-              <button onClick={handleDeleteAccount} disabled={deleteInput!=='DELETE'||deleting} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:deleteInput==='DELETE'?"#E05C7A":"#D8D0C8",color:"#fff",fontWeight:700,fontSize:13,cursor:deleteInput==='DELETE'&&!deleting?"pointer":"not-allowed",fontFamily:"inherit"}}>
+              <button onClick={handleDeleteAccount} disabled={deleteInput!=='DELETE'||deleting} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:deleteInput==='DELETE'?"#E05C7A":C.pill,color:"#fff",fontWeight:700,fontSize:13,cursor:deleteInput==='DELETE'&&!deleting?"pointer":"not-allowed",fontFamily:"inherit"}}>
                 {deleting?'Deleting...':'Delete my account'}
               </button>
             </div>
