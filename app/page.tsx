@@ -1886,18 +1886,13 @@ function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDa
 
       {/* ── Stats hero ───────────────────────────────────────────── */}
       <div style={{margin:"0 16px 16px",position:"relative",background:`linear-gradient(145deg,${C.bark} 0%,#3D2010 100%)`,borderRadius:24,padding:"18px 18px 14px",overflow:"hidden",color:"#fff",boxShadow:"0 4px 24px rgba(0,0,0,.18)"}}>
-        {/* Top row: goal + edit */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-          <div>
-            <div style={{fontSize:10,fontWeight:700,opacity:.45,textTransform:"uppercase",letterSpacing:".12em",marginBottom:3}}>{goal.label}</div>
-            <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-              <span style={{fontSize:38,fontWeight:900,lineHeight:1,fontFamily:DF}}>{weekDone}</span>
-              <span style={{fontSize:18,fontWeight:700,opacity:.4}}>/{goal.target}</span>
-            </div>
+        {/* Top row: goal progress */}
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,opacity:.45,textTransform:"uppercase",letterSpacing:".12em",marginBottom:3}}>{goal.label}</div>
+          <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+            <span style={{fontSize:38,fontWeight:900,lineHeight:1,fontFamily:DF}}>{weekDone}</span>
+            <span style={{fontSize:18,fontWeight:700,opacity:.4}}>/{goal.target}</span>
           </div>
-          <button onClick={onEditGoal} className="tap" style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:10,color:"rgba(255,255,255,.7)",padding:"5px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginTop:4}}>
-            Edit goal
-          </button>
         </div>
 
         {/* Progress bar */}
