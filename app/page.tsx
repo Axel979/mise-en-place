@@ -5102,26 +5102,32 @@ export default function App(){
           {!detailRecipe&&tab==="notifications"&&<NotificationsTab notifications={notifications} setNotifications={setNotifications} setTab={setTab}/>}
         </div>
 
-        {/* ── Floating nav + radial menu ────────────────────────── */}
-        {!detailRecipe&&<>
-          {/* Backdrop overlay */}
-          <div onClick={()=>setShowRadialMenu(false)} style={{
-            position:"fixed",inset:0,zIndex:5,
-            background:showRadialMenu?"rgba(59,42,26,0.35)":"rgba(0,0,0,0)",
-            backdropFilter:showRadialMenu?"blur(2px)":"blur(0px)",
-            WebkitBackdropFilter:showRadialMenu?"blur(2px)":"blur(0px)",
-            pointerEvents:showRadialMenu?"auto":"none",
-            transition:"background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease",
-          }}/>
+        {/* Floating nav rendered outside this container — see below */}
+      </div>
 
-          {/* Radial menu bubbles */}
+      {/* ── Floating nav + radial menu (outside transformed parent) ── */}
+      {!detailRecipe&&<>
+        {/* Backdrop overlay */}
+        <div onClick={()=>setShowRadialMenu(false)} style={{
+          position:"fixed",inset:0,zIndex:5,
+          background:showRadialMenu?"rgba(59,42,26,0.35)":"rgba(0,0,0,0)",
+          backdropFilter:showRadialMenu?"blur(2px)":"none",
+          WebkitBackdropFilter:showRadialMenu?"blur(2px)":"none",
+          pointerEvents:showRadialMenu?"auto":"none",
+          transition:"background 0.3s ease",
+        }}/>
+
+        {/* Nav + bubbles container — centered, max-width capped */}
+        <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:420,zIndex:9,pointerEvents:"none"}}>
+
+          {/* Bubble layer — anchored to bottom-right of this container */}
           {[
             {label:"Log a cook",y:-54,delay:0,icon:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowQuickLog(true),80);}},
             {label:"Add recipe",y:-106,delay:45,icon:<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowCreate(true),80);}},
             {label:"Grocery list",y:-158,delay:90,icon:<><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowGroceryList(true),80);}},
           ].map((b,i,arr)=>(
             <div key={b.label} onClick={b.action} style={{
-              position:"fixed",bottom:86,right:22,zIndex:8,
+              position:"absolute",bottom:68,right:0,zIndex:8,
               display:"flex",alignItems:"center",gap:10,cursor:"pointer",
               opacity:showRadialMenu?1:0,
               transform:showRadialMenu?`translate(0px, ${b.y}px) scale(1)`:"translate(40px, 40px) scale(0.3)",
@@ -5136,8 +5142,8 @@ export default function App(){
             </div>
           ))}
 
-          {/* Floating nav container */}
-          <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:420,display:"flex",alignItems:"flex-end",gap:10,zIndex:9,pointerEvents:"none"}}>
+          {/* Nav row — pill + plus button */}
+          <div style={{display:"flex",alignItems:"flex-end",gap:10}}>
             {/* Dark pill with 4 tabs */}
             <div style={{
               flex:1,display:"flex",justifyContent:"space-around",alignItems:"center",
@@ -5156,7 +5162,6 @@ export default function App(){
                     border:"none",borderRadius:999,cursor:"pointer",
                     display:"flex",flexDirection:"column",alignItems:"center",gap:2,
                     padding:"6px 10px",fontFamily:"inherit",
-                    pointerEvents:"auto",
                   }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFF8F0" strokeWidth={active?2:1.5} strokeLinecap="round" strokeLinejoin="round" style={{opacity:active?1:0.6}}>
                       {t.id==="home"&&<><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
@@ -5186,8 +5191,8 @@ export default function App(){
               </svg>
             </button>
           </div>
-        </>}
-      </div>
+        </div>
+      </>}
 
       {showGoal&&<GoalPicker goal={goal} onSelect={g=>{setGoal(g);setShowGoal(false);}} onClose={()=>setShowGoal(false)}/>}
       {showCreate&&<CreateRecipeSheet onSave={async r=>{
