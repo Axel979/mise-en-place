@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import html2canvas from "html2canvas";
 import { useAuth } from "@/lib/hooks/useAuth";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
+import { hapticImpact } from "@/lib/haptics";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
@@ -5109,9 +5110,9 @@ export default function App(){
 
           {/* Radial menu bubbles */}
           {[
-            {label:"Log a cook",y:-54,delay:0,icon:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,action:()=>{setShowRadialMenu(false);setTimeout(()=>setShowQuickLog(true),80);}},
-            {label:"Add recipe",y:-106,delay:45,icon:<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,action:()=>{setShowRadialMenu(false);setTimeout(()=>setShowCreate(true),80);}},
-            {label:"Grocery list",y:-158,delay:90,icon:<><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></>,action:()=>{setShowRadialMenu(false);setTimeout(()=>setShowGroceryList(true),80);}},
+            {label:"Log a cook",y:-54,delay:0,icon:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowQuickLog(true),80);}},
+            {label:"Add recipe",y:-106,delay:45,icon:<><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowCreate(true),80);}},
+            {label:"Grocery list",y:-158,delay:90,icon:<><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></>,action:()=>{hapticImpact('Light');setShowRadialMenu(false);setTimeout(()=>setShowGroceryList(true),80);}},
           ].map((b,i,arr)=>(
             <div key={b.label} onClick={b.action} style={{
               position:"fixed",bottom:86,right:22,zIndex:8,
@@ -5143,7 +5144,7 @@ export default function App(){
               {TABS.map(t=>{
                 const active=tab===t.id;
                 return(
-                  <button key={t.id} onClick={()=>{setTab(t.id);setShowRadialMenu(false);}} style={{
+                  <button key={t.id} onClick={()=>{hapticImpact('Light');setTab(t.id);setShowRadialMenu(false);}} style={{
                     background:active?"rgba(255,248,240,0.18)":"none",
                     border:"none",borderRadius:999,cursor:"pointer",
                     display:"flex",flexDirection:"column",alignItems:"center",gap:2,
@@ -5163,7 +5164,7 @@ export default function App(){
             </div>
 
             {/* + button */}
-            <button onClick={()=>setShowRadialMenu(v=>!v)} style={{
+            <button onClick={()=>{hapticImpact(showRadialMenu?'Medium':'Light');setShowRadialMenu(v=>!v);}} style={{
               width:50,height:50,borderRadius:"50%",border:"none",
               background:C.flame,cursor:"pointer",
               display:"flex",alignItems:"center",justifyContent:"center",
