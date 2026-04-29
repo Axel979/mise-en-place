@@ -22,6 +22,12 @@ interface StepSkillProps {
 export default function StepSkill({ onAnswer, onSkip }: StepSkillProps) {
   return (
     <div>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+        <div style={{width:36,height:36,borderRadius:'50%',background:C.cream,border:`1px solid ${C.border}`,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <img src="/lemon.png" alt="Lemon" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+        </div>
+        <span style={{fontFamily:"'Source Serif 4',Georgia,serif",fontSize:14,fontWeight:500,color:C.muted}}>Lemon</span>
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
         {SKILL_OPTIONS.map((opt) => (
           <button
