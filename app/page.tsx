@@ -82,7 +82,7 @@ const BASE_RANKS = [
   {title:"Legend",        icon:"", color:"#1A237E", minDishes:2000},
 ];
 
-function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uploadAvatar, saveProfileField}){
+function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uploadAvatar, saveProfileField, setToast}){
   const [username, setUsername] = React.useState(profile?.username||"");
   const [checking, setChecking] = React.useState(false);
   const [available, setAvailable] = React.useState(null);
@@ -99,7 +99,12 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
     setUploading(true);
     const url = await uploadAvatar(file);
     setUploading(false);
-    if(url && onProfileUpdate) onProfileUpdate({...profile, avatar_url: url});
+    if(url){
+      if(onProfileUpdate) onProfileUpdate({...profile, avatar_url: url});
+      if(setToast) setToast({emoji:'',title:'Profile photo updated',subtitle:''});
+    }else{
+      if(setToast) setToast({emoji:'',title:'Upload failed',subtitle:'Please try again'});
+    }
   };
 
   const checkUsername = async(val) => {
@@ -122,7 +127,11 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
       await saveProfileField(user.id, updates);
       onProfileUpdate({...profile,...updates});
       setSaved(true);
-    }catch(e){console.error('profile save failed',e);}finally{setSaving(false);}
+      if(setToast) setToast({emoji:'',title:'Username saved',subtitle:''});
+    }catch(e){
+      console.error('profile save failed',e);
+      if(setToast) setToast({emoji:'',title:'Save failed',subtitle:'Please try again'});
+    }finally{setSaving(false);}
     setTimeout(()=>setSaved(false),2500);
   };
 
@@ -4439,7 +4448,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
   if(section==="account") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate} uploadAvatar={uploadAvatar} saveProfileField={saveProfileField}/>
+        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate} uploadAvatar={uploadAvatar} saveProfileField={saveProfileField} setToast={setToast}/>
       </div>
     </Sheet>
   );
