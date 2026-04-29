@@ -4723,6 +4723,12 @@ export default function App(){
           }));
           setCookLog(mapped);
           try{ localStorage.setItem('mep_cookLog', JSON.stringify(mapped)); }catch{}
+
+          // Cross-reference: mark recipes as done if they appear in completed_recipes
+          const cookedIds=new Set(filteredRows.map(r=>String(r.recipe_id)));
+          if(cookedIds.size>0){
+            setAllRecipes(rs=>rs.map(r=>cookedIds.has(String(r.id))?{...r,done:true}:r));
+          }
         }
       }).catch(e=>console.error('loadCompletedRecipes failed',e));
 
