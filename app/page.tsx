@@ -83,7 +83,7 @@ const BASE_RANKS = [
   {title:"Legend",        icon:"", color:"#1A237E", minDishes:2000},
 ];
 
-function AccountSettings({onBack, user, profile, supabase, uploadAvatar, saveProfileField, setToast}){
+function AccountSettings({onBack, user, profile, supabase, saveProfileField, setToast}){
   const [username, setUsername] = React.useState(profile?.username||"");
   const [checking, setChecking] = React.useState(false);
   const [available, setAvailable] = React.useState(null);
@@ -983,18 +983,16 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,uid,o
   const [postOpen,setPostOpen]=useState(false);
   const [caption,setCaption]=useState("");
   const [rating,setRating]=useState(0);
-  const [photoPreview,setPhotoPreview]=useState(null);
+  const [cookPhoto,setCookPhoto]=useState<{url:string;width:number;height:number;dominantColor:string}|null>(null);
   const [visibility,setVisibility]=useState("friends");
   const showChallengeToggle=currentChallenge&&(challengeJoined||[]).includes(currentChallenge?.id);
   const [postToChallenge,setPostToChallenge]=useState(!!showChallengeToggle);
   const shareCardRef=useRef(null);
-  const fileRef=useRef();
   const steps_=(recipe.steps||[]);
   const nSteps=steps_.length;
-  const handleFile=(e)=>{const f=e.target.files[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));};
   const handleComplete=()=>{setDone(true);setPostOpen(true);};
-  const handlePost=()=>{setPostOpen(false);onComplete(recipe,photoPreview,caption,rating,visibility,postToChallenge&&currentChallenge?currentChallenge.id:null);};
-  const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0,"friends",null);};
+  const handlePost=()=>{setPostOpen(false);onComplete(recipe,cookPhoto?.url||null,caption,rating,visibility,postToChallenge&&currentChallenge?currentChallenge.id:null,cookPhoto);};
+  const handleSkip=()=>{setPostOpen(false);onComplete(recipe,null,"",0,"friends",null,null);};
 
   useEffect(()=>{window.scrollTo({top:0,behavior:'instant'});},[recipe?.id]);
 
@@ -1144,18 +1142,21 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,uid,o
               </div>
               {rating>0&&<div style={{textAlign:"center",fontSize:12,color:C.muted,marginTop:8}}>{["","Needs work","Getting there","Pretty good!","Really pleased!","Perfect! 🌟"][rating]}</div>}
             </div>
-            {!photoPreview
-              ?<div onClick={()=>fileRef.current?.click()} style={{border:`3px dashed ${C.border}`,borderRadius:18,padding:"24px 20px",textAlign:"center",cursor:"pointer",background:C.cream,marginBottom:14}}>
-                <div style={{fontWeight:700,fontSize:14,color:C.muted,marginBottom:8}}>Add a photo</div>
-                <div style={{fontWeight:800,fontSize:14,color:C.bark,marginBottom:4}}>Add a photo</div>
-                <div style={{fontSize:12,color:C.muted}}>Saved to your cook library + shared with friends</div>
-              </div>
-              :<div style={{marginBottom:14,position:"relative"}}>
-                <img src={photoPreview} alt="" style={{width:"100%",height:200,objectFit:"cover",borderRadius:18}}/>
-                <button onClick={()=>setPhotoPreview(null)} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.5)",border:"none",borderRadius:99,color:"#fff",width:32,height:32,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-              </div>
-            }
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{display:"none"}}/>
+            <div style={{marginBottom:14}}>
+              <PhotoUpload
+                target="cooks"
+                uid={uid||''}
+                currentUrl={cookPhoto?.url}
+                currentDimensions={cookPhoto?{width:cookPhoto.width,height:cookPhoto.height}:null}
+                currentDominantColor={cookPhoto?.dominantColor}
+                variant="card"
+                allowRemove={true}
+                allowCamera={true}
+                onUploaded={(meta)=>setCookPhoto({url:meta.url,width:meta.width,height:meta.height,dominantColor:meta.dominantColor})}
+                onRemoved={()=>setCookPhoto(null)}
+                onToast={setToast}
+              />
+            </div>
             <textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder="What happened? What worked? What would you change?" style={{width:"100%",minHeight:80,borderRadius:16,border:`2px solid ${caption?C.ember:C.border}`,background:C.cream,padding:"12px 16px",fontSize:14,color:C.bark,resize:"none",outline:"none",lineHeight:1.55,boxSizing:"border-box",marginBottom:14,transition:"border-color .18s"}}/>
             <div style={{marginBottom:14}}>
             {showChallengeToggle&&(
@@ -1916,7 +1917,7 @@ function FeedTab({posts,setPosts,xp,weeklyXp,levelInfo,onAddFriends,onShareInsta
   );
 }
 
-function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onQuickLog,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze,currentChallenge,challengeJoined,onJoinChallenge,onOpenChallenge}){
+function HomeTab({xp,setXp,recipes,onOpen,onComplete,goal,cookedDays,setCookedDays,onEditGoal,levelInfo,onShowRecap,onShowCalendar,seasonalEvent,hearts,hasFreeze,setHearts,setHasFreeze,currentChallenge,challengeJoined,onJoinChallenge,onOpenChallenge}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/goal.target*100);
   const goalDone=weekDone>=goal.target;
@@ -2746,45 +2747,6 @@ function InstagramShareSheet({post, onClose}){
   );
 }
 
-/* ═══ QUICK LOG ════════════════════════════════════════════════════════════ */
-function QuickLogSheet({onLog, onClose, goal, cookedDays}){
-  const [note, setNote] = useState("");
-  const weekDone = cookedDays.filter(Boolean).length;
-
-  return(
-    <Sheet onClose={onClose}>
-      <div style={{padding:"24px 20px 44px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}> Quick Log</div>
-            <div style={{fontSize:12,color:C.muted,marginTop:2}}>Cooked something not in the library? Log it here.</div>
-          </div>
-          <CloseBtn onClose={onClose}/>
-        </div>
-
-        <div style={{background:C.surface_inverted,borderRadius:18,padding:"18px 20px",marginBottom:18,color:"#fff"}}>
-          <div style={{fontSize:11,opacity:.6,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>This Week</div>
-          <div style={{fontSize:36,fontWeight:900,fontFamily:DF}}>{weekDone}/{goal.target} {goal.icon}</div>
-          <div style={{fontSize:13,opacity:.7,marginTop:4}}>
-            {weekDone>=goal.target?" Goal achieved!":
-            `${goal.target-weekDone} more to hit your ${goal.label} goal`}
-          </div>
-        </div>
-
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>What did you cook? (optional)</div>
-          <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="e.g. Made pasta from scratch, improvised a stir fry…" style={{width:"100%",minHeight:80,borderRadius:14,border:`2px solid ${note?C.ember:C.border}`,background:C.cream,padding:"12px 14px",fontSize:14,color:C.bark,resize:"none",outline:"none",lineHeight:1.5,boxSizing:"border-box",transition:"border-color .18s"}}/>
-        </div>
-
-        <div style={{background:`${a(C.sky,'0E')}`,border:`1.5px solid ${a(C.sky,'28')}`,borderRadius:12,padding:"10px 14px",marginBottom:16}}>
-          <div style={{fontSize:12,color:C.sky,fontWeight:600}}>Quick log counts toward your streak and earns 30 🔥 Heat. Use it on busy days when you cook something simple.</div>
-        </div>
-
-        <Btn onClick={()=>onLog(note)} full>Log Today's Cook </Btn>
-      </div>
-    </Sheet>
-  );
-}
 
 /* ═══ COOK TOGETHER SHEET ══════════════════════════════════════════════════ */
 function CookTogetherSheet({recipe, onClose}){
@@ -4338,14 +4300,14 @@ class AppErrorBoundary extends React.Component {
 }
 
 /* ═══ SETTINGS SHEET ══════════════════════════════════════════════════════ */
-function SettingsSheet({user, profile, supabase, goal, onGoalChange, onClose, appTheme, setAppTheme, uploadAvatar, setToast, signOut, saveProfileField}){
+function SettingsSheet({user, profile, supabase, goal, onGoalChange, onClose, appTheme, setAppTheme, setToast, signOut, saveProfileField}){
   const [section, setSection] = useState(null);
 
   // Section components rendered inline
   if(section==="account") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} uploadAvatar={uploadAvatar} saveProfileField={saveProfileField} setToast={setToast}/>
+        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} saveProfileField={saveProfileField} setToast={setToast}/>
       </div>
     </Sheet>
   );
@@ -4455,7 +4417,7 @@ function SettingsSheet({user, profile, supabase, goal, onGoalChange, onClose, ap
 }
 
 export default function App(){
-  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends, followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById, uploadAvatar } = useAuth();
+  const { user, profile, loading, refreshProfile, saveAllUserData, saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes, saveEarnedBadges, saveCookedDates, saveSavedPosts, saveGoal, signOut, supabase, postActivity, loadFeed, loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends, followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById } = useAuth();
   const userIdRef = useRef(null);
   useEffect(()=>{
     if(user?.id) userIdRef.current = user.id;
@@ -4484,7 +4446,6 @@ export default function App(){
   const [cookLog,      setCookLog]      = useState([]);
   const [showCreate,   setShowCreate]   = useState(false);
   const [libraryInitTab, setLibraryInitTab] = useState(null);
-  const [showQuickLog, setShowQuickLog] = useState(false);
   const [showRadialMenu, setShowRadialMenu] = useState(false);
   const [showFollowers,setShowFollowers]=useState(false);
   const [profileSheetUserId,setProfileSheetUserId]=useState(null);
@@ -4789,7 +4750,7 @@ export default function App(){
     return newOnes.map(b=>b.id);
   },[earnedBadges]);
 
-  const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends",challengeId=null)=>{
+  const handleComplete=useCallback((recipe,photo,caption,rating,visibility="friends",challengeId=null,photoMeta=null)=>{
     setAllRecipes(rs=>rs.map(r=>r.id===recipe.id?{...r,done:true}:r));
     const newXp=xp+recipe.xp;
     setXp(newXp);
@@ -4878,7 +4839,7 @@ export default function App(){
     if(uid){
       saveAllUserData(uid, {
         xp: newXp,
-        completedRecipe: {...recipe, photo},
+        completedRecipe: {...recipe, photo, photoMeta},
         cookedDates: newDates,
         earnedBadges: allBadges,
       });
@@ -4943,22 +4904,6 @@ export default function App(){
 
   const effectiveProfile = profile;
 
-  const handleQuickLog=useCallback((note)=>{
-    const newXp2 = xp + 30;
-    setXp(newXp2);
-    setWeeklyXp(w=>w+30);
-    const di=new Date().getDay();const idx=di===0?6:di-1;
-    setCookedDays(d=>{const n=[...d];n[idx]=true;return n;});
-    const today=new Date();
-    const dateStr=today.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
-    setCookLog(log=>[{
-      id:`log-${Date.now()}`,name:note||"Quick Cook",emoji:"⚡",
-      category:null,xp:40,difficulty:"Easy",rating:0,photo:null,
-      caption:note||"",date:dateStr,
-    },...log]);
-    setShowQuickLog(false);
-    setToast({emoji:"⚡",title:"Logged!",subtitle:"30 🔥 Heat earned"});
-  },[xp]);
 
   const TABS=[
     {id:"home",       label:"Today",      svg:'<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'},
@@ -5035,7 +4980,7 @@ export default function App(){
               });
               setToast({emoji:'🛒',title:`${newIngs.length} ingredients added`,subtitle:`From ${r.name}`});
             }} currentChallenge={currentChallenge} challengeJoined={challengeJoined}/>;})()}
-          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onQuickLog={()=>setShowQuickLog(true)} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onOpenChallenge={()=>setShowChallengeSheet(true)}/>}
+          {!detailRecipe&&tab==="home"&&<HomeTab xp={xp} setXp={setXp} recipes={allRecipes} onOpen={openRecipe} onComplete={handleComplete} goal={goal} cookedDays={cookedDays} setCookedDays={setCookedDays} onEditGoal={()=>setShowGoal(true)} levelInfo={levelInfo} onShowRecap={()=>setShowRecap(true)} onShowCalendar={()=>setShowCalendar(true)} seasonalEvent={seasonalEvent} hearts={hearts} hasFreeze={hasFreeze} setHearts={setHearts} setHasFreeze={setHasFreeze} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onOpenChallenge={()=>setShowChallengeSheet(true)}/>}
           {!detailRecipe&&tab==="recipes"&&<RecipesTab allRecipes={allRecipes} onOpen={openRecipe} onShowCreate={()=>setShowCreate(true)}initialCat={recipeFilter?.cat||"All"} initialDiet={recipeFilter?.diet||(userDiet!=="None"?userDiet:"All")} initialSort={recipeFilter?.sort||"default"} initialMinDifficulty={recipeFilter?.minDifficulty||null}/>}
                     {!detailRecipe&&tab==="feed"&&<FeedTab posts={posts} setPosts={setPosts} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} onAddFriends={()=>setShowFollowers(true)} onShareInsta={(post)=>setShowInstaShare(post)} currentUser={effectiveProfile} allRecipes={allRecipes} saveUserRecipe={saveUserRecipe} setToast={setToast} savedPosts={savedPosts} setSavedPosts={setSavedPosts} username={effectiveProfile?.username} currentChallenge={currentChallenge} challengeJoined={challengeJoined} onJoinChallenge={handleJoinChallenge} onSwitchToRecipes={()=>{setTab("recipes");}} onOpenProfile={(id)=>setProfileSheetUserId(id)}/>}
           {!detailRecipe&&tab==="library"&&<CookLibrary cookLog={cookLog} allRecipes={allRecipes} earnedBadges={earnedBadges} onShowCalendar={()=>setShowCalendar(true)} onOpen={openRecipe} savedPosts={savedPosts} posts={posts} cookedDatesAll={cookedDatesAll} initialLibTab={libraryInitTab} wantToCook={wantToCook}
@@ -5177,7 +5122,6 @@ export default function App(){
           setToast({emoji:"",title:"Saved locally only",subtitle:"Couldn't sync to your account"});
         }
       }} onClose={()=>setShowCreate(false)}/>}
-      {showQuickLog&&<QuickLogSheet onLog={handleQuickLog} onClose={()=>setShowQuickLog(false)} goal={goal} cookedDays={cookedDays}/>}
       {showFollowers&&<FollowersSheet onClose={()=>setShowFollowers(false)} searchUsers={searchUsers} followUser={followUser} unfollowUser={unfollowUser} isFollowing={isFollowing} loadFollowers={loadFollowers} loadFollowing={loadFollowing} currentUserId={user?.id} onOpenProfile={(id)=>{setShowFollowers(false);setProfileSheetUserId(id);}}/>}
       {showCalendar&&<StreakCalendar cookedDays={cookedDays} cookLog={cookLog} onClose={()=>setShowCalendar(false)}/>}
       {showRecap&&<WeeklyRecapSheet cookedDays={cookedDays} xp={xp} weeklyXp={weeklyXp} levelInfo={levelInfo} posts={posts} earnedBadges={earnedBadges} onClose={()=>setShowRecap(false)}/>}
@@ -5198,7 +5142,7 @@ export default function App(){
           </div>
         </div>
       )}
-      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} uploadAvatar={uploadAvatar} setToast={setToast} signOut={signOut} saveProfileField={saveProfileField}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} setToast={setToast} signOut={signOut} saveProfileField={saveProfileField}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}

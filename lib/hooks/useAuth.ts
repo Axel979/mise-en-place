@@ -203,6 +203,9 @@ export function useAuth() {
           difficulty: r.difficulty || null,
           xp_earned: r.xp || 0,
           photo_url: r.photo || null,
+          photo_width: r.photoMeta?.width || null,
+          photo_height: r.photoMeta?.height || null,
+          photo_dominant_color: r.photoMeta?.dominantColor || null,
         };
         const { error } = await supabase.from('completed_recipes').insert(payload);
         if (error) {
@@ -690,28 +693,6 @@ export function useAuth() {
     }
   };
 
-  /** @deprecated Use PhotoUpload component with target='avatar' instead. Remove in Phase 2 Commit 5. */
-  const uploadAvatar = async (file: File): Promise<string | null> => {
-    const uid = userIdRef.current;
-    if (!uid) return null;
-    try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${uid}/avatar.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-      const publicUrl = urlData.publicUrl + '?v=' + Date.now();
-      const result = await patchProfile(uid, { avatar_url: publicUrl });
-      if (result.error) throw result.error;
-      return publicUrl;
-    } catch (e) {
-      console.error('uploadAvatar error:', e);
-      return null;
-    }
-  };
-
   return {
     user, session, profile, loading, supabase, refreshProfile, updateProfileLocal,
     signIn, signOut, refresh,
@@ -721,6 +702,6 @@ export function useAuth() {
     postActivity, loadFeed,
     loadUserRecipes, saveUserRecipe, updateUserRecipe, deleteUserRecipe,
     searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, loadFriends,
-    followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById, uploadAvatar,
+    followUser, unfollowUser, isFollowing, loadFollowing, loadFollowers, loadProfileById,
   };
 }
