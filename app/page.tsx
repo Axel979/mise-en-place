@@ -1231,8 +1231,6 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
   const uniqueCuisines=[...new Set(safeLog.map(e=>e.category).filter(Boolean))];
   const myRecipes=(allRecipes||[]).filter(r=>r.isPersonal&&r.isCustom);
   const savedRecipes=(allRecipes||[]).filter(r=>r.isPersonal&&!r.isCustom);
-  const hasPhotos=filtered.some(e=>e.photo);
-
   // Stats
   const totalCooked=safeLog.length;
   const streak=useMemo(()=>{
@@ -1359,43 +1357,26 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
                 </div>
               )}
 
-              {/* Photo grid or card list */}
-              {hasPhotos?(
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,marginBottom:16}}>
-                  {filtered.map((entry,i)=>(
-                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",borderRadius:i===0?"16px 4px 4px 4px":i===1?"4px 16px 4px 4px":i===filtered.length-2&&filtered.length%2===0?"4px 4px 4px 16px":i===filtered.length-1?"4px 4px 16px 4px":"4px",overflow:jiggleMode?"visible":"hidden",position:"relative",aspectRatio:"1/1",background:C.pill,...jiggleStyle}}>
-                      <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
-                      {entry.photo
-                        ?<img src={entry.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                        :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${a(C.bark,'18')},${a(C.ember,'10')})`}}>
-                          <span style={{fontSize:11,fontWeight:700,color:C.muted,textAlign:"center",padding:"0 8px"}}>{entry.name}</span>
-                        </div>
-                      }
-                      <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,.55))",padding:"20px 8px 8px"}}>
-                        <div style={{fontSize:10,fontWeight:700,color:"#fff",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</div>
-                        {entry.rating>0&&<div style={{fontSize:9,color:"rgba(255,255,255,.7)",marginTop:1}}>{"★".repeat(entry.rating)}</div>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ):(
-                <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {filtered.map((entry,i)=>(
-                    <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center",position:"relative",overflow:jiggleMode?"visible":"hidden",...jiggleStyle}}>
-                      <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
-                      <div style={{width:44,height:44,borderRadius:12,background:`${a(C.flame,'10')}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              {/* Cooked entries — always list mode */}
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {filtered.map((entry,i)=>(
+                  <div key={entry.id||i} onClick={e=>{e.stopPropagation();if(jiggleMode)return;const m=(allRecipes||[]).find(r=>r.name===entry.name);if(m&&onOpen)onOpen(m);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{cursor:"pointer",background:C.cream,borderRadius:16,padding:"14px",border:`1px solid ${C.border}`,display:"flex",gap:12,alignItems:"center",position:"relative",overflow:jiggleMode?"visible":"hidden",...jiggleStyle}}>
+                    <DeleteBadge onDel={()=>{if(onDeleteCookLog)onDeleteCookLog(entry.id);}}/>
+                    {entry.photo
+                      ?<img src={entry.photo} alt={entry.name} style={{width:44,height:44,objectFit:"cover",borderRadius:12,flexShrink:0}}/>
+                      :<div style={{width:44,height:44,borderRadius:12,background:`${a(C.flame,'10')}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".6"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
                       </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontWeight:700,fontSize:14,color:C.bark,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</div>
-                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>{entry.date}{entry.category?` · ${entry.category}`:""}</div>
-                        {entry.rating>0&&<div style={{fontSize:11,color:C.gold,marginTop:2}}>{"★".repeat(entry.rating)}</div>}
-                      </div>
-                      <div style={{fontSize:11,fontWeight:700,color:C.sage,flexShrink:0}}>+{entry.xp} 🔥</div>
+                    }
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:700,fontSize:14,color:C.bark,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</div>
+                      <div style={{fontSize:11,color:C.muted,marginTop:2}}>{entry.date}{entry.category?` · ${entry.category}`:""}</div>
+                      {entry.rating>0&&<div style={{fontSize:11,color:C.gold,marginTop:2}}>{"★".repeat(entry.rating)}</div>}
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div style={{fontSize:11,fontWeight:700,color:C.sage,flexShrink:0}}>+{entry.xp} 🔥</div>
+                  </div>
+                ))}
+              </div>
 
             </div>
           )}
