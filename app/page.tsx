@@ -152,6 +152,7 @@ function AccountSettings({onBack, user, profile, supabase, uploadAvatar, savePro
           }}
           onRemoved={async()=>{
             await saveProfileField(user.id,{avatar_url:null});
+            if(setToast) setToast({emoji:'',title:'Avatar updated',subtitle:''});
           }}
           onToast={setToast}
         />
@@ -160,9 +161,9 @@ function AccountSettings({onBack, user, profile, supabase, uploadAvatar, savePro
           <div style={{marginTop:20,width:'100%'}}>
             <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>Avatar color</div>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
-              <button onClick={()=>saveProfileField(user.id,{avatar_color:null})} style={{padding:'5px 12px',borderRadius:99,border:`2px solid ${!profile?.avatar_color?C.flame:C.border}`,background:!profile?.avatar_color?`${C.flame}12`:'transparent',color:!profile?.avatar_color?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Auto</button>
+              <button onClick={async()=>{await saveProfileField(user.id,{avatar_color:null});if(setToast) setToast({emoji:'',title:'Color updated',subtitle:''});}} style={{padding:'5px 12px',borderRadius:99,border:`2px solid ${!profile?.avatar_color?C.flame:C.border}`,background:!profile?.avatar_color?`${C.flame}12`:'transparent',color:!profile?.avatar_color?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Auto</button>
               {AVATAR_COLORS.map(hex=>(
-                <button key={hex} onClick={()=>saveProfileField(user.id,{avatar_color:hex})} style={{width:28,height:28,borderRadius:'50%',background:hex,border:profile?.avatar_color===hex?`3px solid ${C.flame}`:`2px solid ${C.border}`,cursor:'pointer',flexShrink:0}}/>
+                <button key={hex} onClick={async()=>{await saveProfileField(user.id,{avatar_color:hex});if(setToast) setToast({emoji:'',title:'Color updated',subtitle:''});}} style={{width:28,height:28,borderRadius:'50%',background:hex,border:profile?.avatar_color===hex?`3px solid ${C.flame}`:`2px solid ${C.border}`,cursor:'pointer',flexShrink:0}}/>
               ))}
             </div>
           </div>
