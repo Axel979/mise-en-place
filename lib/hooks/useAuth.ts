@@ -670,6 +670,7 @@ export function useAuth() {
     }
   };
 
+  /** @deprecated Use PhotoUpload component with target='avatar' instead. Remove in Phase 2 Commit 5. */
   const uploadAvatar = async (file: File): Promise<string | null> => {
     const uid = userIdRef.current;
     if (!uid) return null;

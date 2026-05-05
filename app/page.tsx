@@ -4,6 +4,7 @@ import html2canvas from "html2canvas";
 import { useAuth, fetchProfileById, fetchIsFollowing, fetchFollowersList, fetchFollowingList } from "@/lib/hooks/useAuth";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import { hapticImpact } from "@/lib/haptics";
+import PhotoUpload from "@/components/PhotoUpload";
 
 /* ═══ TOKENS ══════════════════════════════════════════════════════════════ */
 const C = {
@@ -89,23 +90,7 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [resetSent, setResetSent] = React.useState(false);
-  const fileInputRef = React.useRef(null);
-  const [uploading, setUploading] = React.useState(false);
-
-  const handleAvatarChange = async(e) => {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    if(file.size > 5 * 1024 * 1024){ alert('Image must be under 5MB'); return; }
-    setUploading(true);
-    const url = await uploadAvatar(file);
-    setUploading(false);
-    if(url){
-      if(onProfileUpdate) onProfileUpdate({...profile, avatar_url: url});
-      if(setToast) setToast({emoji:'',title:'Profile photo updated',subtitle:''});
-    }else{
-      if(setToast) setToast({emoji:'',title:'Upload failed',subtitle:'Please try again'});
-    }
-  };
+  const [localProfile, setLocalProfile] = React.useState(profile);
 
   const checkUsername = async(val) => {
     setUsername(val); setAvailable(null);
@@ -152,19 +137,54 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
         <div style={{fontWeight:900,fontSize:18,color:C.bark,fontFamily:DF}}>Account</div>
       </div>
 
-      {/* Avatar upload */}
+      {/* Avatar upload via PhotoUpload */}
       <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'24px 0',borderBottom:`1px solid ${C.border}`,marginBottom:24}}>
-        <div style={{position:'relative',marginBottom:16}}>
-          <AvatarIcon username={profile?.username||'You'} avatarUrl={profile?.avatar_url} size={96} fontSize={36}/>
-          <button onClick={()=>fileInputRef.current?.click()} disabled={uploading}
-            style={{position:'absolute',bottom:-4,right:-4,width:32,height:32,borderRadius:'50%',background:C.flame,border:'3px solid #fff',cursor:uploading?'wait':'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
-        </div>
-        <input ref={fileInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleAvatarChange}/>
-        {uploading&&<div style={{fontSize:12,color:C.muted,marginTop:8}}>Uploading…</div>}
+        <PhotoUpload
+          target="avatar"
+          uid={user?.id||''}
+          currentUrl={localProfile?.avatar_url}
+          currentDimensions={null}
+          currentDominantColor={null}
+          variant="avatar"
+          allowRemove={true}
+          allowCamera={true}
+          fallback={<AvatarIcon username={localProfile?.username||'You'} colorOverride={localProfile?.avatar_color} size={96} fontSize={36}/>}
+          onUploaded={async(metadata)=>{
+            await saveProfileField(user.id,{avatar_url:metadata.url});
+            const updated={...localProfile,avatar_url:metadata.url};
+            setLocalProfile(updated);
+            if(onProfileUpdate) onProfileUpdate(updated);
+          }}
+          onRemoved={async()=>{
+            await saveProfileField(user.id,{avatar_url:null});
+            const updated={...localProfile,avatar_url:null};
+            setLocalProfile(updated);
+            if(onProfileUpdate) onProfileUpdate(updated);
+          }}
+          onToast={setToast}
+        />
+        {/* Color picker — only when no photo */}
+        {!localProfile?.avatar_url&&(
+          <div style={{marginTop:20,width:'100%'}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>Avatar color</div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+              <button onClick={async()=>{
+                await saveProfileField(user.id,{avatar_color:null});
+                const updated={...localProfile,avatar_color:null};
+                setLocalProfile(updated);
+                if(onProfileUpdate) onProfileUpdate(updated);
+              }} style={{padding:'5px 12px',borderRadius:99,border:`2px solid ${!localProfile?.avatar_color?C.flame:C.border}`,background:!localProfile?.avatar_color?`${C.flame}12`:'transparent',color:!localProfile?.avatar_color?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Auto</button>
+              {AVATAR_COLORS.map(hex=>(
+                <button key={hex} onClick={async()=>{
+                  await saveProfileField(user.id,{avatar_color:hex});
+                  const updated={...localProfile,avatar_color:hex};
+                  setLocalProfile(updated);
+                  if(onProfileUpdate) onProfileUpdate(updated);
+                }} style={{width:28,height:28,borderRadius:'50%',background:hex,border:localProfile?.avatar_color===hex?`3px solid ${C.flame}`:`2px solid ${C.border}`,cursor:'pointer',flexShrink:0}}/>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Email - read only */}
@@ -224,23 +244,25 @@ function StarRating({value, onChange, size=28}){
 
 const AVATAR_COLORS=['#E05C7A','#4A90D9','#5C7A4E','#FF8C42','#9B5DE5','#F5C842','#2EC4B6','#E71D36','#3D405B','#F4A261','#264653','#A8DADC'];
 
-function AvatarIcon({username, avatarUrl=null, size=36, fontSize=14}){
-  if(avatarUrl){
+function AvatarIcon({username, avatarUrl=null, size=36, fontSize=14, colorOverride=null}){
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(()=>{setImgFailed(false);},[avatarUrl]);
+
+  if(avatarUrl && !imgFailed){
     return(
       <img
         src={avatarUrl}
         alt={username||'avatar'}
         style={{width:size,height:size,borderRadius:'50%',objectFit:'cover',flexShrink:0}}
-        onError={(e)=>{(e.currentTarget as HTMLImageElement).style.display='none';}}
+        onError={()=>setImgFailed(true)}
       />
     );
   }
   const name = username || '?';
   const initial = name[0].toUpperCase();
-  const colorIdx = name.charCodeAt(0) % AVATAR_COLORS.length;
-  const bg = AVATAR_COLORS[colorIdx];
+  const bg = colorOverride || AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
   return(
-    <div style={{width:size,height:size,borderRadius:size*0.28,background:bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontWeight:800,fontSize,color:'#fff',fontFamily:"'Playfair Display',Georgia,serif",userSelect:'none'}}>
+    <div style={{width:size,height:size,borderRadius:'50%',background:bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontWeight:800,fontSize,color:'#fff',fontFamily:"'Playfair Display',Georgia,serif",userSelect:'none'}}>
       {initial}
     </div>
   );
@@ -4111,7 +4133,7 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
       {/* Profile card */}
       <div style={{background:C.surface_inverted,borderRadius:20,padding:"18px",marginBottom:20,position:"relative",overflow:"hidden"}}>
         <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={54} fontSize={22}/>
+          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} colorOverride={profile?.avatar_color} size={54} fontSize={22}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:900,fontSize:17,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
@@ -4191,7 +4213,7 @@ function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,c
 
         {/* Avatar + name */}
         <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={68} fontSize={28}/>
+          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} colorOverride={profile?.avatar_color} size={68} fontSize={28}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:900,fontSize:22,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {profile?.username||user?.email?.split("@")[0]||"Chef"}
@@ -4494,7 +4516,7 @@ function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalCh
 
         {/* Account info card */}
         <div style={{background:C.surface_inverted,borderRadius:16,padding:"14px 16px",marginBottom:22,display:"flex",alignItems:"center",gap:12}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} size={42} fontSize={17}/>
+          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} colorOverride={profile?.avatar_color} size={42} fontSize={17}/>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:800,fontSize:15,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.username||user?.email?.split("@")[0]||"Chef"}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginTop:2}}>{user?.email||""}</div>
