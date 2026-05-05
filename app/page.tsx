@@ -1183,7 +1183,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,uid,o
               <Btn onClick={handleSkip} outline color={C.muted} style={{flex:1}}>Skip</Btn>
               <Btn onClick={handlePost} color={C.sage} style={{flex:2}}>Save & Share</Btn>
             </div>
-            <button onClick={()=>shareRecipe({recipe,photo:photoPreview||recipe.photo,username,xp:recipe.xp,isCooked:true,cardEl:shareCardRef.current,setToast})} className="tap" style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,border:`2px solid ${a(C.flame,'30')}`,background:`${a(C.flame,'08')}`,cursor:"pointer",fontWeight:700,fontSize:13,color:C.flame,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <button onClick={()=>shareRecipe({recipe,photo:cookPhoto?.url||recipe.photo,username,xp:recipe.xp,isCooked:true,cardEl:shareCardRef.current,setToast})} className="tap" style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,border:`2px solid ${a(C.flame,'30')}`,background:`${a(C.flame,'08')}`,cursor:"pointer",fontWeight:700,fontSize:13,color:C.flame,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               Share your cook
             </button>
@@ -1196,7 +1196,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,uid,o
           </div>
         </Sheet>
       )}
-      <ShareCardRender ref={null} recipe={recipe} photo={photoPreview||recipe.photo} username={username} xp={recipe.xp} isCooked={done} cardRef={shareCardRef}/>
+      <ShareCardRender ref={null} recipe={recipe} photo={cookPhoto?.url||recipe.photo} username={username} xp={recipe.xp} isCooked={done} cardRef={shareCardRef}/>
     </div>
   );
 }
