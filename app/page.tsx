@@ -83,14 +83,13 @@ const BASE_RANKS = [
   {title:"Legend",        icon:"", color:"#1A237E", minDishes:2000},
 ];
 
-function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uploadAvatar, saveProfileField, setToast}){
+function AccountSettings({onBack, user, profile, supabase, uploadAvatar, saveProfileField, setToast}){
   const [username, setUsername] = React.useState(profile?.username||"");
   const [checking, setChecking] = React.useState(false);
   const [available, setAvailable] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [resetSent, setResetSent] = React.useState(false);
-  const [localProfile, setLocalProfile] = React.useState(profile);
 
   const checkUsername = async(val) => {
     setUsername(val); setAvailable(null);
@@ -110,7 +109,6 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
     if(Object.keys(updates).length===0){setSaving(false);return;}
     try{
       await saveProfileField(user.id, updates);
-      onProfileUpdate({...profile,...updates});
       setSaved(true);
       if(setToast) setToast({emoji:'',title:'Username saved',subtitle:''});
     }catch(e){
@@ -142,45 +140,29 @@ function AccountSettings({onBack, user, profile, supabase, onProfileUpdate, uplo
         <PhotoUpload
           target="avatar"
           uid={user?.id||''}
-          currentUrl={localProfile?.avatar_url}
+          currentUrl={profile?.avatar_url}
           currentDimensions={null}
           currentDominantColor={null}
           variant="avatar"
           allowRemove={true}
           allowCamera={true}
-          fallback={<AvatarIcon username={localProfile?.username||'You'} colorOverride={localProfile?.avatar_color} size={96} fontSize={36}/>}
+          fallback={<AvatarIcon username={profile?.username||'You'} colorOverride={profile?.avatar_color} size={96} fontSize={36}/>}
           onUploaded={async(metadata)=>{
             await saveProfileField(user.id,{avatar_url:metadata.url});
-            const updated={...localProfile,avatar_url:metadata.url};
-            setLocalProfile(updated);
-            if(onProfileUpdate) onProfileUpdate(updated);
           }}
           onRemoved={async()=>{
             await saveProfileField(user.id,{avatar_url:null});
-            const updated={...localProfile,avatar_url:null};
-            setLocalProfile(updated);
-            if(onProfileUpdate) onProfileUpdate(updated);
           }}
           onToast={setToast}
         />
         {/* Color picker — only when no photo */}
-        {!localProfile?.avatar_url&&(
+        {!profile?.avatar_url&&(
           <div style={{marginTop:20,width:'100%'}}>
             <div style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>Avatar color</div>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
-              <button onClick={async()=>{
-                await saveProfileField(user.id,{avatar_color:null});
-                const updated={...localProfile,avatar_color:null};
-                setLocalProfile(updated);
-                if(onProfileUpdate) onProfileUpdate(updated);
-              }} style={{padding:'5px 12px',borderRadius:99,border:`2px solid ${!localProfile?.avatar_color?C.flame:C.border}`,background:!localProfile?.avatar_color?`${C.flame}12`:'transparent',color:!localProfile?.avatar_color?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Auto</button>
+              <button onClick={()=>saveProfileField(user.id,{avatar_color:null})} style={{padding:'5px 12px',borderRadius:99,border:`2px solid ${!profile?.avatar_color?C.flame:C.border}`,background:!profile?.avatar_color?`${C.flame}12`:'transparent',color:!profile?.avatar_color?C.flame:C.muted,fontWeight:700,fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Auto</button>
               {AVATAR_COLORS.map(hex=>(
-                <button key={hex} onClick={async()=>{
-                  await saveProfileField(user.id,{avatar_color:hex});
-                  const updated={...localProfile,avatar_color:hex};
-                  setLocalProfile(updated);
-                  if(onProfileUpdate) onProfileUpdate(updated);
-                }} style={{width:28,height:28,borderRadius:'50%',background:hex,border:localProfile?.avatar_color===hex?`3px solid ${C.flame}`:`2px solid ${C.border}`,cursor:'pointer',flexShrink:0}}/>
+                <button key={hex} onClick={()=>saveProfileField(user.id,{avatar_color:hex})} style={{width:28,height:28,borderRadius:'50%',background:hex,border:profile?.avatar_color===hex?`3px solid ${C.flame}`:`2px solid ${C.border}`,cursor:'pointer',flexShrink:0}}/>
               ))}
             </div>
           </div>
@@ -4104,7 +4086,7 @@ function DataSettings({onBack, supabase, user, setToast, signOut}){
   );
 }
 
-function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,onProfileUpdate,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard,onShowFollowers}){
+function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCalendar,onShowRecap,onShowYearReview,onEditGoal,signOut,supabase,setTab,onShowSettings,onShowGroceryList,groceryCount,setToast,onShowLeaderboard,onShowFollowers}){
   const weekDone=cookedDays.filter(Boolean).length;
   const pct=Math.min(100,weekDone/(goal?.target||3)*100);
 
@@ -4182,148 +4164,6 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
   );
 }
 
-function ProfileTab({user,profile,xp,levelInfo,allRecipes,cookLog,earnedBadges,cookedDays,goal,weeklyXp,signOut,onShowSettings,onShowCalendar,onShowRecap,onGoToLibrary,onEditGoal}){
-  const totalCooked=(allRecipes||[]).filter(r=>r.done).length;
-  const uniqueCuisines=[...new Set((cookLog||[]).map(e=>e.category).filter(Boolean))].length;
-  const safeEarned=earnedBadges||[];
-  const safeCookLog=cookLog||[];
-  const level=levelInfo?.current;
-  const nextLevel=levelInfo?.next;
-
-  const StatBox=({label,value})=>(
-    <div style={{textAlign:"center",background:"rgba(255,255,255,.08)",borderRadius:12,padding:"10px 4px"}}>
-      <div style={{fontSize:20,fontWeight:900,color:"#fff",fontFamily:DF,lineHeight:1}}>{value}</div>
-      <div style={{fontSize:9,color:"rgba(255,255,255,.45)",textTransform:"uppercase",letterSpacing:".07em",marginTop:3}}>{label}</div>
-    </div>
-  );
-
-  return(
-    <div style={{paddingBottom:100}}>
-
-      {/* Hero */}
-      <div style={{background:C.surface_inverted,padding:"24px 20px 28px",position:"relative",overflow:"hidden"}}>
-
-        {/* Settings button */}
-        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
-          <button onClick={onShowSettings} style={{background:"rgba(255,255,255,.12)",border:"none",borderRadius:10,padding:"6px 14px",color:"rgba(255,255,255,.8)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-            Settings
-          </button>
-        </div>
-
-        {/* Avatar + name */}
-        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
-          <AvatarIcon username={profile?.username||user?.email||"?"} avatarUrl={profile?.avatar_url} colorOverride={profile?.avatar_color} size={68} fontSize={28}/>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:900,fontSize:22,color:"#fff",fontFamily:DF,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-              {profile?.username||user?.email?.split("@")[0]||"Chef"}
-            </div>
-            {level&&(
-              <div style={{display:"inline-block",background:level.color||C.flame,borderRadius:8,padding:"3px 10px",fontSize:12,fontWeight:800,color:"#fff",marginTop:6}}>
-                {level.title}
-              </div>
-            )}
-            <div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginTop:5}}>{user?.email||""}</div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-          <StatBox label="Cooked" value={totalCooked}/>
-          <StatBox label="Heat" value={xp}/>
-          <StatBox label="Cuisines" value={uniqueCuisines}/>
-          <StatBox label="Badges" value={safeEarned.length}/>
-        </div>
-      </div>
-
-      <div style={{padding:"14px 16px 0"}}>
-
-        {/* Level progress */}
-        <div style={{background:C.cream,borderRadius:18,padding:"16px",marginBottom:12,border:`1px solid ${C.border}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <div style={{fontWeight:800,fontSize:14,color:C.bark}}>{level?.title||"Prep Hand"}</div>
-            {nextLevel&&<div style={{fontSize:12,color:C.muted}}>{levelInfo.xpIntoLevel}/{levelInfo.xpForLevel} 🔥 to {nextLevel.title}</div>}
-          </div>
-          <div style={{background:C.border,borderRadius:99,height:6,overflow:"hidden"}}>
-            <div style={{width:`${levelInfo?.pct||0}%`,height:"100%",background:level?.color||C.flame,borderRadius:99,transition:"width .5s"}}/>
-          </div>
-          {!nextLevel&&<div style={{fontSize:12,color:C.muted,marginTop:6}}>Max level reached</div>}
-        </div>
-
-        {/* Weekly goal */}
-        {goal&&(
-          <div style={{background:C.cream,borderRadius:18,padding:"14px 16px",marginBottom:12,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>Weekly goal</div>
-              <div style={{fontWeight:800,fontSize:15,color:C.bark}}>{goal.label}</div>
-            </div>
-            <div style={{fontWeight:900,fontSize:22,color:goal.color||C.flame,marginRight:4}}>{weeklyXp||0} <span style={{fontSize:12,color:C.muted,fontWeight:600}}>🔥 this week</span></div>
-            <button onClick={onEditGoal} style={{background:`${a(C.flame,'10')}`,border:"none",borderRadius:8,padding:"6px 12px",color:C.flame,fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>Edit</button>
-          </div>
-        )}
-
-        {/* Quick actions */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-          {[
-            {label:"Cooking History",action:onShowCalendar,icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>},
-            {label:"Weekly Recap",action:onShowRecap,icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sky} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>},
-            {label:"My Badges",action:onGoToLibrary,icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>},
-            {label:"Cook Library",action:onGoToLibrary,icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>},
-          ].map(({label,action,icon})=>(
-            <button key={label} onClick={action} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8,fontFamily:"inherit"}}>
-              {icon}
-              <span style={{fontSize:12,fontWeight:700,color:C.bark,textAlign:"center"}}>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Badges earned */}
-        {safeEarned.length>0&&(
-          <div style={{background:C.cream,borderRadius:18,padding:"16px",marginBottom:12,border:`1px solid ${C.border}`}}>
-            <div style={{fontWeight:800,fontSize:14,color:C.bark,marginBottom:12}}>Badges</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-              {BADGES.filter(b=>safeEarned.includes(b.id)).map(b=>(
-                <div key={b.id} style={{background:`${a(C.gold,'15')}`,border:`1px solid ${a(C.gold,'40')}`,borderRadius:10,padding:"6px 12px"}}>
-                  <div style={{fontSize:12,fontWeight:700,color:C.bark}}>{b.label}</div>
-                  <div style={{fontSize:10,color:C.muted,marginTop:2}}>{b.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent cooks */}
-        {safeCookLog.length>0&&(
-          <div style={{marginBottom:14}}>
-            <div style={{fontWeight:800,fontSize:14,color:C.bark,marginBottom:10}}>Recent cooks</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {safeCookLog.slice(0,5).map((entry,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,background:C.cream,borderRadius:14,padding:"10px 14px",border:`1px solid ${C.border}`}}>
-                  {entry.photo
-                    ?<img src={entry.photo} alt="" style={{width:44,height:44,borderRadius:10,objectFit:"cover",flexShrink:0}}/>
-                    :<div style={{width:44,height:44,borderRadius:10,background:`${a(C.flame,'10')}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.flame} strokeWidth="1.5" opacity=".5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
-                    </div>
-                  }
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:13,color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{entry.name}</div>
-                    <div style={{fontSize:11,color:C.muted,marginTop:2}}>{entry.date}</div>
-                  </div>
-                  <div style={{fontSize:11,fontWeight:700,color:C.sage,flexShrink:0}}>+{entry.xp} 🔥</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Sign out */}
-        <button onClick={signOut} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${C.border}`,background:"transparent",color:C.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
-}
 
 
 /* ═══ EDIT RECIPE SHEET ════════════════════════════════════════════════════ */
@@ -4451,14 +4291,14 @@ class AppErrorBoundary extends React.Component {
 }
 
 /* ═══ SETTINGS SHEET ══════════════════════════════════════════════════════ */
-function SettingsSheet({user, profile, supabase, onProfileUpdate, goal, onGoalChange, onClose, appTheme, setAppTheme, uploadAvatar, setToast, signOut, saveProfileField}){
+function SettingsSheet({user, profile, supabase, goal, onGoalChange, onClose, appTheme, setAppTheme, uploadAvatar, setToast, signOut, saveProfileField}){
   const [section, setSection] = useState(null);
 
   // Section components rendered inline
   if(section==="account") return(
     <Sheet onClose={onClose}>
       <div style={{padding:"24px 20px 44px"}}>
-        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} onProfileUpdate={onProfileUpdate} uploadAvatar={uploadAvatar} saveProfileField={saveProfileField} setToast={setToast}/>
+        <AccountSettings onBack={()=>setSection(null)} user={user} profile={profile} supabase={supabase} uploadAvatar={uploadAvatar} saveProfileField={saveProfileField} setToast={setToast}/>
       </div>
     </Sheet>
   );
@@ -4624,7 +4464,6 @@ export default function App(){
   const [wantToCook,      setWantToCook]      = useState([]);
   const [hearts,          setHearts]          = useState(5);
   const [hasFreeze,       setHasFreeze]       = useState(true);
-  const [localProfile,    setLocalProfile]    = useState(null);
   const [activeTab,       setActiveTab]       = useState("home");
 
   const [seasonalEvent] = useState({
@@ -5055,11 +4894,7 @@ export default function App(){
     setToast({emoji:"💾",title:"Saved!",subtitle:`${communityRecipe.name} added to your recipes`});
   };
 
-  const effectiveProfile = localProfile || profile;
-
-  const handleProfileUpdate = (updated) => {
-    setLocalProfile(updated);
-  };
+  const effectiveProfile = profile;
 
   const handleQuickLog=useCallback((note)=>{
     const newXp2 = xp + 30;
@@ -5312,11 +5147,11 @@ export default function App(){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.bark} strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} onProfileUpdate={handleProfileUpdate} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}} onShowFollowers={()=>{setShowFollowers(true);setShowDrawer(false);}}/>
+            <SideDrawer user={user} profile={effectiveProfile} xp={xp} levelInfo={levelInfo} goal={goal} cookedDays={cookedDays} onClose={()=>setShowDrawer(false)} onShowCalendar={()=>{setShowCalendar(true);setShowDrawer(false);}} onShowRecap={()=>{setShowRecap(true);setShowDrawer(false);}} onShowYearReview={()=>{setShowYearReview(true);setShowDrawer(false);}} onEditGoal={()=>{setShowGoal(true);setShowDrawer(false);}} signOut={signOut} supabase={supabase} setTab={(t)=>{setTab(t);setShowDrawer(false);}} onShowSettings={()=>{setShowSettings(true);setShowDrawer(false);}} onShowGroceryList={()=>{setShowGroceryList(true);setShowDrawer(false);}} groceryCount={groceryList.filter(i=>!i.checked).length} setToast={setToast} onShowLeaderboard={()=>{setShowLeaderboard(true);setShowDrawer(false);}} onShowFollowers={()=>{setShowFollowers(true);setShowDrawer(false);}}/>
           </div>
         </div>
       )}
-      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} onProfileUpdate={handleProfileUpdate} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} uploadAvatar={uploadAvatar} setToast={setToast} signOut={signOut} saveProfileField={saveProfileField}/>}
+      {showSettings&&<SettingsSheet user={user} profile={effectiveProfile} onClose={()=>setShowSettings(false)} supabase={supabase} goal={goal} onGoalChange={g=>{setGoal(g);setShowGoal(false);}} appTheme={appTheme} setAppTheme={setAppTheme} uploadAvatar={uploadAvatar} setToast={setToast} signOut={signOut} saveProfileField={saveProfileField}/>}
       {showWantToCook&&<WantToCookSheet wantToCook={wantToCook} allRecipes={allRecipes} onRemove={id=>{setWantToCook(w=>{const next=w.filter(x=>x!==id);try{localStorage.setItem('mep_wantToCook',JSON.stringify(next));}catch{}return next;});}} onCookNow={(r)=>{openRecipe(r);setShowWantToCook(false);}} onClose={()=>setShowWantToCook(false)}/>}
       {showYearReview&&<YearInReviewSheet cookLog={cookLog} xp={xp} levelInfo={levelInfo} earnedBadges={earnedBadges} allRecipes={allRecipes} onClose={()=>setShowYearReview(false)}/>}
       {showGroceryList&&<GroceryListSheet groceryList={groceryList} setGroceryList={setGroceryList} onClose={()=>setShowGroceryList(false)}/>}

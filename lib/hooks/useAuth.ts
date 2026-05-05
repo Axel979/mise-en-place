@@ -216,8 +216,15 @@ export function useAuth() {
   };
 
   // ── Individual savers (kept for non-handleComplete uses) ──
+  const updateProfileLocal = (patch: Record<string, any>) => {
+    setProfile((prev: any) => prev ? { ...prev, ...patch } : prev);
+  };
+
   const saveProfileField = async (userId: string, fields: Record<string, any>) => {
     if (!userId) return;
+    // Optimistic UI: update local state first
+    updateProfileLocal(fields);
+    // Then persist to DB
     try {
       const { error } = await patchProfile(userId, { ...fields, updated_at: new Date().toISOString() });
       if (error) console.error('saveProfileField error:', error);
@@ -693,7 +700,7 @@ export function useAuth() {
   };
 
   return {
-    user, session, profile, loading, supabase, refreshProfile,
+    user, session, profile, loading, supabase, refreshProfile, updateProfileLocal,
     signIn, signOut, refresh,
     saveAllUserData,
     saveXp, saveProfileField, logCompletedRecipe, loadCompletedRecipes,
