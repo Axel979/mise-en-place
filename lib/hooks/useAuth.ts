@@ -353,7 +353,10 @@ export function useAuth() {
         isCustom: !r.is_imported,
         isImported: r.is_imported || false,
         isPublic: r.is_public !== false,
-        photo: null,
+        photo: r.photo_url || null,
+        photoWidth: r.photo_width || null,
+        photoHeight: r.photo_height || null,
+        photoDominantColor: r.photo_dominant_color || null,
         emoji: '',
         done: false,
         diets: ['No restrictions'],
@@ -386,6 +389,10 @@ export function useAuth() {
           xp: recipe.xp || 60,
           is_imported: recipe.isImported || false,
           is_public: recipe.isPublic !== false,
+          photo_url: recipe.photo || null,
+          photo_width: recipe.photoWidth || null,
+          photo_height: recipe.photoHeight || null,
+          photo_dominant_color: recipe.photoDominantColor || null,
         })
         .select()
         .single();
@@ -426,6 +433,12 @@ export function useAuth() {
           };
           if (typeof updates.isPublic === 'boolean') {
             payload.is_public = updates.isPublic;
+          }
+          if (updates.photo !== undefined) {
+            payload.photo_url = updates.photo || null;
+            payload.photo_width = updates.photoWidth || null;
+            payload.photo_height = updates.photoHeight || null;
+            payload.photo_dominant_color = updates.photoDominantColor || null;
           }
           return payload;
         })()),

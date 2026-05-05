@@ -975,7 +975,7 @@ async function shareToInstagramStory({cardEl,setToast}){
 }
 
 /* ═══ RECIPE DETAIL ═══════════════════════════════════════════════════════ */
-function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAddToGroceryList,currentChallenge,challengeJoined}){
+function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,uid,onAddToGroceryList,currentChallenge,challengeJoined}){
   const [showEdit,setShowEdit]=useState(false);
   const [step,setStep]=useState(0);
   const [mode,setMode]=useState("overview");
@@ -1121,7 +1121,7 @@ function RecipeDetail({recipe,onBack,onComplete,onUpdate,setToast,username,onAdd
         )}
       </div>
 
-      {showEdit&&<EditRecipeSheet recipe={recipe} onSave={r=>{onUpdate&&onUpdate(r);setShowEdit(false);}} onClose={()=>setShowEdit(false)}/>}
+      {showEdit&&<EditRecipeSheet recipe={recipe} uid={uid} setToast={setToast} onSave={r=>{onUpdate&&onUpdate(r);setShowEdit(false);}} onClose={()=>setShowEdit(false)}/>}
 
       {postOpen&&(
         <Sheet onClose={handleSkip}>
@@ -1412,10 +1412,12 @@ function CookLibrary({cookLog,allRecipes,earnedBadges,onShowCalendar,onOpen,save
               {[...myRecipes,...savedRecipes].map(r=>(
                 <div key={r.id} onClick={e=>{e.stopPropagation();if(jiggleMode)return;if(onOpen)onOpen(r);}} onMouseDown={handlePressStart} onMouseUp={handlePressEnd} onTouchStart={handlePressStart} onTouchEnd={handlePressEnd} className={jiggleMode?"":"tap"} style={{background:C.cream,border:`1px solid ${C.border}`,borderRadius:18,overflow:jiggleMode?"visible":"hidden",cursor:"pointer",display:"flex",position:"relative",...jiggleStyle}}>
                   <DeleteBadge onDel={()=>{if(onDeleteRecipe)onDeleteRecipe(r);}}/>
-                  {/* Thumbnail area — Private badge overlaid if not public */}
-                  {/* Assumption: this only renders in My Recipes tab which is owner-only */}
-                  <div style={{width:80,flexShrink:0,background:`linear-gradient(135deg,${a(C.sage,'20')},${a(C.sage,'08')})`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5" opacity=".6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  {/* Thumbnail area */}
+                  <div style={{width:80,flexShrink:0,background:r.photo?r.photoDominantColor||C.pill:`linear-gradient(135deg,${a(C.sage,'20')},${a(C.sage,'08')})`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+                    {r.photo
+                      ?<img src={r.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                      :<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.5" opacity=".6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    }
                     {r.isPublic===false&&(
                       <div style={{position:"absolute",top:6,left:6,background:"rgba(158,140,126,.9)",borderRadius:999,padding:"2px 7px",display:"flex",alignItems:"center",gap:3}}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -2323,7 +2325,7 @@ function parseRecipeText(text){
   return {name, ingredients, steps};
 }
 
-function CreateRecipeSheet({onSave,onClose}){
+function CreateRecipeSheet({onSave,onClose,uid,setToast}){
   const [name,setName]=useState("");
   const [category,setCategory]=useState("Comfort");
   const [difficulty,setDifficulty]=useState("Easy");
@@ -2336,6 +2338,7 @@ function CreateRecipeSheet({onSave,onClose}){
   const [showPaste,setShowPaste]=useState(false);
   const [parseNote,setParseNote]=useState("");
   const [isPublic,setIsPublic]=useState(true);
+  const [recipePhoto,setRecipePhoto]=useState<{url:string;width:number;height:number;dominantColor:string}|null>(null);
   const CATS=["Breakfast","Quick","Asian","Indian","Japanese","Italian","Mexican","Mediterranean","Comfort","Healthy","Baking"];
 
   const addIngredient=()=>setIngredients(i=>[...i,""]);
@@ -2367,7 +2370,9 @@ function CreateRecipeSheet({onSave,onClose}){
     if(!name.trim()||ingredients.filter(i=>i.trim()).length===0)return;
     const xpMap={Easy:50,Medium:80,Hard:120};
     onSave({
-      id:Date.now(),name:name.trim(),emoji:"",photo:null,
+      id:Date.now(),name:name.trim(),emoji:"",photo:recipePhoto?.url||null,
+      photoWidth:recipePhoto?.width||null,photoHeight:recipePhoto?.height||null,
+      photoDominantColor:recipePhoto?.dominantColor||null,
       xp:xpMap[difficulty]||60,difficulty,time:time||"30 min",
       category,diets:["No restrictions"],macros:null,done:false,
       ingredients:ingredients.filter(i=>i.trim()),
@@ -2387,6 +2392,23 @@ function CreateRecipeSheet({onSave,onClose}){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Create Recipe</div>
           <CloseBtn onClose={onClose}/>
+        </div>
+
+        {/* Photo upload */}
+        <div style={{marginBottom:14}}>
+          <PhotoUpload
+            target="recipes"
+            uid={uid}
+            currentUrl={recipePhoto?.url}
+            currentDimensions={recipePhoto?{width:recipePhoto.width,height:recipePhoto.height}:null}
+            currentDominantColor={recipePhoto?.dominantColor}
+            variant="card"
+            allowRemove={true}
+            allowCamera={true}
+            onUploaded={(meta)=>setRecipePhoto({url:meta.url,width:meta.width,height:meta.height,dominantColor:meta.dominantColor})}
+            onRemoved={()=>setRecipePhoto(null)}
+            onToast={setToast}
+          />
         </div>
 
         {/* Smart paste area */}
@@ -4168,7 +4190,7 @@ function SideDrawer({user,profile,xp,levelInfo,goal,cookedDays,onClose,onShowCal
 
 
 /* ═══ EDIT RECIPE SHEET ════════════════════════════════════════════════════ */
-function EditRecipeSheet({recipe, onSave, onClose}){
+function EditRecipeSheet({recipe, onSave, onClose, uid, setToast}){
   const [name, setName] = useState(recipe.name||"");
   const [time, setTime] = useState(recipe.time||"30 min");
   const [difficulty, setDifficulty] = useState(recipe.difficulty||"Medium");
@@ -4176,6 +4198,9 @@ function EditRecipeSheet({recipe, onSave, onClose}){
   const [steps, setSteps] = useState((recipe.steps||[]).map(s=>s.body).join("\n"));
   const [tip, setTip] = useState(recipe.tip||"");
   const [isPublic, setIsPublic] = useState(recipe.isPublic !== false);
+  const [recipePhoto,setRecipePhoto]=useState<{url:string;width:number;height:number;dominantColor:string}|null>(
+    recipe.photo?{url:recipe.photo,width:recipe.photoWidth||0,height:recipe.photoHeight||0,dominantColor:recipe.photoDominantColor||''}:null
+  );
 
   const handleSave = () => {
     const newIngredients = ingredients.split("\n").map(l=>l.trim()).filter(Boolean);
@@ -4194,6 +4219,10 @@ function EditRecipeSheet({recipe, onSave, onClose}){
       steps: newSteps,
       tip: tip.trim()||null,
       isPublic,
+      photo: recipePhoto?.url||null,
+      photoWidth: recipePhoto?.width||null,
+      photoHeight: recipePhoto?.height||null,
+      photoDominantColor: recipePhoto?.dominantColor||null,
     });
     onClose();
   };
@@ -4210,6 +4239,23 @@ function EditRecipeSheet({recipe, onSave, onClose}){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div style={{fontWeight:900,fontSize:20,color:C.bark,fontFamily:DF}}>Edit Recipe</div>
           <CloseBtn onClose={onClose}/>
+        </div>
+
+        {/* Photo */}
+        <div style={{marginBottom:14}}>
+          <PhotoUpload
+            target="recipes"
+            uid={uid||''}
+            currentUrl={recipePhoto?.url}
+            currentDimensions={recipePhoto?{width:recipePhoto.width,height:recipePhoto.height}:null}
+            currentDominantColor={recipePhoto?.dominantColor}
+            variant="card"
+            allowRemove={true}
+            allowCamera={true}
+            onUploaded={(meta)=>setRecipePhoto({url:meta.url,width:meta.width,height:meta.height,dominantColor:meta.dominantColor})}
+            onRemoved={()=>setRecipePhoto(null)}
+            onToast={setToast}
+          />
         </div>
 
         <Label text="Recipe name"/>
@@ -4973,7 +5019,7 @@ export default function App(){
         </div>
 
         <div style={{minHeight:"calc(100vh - 118px)",paddingTop:84,paddingBottom:100}}>
-          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating,vis,chId)=>{handleComplete(r,p,c_,rating,vis,chId);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} onAddToGroceryList={(r)=>{
+          {detailRecipe&&(()=>{const live=allRecipes.find(r=>r.id===detailRecipe.id)||detailRecipe;return <RecipeDetail recipe={live} onBack={()=>setDetailRecipe(null)} onComplete={(r,p,c_,rating,vis,chId)=>{handleComplete(r,p,c_,rating,vis,chId);setDetailRecipe(null);}} onUpdate={async r=>{setAllRecipes(rs=>rs.map(x=>x.id===r.id?r:x));setDetailRecipe(r);if(r._supabaseId){try{await updateUserRecipe(r._supabaseId,r);}catch(e){console.error("updateUserRecipe failed",e);}}}} setToast={setToast} username={effectiveProfile?.username} uid={user?.id||''} onAddToGroceryList={(r)=>{
               const newIngs=getRawIngredients(r);
               if(!newIngs.length){setToast({emoji:'🛒',title:'No ingredients found',subtitle:'This recipe has no ingredients listed'});return;}
               setGroceryList(prev=>{
@@ -5111,7 +5157,7 @@ export default function App(){
       </>}
 
       {showGoal&&<GoalPicker goal={goal} onSelect={g=>{setGoal(g);setShowGoal(false);}} onClose={()=>setShowGoal(false)}/>}
-      {showCreate&&<CreateRecipeSheet onSave={async r=>{
+      {showCreate&&<CreateRecipeSheet uid={user?.id||''} setToast={setToast} onSave={async r=>{
         // Optimistic update
         setAllRecipes(rs=>[r,...rs]);
         try{
